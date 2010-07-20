@@ -15,6 +15,8 @@
  * of parameters, about, and help) while others only appear when there are
  * items in the database (generate existing, edit, or delete).
  * 
+ * UPDATES FOR 1.1.1:  Added Help option menu
+ * 
  * This program is Copyright 2010, Jeffrey T. Darlington.
  * E-mail:  android_support@cryptnos.com
  * Web:     http://www.cryptnos.com/
@@ -38,6 +40,8 @@ import android.app.ListActivity;
 import android.content.Intent;
 import android.content.res.Resources;
 import android.os.Bundle;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.ListView;
 import android.widget.SimpleAdapter;
@@ -55,7 +59,10 @@ public class CryptnosMainMenu extends ListActivity {
 	private CryptnosApplication theApp = null;
 	/** Our database adapter */
 	private ParamsDbAdapter mDBHelper;
-	
+
+	/** A constant indicating the Help option menu item. */
+	public static final int OPTMENU_HELP = Menu.FIRST;
+
     /** Called when the activity is first created. */
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -169,6 +176,31 @@ public class CryptnosMainMenu extends ListActivity {
         // the user know that's our fault and not theirs.
         else Toast.makeText(this, R.string.error_not_implemented,
         		Toast.LENGTH_SHORT).show();
+    }
+    
+	@Override
+	public boolean onCreateOptionsMenu(Menu menu) {
+    	// Add the "Help" menu items:
+    	menu.add(0, OPTMENU_HELP, Menu.NONE,
+        	R.string.optmenu_help).setIcon(android.R.drawable.ic_menu_help);
+    	return true;
+    }
+    
+	@Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+    	switch (item.getItemId()) {
+	    	// If the Help item is selected, open up the "What is Cryptnos?"
+    		// help.  (Should this open the help index, rather than this
+    		// specific item?  I'm not sure.  We can always change that, but
+    		// such a change will require using the HelpMenuActivity rather
+    		// than the HelpActivity.)
+	    	case OPTMENU_HELP:
+	        	Intent i = new Intent(this, HelpActivity.class);
+	        	i.putExtra("helptext", R.string.help_text_whatis);
+	        	startActivity(i);
+	    		return true;
+    	}
+    	return false;
     }
     
     /**

@@ -27,6 +27,8 @@
  * to the root of the SD card.  This should be abstracted enough that other
  * file managers can be slipped in if their intents are known.
  * 
+ * UPDATES FOR 1.1.1:  Added Help option menu
+ * 
  * This program is Copyright 2010, Jeffrey T. Darlington.
  * E-mail:  android_support@cryptnos.com
  * Web:     http://www.cryptnos.com/
@@ -58,6 +60,8 @@ import android.content.Intent;
 import android.content.DialogInterface.OnMultiChoiceClickListener;
 import android.net.Uri;
 import android.os.Bundle;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.View.OnFocusChangeListener;
 import android.widget.Button;
@@ -109,6 +113,9 @@ public class ExportActivity extends Activity implements
 	/** A constant indicating that we should show the progress dialog during
 	 *  the export process. */
 	static final int DIALOG_PROGRESS_EXPORT = 1101;
+
+	/** A constant indicating the Help option menu item. */
+	public static final int OPTMENU_HELP = Menu.FIRST;
 
 	/** The Intent action for OI File Manager */
 	private static final String DIR_SELECT_INTENT_OI = "org.openintents.action.PICK_DIRECTORY";
@@ -276,6 +283,7 @@ public class ExportActivity extends Activity implements
         
         /** What to do when the Selected Path button is clicked */
         btnPickPath.setOnClickListener(new View.OnClickListener() {
+			@Override
 			public void onClick(View v) {
 				// Double-check to make sure the OI File Manager intent is
 				// still available.  This will also let us add support for
@@ -497,6 +505,28 @@ public class ExportActivity extends Activity implements
 	    		break;
     	}
     	return dialog;
+    }
+    
+	@Override
+	public boolean onCreateOptionsMenu(Menu menu) {
+    	// Add the "Help" menu item:
+    	menu.add(0, OPTMENU_HELP, Menu.NONE,
+        	R.string.optmenu_help).setIcon(android.R.drawable.ic_menu_help);
+    	return true;
+    }
+    
+	@Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+    	switch (item.getItemId()) {
+	    	// If the Help item is selected, open up the "Export and
+    		// Import" help:
+	    	case OPTMENU_HELP:
+	        	Intent i = new Intent(this, HelpActivity.class);
+	        	i.putExtra("helptext", R.string.help_text_importexport);
+	        	startActivity(i);
+	    		return true;
+    	}
+    	return false;
     }
     
     /**

@@ -20,7 +20,9 @@
  * dialog is displayed whenever the list is being built.
  * 
  * UPDATES FOR 1.1:  Added the Delete All option menu and dialog to allow the
- * user to delete all the parameters in the database in one action. 
+ * user to delete all the parameters in the database in one action.
+ * 
+ * UPDATES FOR 1.1.1:  Added Help option menu
  * 
  * This program is Copyright 2010, Jeffrey T. Darlington.
  * E-mail:  android_support@cryptnos.com
@@ -92,6 +94,8 @@ import android.widget.AdapterView.AdapterContextMenuInfo;
 	public static final int MENU_DELETE = Menu.FIRST + 2;
 	/** A constant indicating the Delete All option menu item. */
 	public static final int OPTMENU_DELETE_ALL = Menu.FIRST + 100;
+	/** A constant indicating the Help option menu item. */
+	public static final int OPTMENU_HELP = Menu.FIRST + 101;
 	/** A constant indicating that we should show the confirm delete dialog. */
 	static final int DIALOG_CONFIRM_DELETE = 1000;
 	/** A constant indicating that we should show the confirm delete all
@@ -413,22 +417,30 @@ import android.widget.AdapterView.AdapterContextMenuInfo;
 	}
 
     public boolean onCreateOptionsMenu(Menu menu) {
-    	// Add the "Delete All" menu item.  For now, that's all we really
-    	// have or need, as everything else requires us to select a specific
-    	// item in the list.
+    	// Add the "Delete All" and "Help" menu items.  For now, that's all
+    	// we really have or need, as everything else requires us to select
+    	// a specific item in the list.
     	menu.add(0, OPTMENU_DELETE_ALL, Menu.NONE,
     		R.string.sitelist_optmenu_delete_all).setIcon(android.R.drawable.ic_menu_delete);
+    	menu.add(0, OPTMENU_HELP, Menu.NONE,
+        	R.string.optmenu_help).setIcon(android.R.drawable.ic_menu_help);
     	return true;
     }
     
     public boolean onOptionsItemSelected(MenuItem item) {
-    	// There's not a lot to do here, since we only have one option menu
-    	// item at the moment.  If the Delete All item is selected, show the
-    	// confirmation dialog, which does all the actual work.
     	switch (item.getItemId()) {
-    	case OPTMENU_DELETE_ALL:
-    		showDialog(DIALOG_CONFIRM_DELETE_ALL);
-    		return true;
+	    	// If the Delete All item is selected, show the
+	    	// confirmation dialog, which does all the actual work.
+	    	case OPTMENU_DELETE_ALL:
+	    		showDialog(DIALOG_CONFIRM_DELETE_ALL);
+	    		return true;
+	    	// If the Help item is selected, open up the "Working with
+	    	// existing parameters" help:
+	    	case OPTMENU_HELP:
+	        	Intent i = new Intent(this, HelpActivity.class);
+	        	i.putExtra("helptext", R.string.help_text_existing);
+	        	startActivity(i);
+	    		return true;
     	}
     	return false;
     }

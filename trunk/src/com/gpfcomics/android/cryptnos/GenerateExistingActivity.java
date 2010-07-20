@@ -16,6 +16,8 @@
  * associated password without worrying about fat-fingering screwing up the
  * database.
  * 
+ * UPDATES FOR 1.1.1:  Added Help option menu
+ * 
  * This program is Copyright 2010, Jeffrey T. Darlington.
  * E-mail:  android_support@cryptnos.com
  * Web:     http://www.cryptnos.com/
@@ -35,9 +37,12 @@
 package com.gpfcomics.android.cryptnos;
 
 import android.app.Activity;
+import android.content.Intent;
 import android.database.Cursor;
 import android.os.Bundle;
 import android.text.ClipboardManager;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -56,6 +61,9 @@ import android.widget.Toast;
  * @since 1.0
  */
 public class GenerateExistingActivity extends Activity {
+
+	/** A constant indicating the Help option menu item. */
+	public static final int OPTMENU_HELP = Menu.FIRST;
 
 	/** The EditText view containing the user's passphrase. */
 	private EditText txtPassphrase = null;
@@ -204,5 +212,26 @@ public class GenerateExistingActivity extends Activity {
 			}
         });
 	}
+	@Override
+	public boolean onCreateOptionsMenu(Menu menu) {
+    	// Add the "Help" menu item:
+    	menu.add(0, OPTMENU_HELP, Menu.NONE,
+        	R.string.optmenu_help).setIcon(android.R.drawable.ic_menu_help);
+    	return true;
+    }
+    
+	@Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+    	switch (item.getItemId()) {
+	    	// If the Help item is selected, open up the "Working with
+    		// existing parameters" help:
+	    	case OPTMENU_HELP:
+	        	Intent i = new Intent(this, HelpActivity.class);
+	        	i.putExtra("helptext", R.string.help_text_existing);
+	        	startActivity(i);
+	    		return true;
+    	}
+    	return false;
+    }
 
 }

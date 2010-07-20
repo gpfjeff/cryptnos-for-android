@@ -26,6 +26,8 @@
  * abstracted that it should be relatively easy to add other file managers
  * if they publish their intents.
  * 
+ * UPDATES FOR 1.1.1:  Added Help option menu
+ * 
  * This program is Copyright 2010, Jeffrey T. Darlington.
  * E-mail:  android_support@cryptnos.com
  * Web:     http://www.cryptnos.com/
@@ -53,6 +55,8 @@ import android.app.ProgressDialog;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
@@ -89,6 +93,9 @@ public class ImportActivity extends Activity {
 	/** Code used for selecting a file using OI File Manager */
 	private static final int REQUEST_SELECT_FILE_OI = 5;
 	
+	/** A constant indicating the Help option menu item. */
+	public static final int OPTMENU_HELP = Menu.FIRST;
+
 	/** A TextView that contains our basic instructions for
 	 *  this activity. */
 	private TextView labelInstructions = null;
@@ -247,6 +254,7 @@ public class ImportActivity extends Activity {
         
         /** What to do when the Select File button is clicked */
         btnSelectFile.setOnClickListener(new View.OnClickListener() {
+			@Override
 			public void onClick(View v) {
 				// Double-check to make sure a file selection intent is
 				// still available.  This will also let us add support for
@@ -343,6 +351,28 @@ public class ImportActivity extends Activity {
 	    		break;
     	}
     	return dialog;
+    }
+    
+	@Override
+	public boolean onCreateOptionsMenu(Menu menu) {
+    	// Add the "Help" menu item:
+    	menu.add(0, OPTMENU_HELP, Menu.NONE,
+        	R.string.optmenu_help).setIcon(android.R.drawable.ic_menu_help);
+    	return true;
+    }
+    
+	@Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+    	switch (item.getItemId()) {
+	    	// If the Help item is selected, open up the "Export and
+    		// Import" help:
+	    	case OPTMENU_HELP:
+	        	Intent i = new Intent(this, HelpActivity.class);
+	        	i.putExtra("helptext", R.string.help_text_importexport);
+	        	startActivity(i);
+	    		return true;
+    	}
+    	return false;
     }
     
     /**

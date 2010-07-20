@@ -10,6 +10,8 @@
  * This activity serves as a simple "about box" for Cryptnos.  It displays
  * version, author, and license information about the entire application.
  * 
+ * UPDATES FOR 1.1.1:  Changed icon to full logo.
+ * 
  * This program is Copyright 2010, Jeffrey T. Darlington.
  * E-mail:  android_support@cryptnos.com
  * Web:     http://www.cryptnos.com/
@@ -71,9 +73,9 @@ public class AboutActivity extends Activity {
 	        PackageInfo info =
 	        	this.getPackageManager().getPackageInfo(this.getPackageName(),
         			PackageManager.GET_META_DATA);
-	        header.setText(header.getText().toString().concat(info.versionName)); 
+	        header.setText(header.getText().toString().concat(" " + info.versionName)); 
         } catch (Exception e) {
-        	header.setText(header.getText().toString().concat("???"));
+        	header.setText(header.getText().toString().concat(" ???"));
         }
     }
     

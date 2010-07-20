@@ -88,8 +88,8 @@ public class ImportActivity extends Activity {
 	
 	/** The Intent action for OI File Manager */
 	private static final String FILE_SELECT_INTENT_OI = "org.openintents.action.PICK_FILE";
-	/** The generic Android "pick" Intent action */
-	private static final String FILE_SELECT_INTENT_AND = "android.intent.action.PICK";
+	/* The generic Android "pick" Intent action */
+	//private static final String FILE_SELECT_INTENT_AND = "android.intent.action.PICK";
 	/** Code used for selecting a file using OI File Manager */
 	private static final int REQUEST_SELECT_FILE_OI = 5;
 	
@@ -254,7 +254,6 @@ public class ImportActivity extends Activity {
         
         /** What to do when the Select File button is clicked */
         btnSelectFile.setOnClickListener(new View.OnClickListener() {
-			@Override
 			public void onClick(View v) {
 				// Double-check to make sure a file selection intent is
 				// still available.  This will also let us add support for

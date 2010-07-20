@@ -33,7 +33,6 @@ package com.gpfcomics.android.cryptnos;
 
 import android.app.Activity;
 import android.os.Bundle;
-import android.text.util.Linkify;
 import android.widget.TextView;
 
 /**

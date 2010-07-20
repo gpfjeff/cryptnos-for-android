@@ -119,8 +119,8 @@ public class ExportActivity extends Activity implements
 
 	/** The Intent action for OI File Manager */
 	private static final String DIR_SELECT_INTENT_OI = "org.openintents.action.PICK_DIRECTORY";
-	/** The Intent action for OI File Manager */
-	private static final String DIR_SELECT_INTENT_AND = "android.intent.action.PICK";
+	/* The Intent action for OI File Manager */
+	//private static final String DIR_SELECT_INTENT_AND = "android.intent.action.PICK";
 	/** Code used for selecting a file using OI File Manager */
 	private static final int REQUEST_SELECT_DIR_OI = 5;
 	
@@ -283,7 +283,6 @@ public class ExportActivity extends Activity implements
         
         /** What to do when the Selected Path button is clicked */
         btnPickPath.setOnClickListener(new View.OnClickListener() {
-			@Override
 			public void onClick(View v) {
 				// Double-check to make sure the OI File Manager intent is
 				// still available.  This will also let us add support for

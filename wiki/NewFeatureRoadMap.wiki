@@ -1,0 +1,46 @@
+#summary A brief list of new features being considered for inclusion in the next few releases
+#labels Phase-Design,Featured
+
+= New Feature Road Map =
+
+This page documents a few new features and enhancements I'm considering adding in future releases. Whether or not they get implemented depends on (a) user feedback (i.e. whether the feature is user requested or commented upon), (b) level of difficulty (some more complicated tasks may require more time to implement), and (c) time (I wear many hats, so development may take longer to implement as my other duties shift and change).
+
+== Help menu on each activity ==
+*Status:* Implemented, ready for next release (1.1.1 or 1.2)
+
+*Level of Difficulty:* Low
+
+*Implementation Time:* Minor; mostly write once then repetitive copy-paste-tweak
+
+*Details:* In addition to a main menu item that takes the user to the help index, add a menu item on each activity that takes the user to the relevant help screen for that activity (e.g. selecting Menu -> Help on the Export activity will take you to the Export/Import help). This should be activated by the Menu hard button.
+
+== "Remove Confusing Characters" option in password generation ==
+*Status:* Considering, not started
+
+*Level of Difficulty:* Moderate
+
+*Implementation Time:* Significant; requires UI, database, business logic, and import/export format changes
+
+*Details:* After a good deal of thought, I'm considering adding a new password generation option to remove "confusing" characters from the generated password. For example, the number one is easily confused with both the lowercase L and capital I characters; removing all three would make retyping, memorization, and verbal conveyance of the password easier and less confusing. To keep the same level of entropy, these "confusing characters" should be replaced with symbols, which requires identifying symbols that are not commonly used as delimiters, wild cards, and other uses that might prove problematic. The current idea would be to implement this as a new checkbox/toggle separate from other options so it may be combined with other parameters. The default would have this setting turned off, which implements the current behavior.
+
+This won't be an easy one, which is why I may not implement it. Adding a new parameter means changes to the business logic (SiteParameters class), database (adding a new column that defaults to null/false), UI (a new checkbox/toggle button), and import/export file format (XML schema changes with the corresponding element being optional to preserve old exports). This also requires the Windows client to be upgraded with the same feature to make sure they are in sync. It's possible that other parameters may clobber the benefits of this setting; for example, changing the character class to "Alphanumerics only" eliminates the substituted symbols, effectively reducing the characters per slot from 62 to 56 (assuming six "confusing" characters were substituted). So this feature may or may not get implemented depending on whether or not users feel it is a worthwhile addition.
+
+== Encrypt database with random key from [http://www.random.org/ Random.org] ==
+*Status:* Considering, not started
+
+*Level of Difficulty:* Moderate
+
+*Implementation Time:* Significant; requires UI, database, and business logic changes
+
+*Details:* Currently, the database stores parameter data encrypted using AES-256 with a key that includes a salt derived from `android.provider.Settings.System.ANDROID_ID`, a value that should be unique per device. Unfortunately, this value is only unique if the user has visited the Android Market. If the user has never been to the Market, this value is null and the salt value is based solely on a hard-coded salt in the code which will not be unique per install. Additionally, `Settings.System.ANDROID_ID` is actually deprecated now in favor of `Settings.Secure.ANDROID_ID`, which cannot be modified by code. (I intentionally used the old value to target Android 1.1+ to get the widest possible install base; implementing a helper class that dynamically picks the right one for the device's API should be another item on this list.)
+
+While I still think it was a good idea to encrypt the database with a unique device-specific key, it may not be the best long term solution. While the number of users who bypass the Market may be few, it likely won't be insignificant. I've been toying with the idea of adding a small HTTP client class that fetches a string of truly random bytes from [http://www.random.org/ Random.org] and using that (or more likely that value hashed and salted multiple times) as the encryption key. This would offer a bit more security in that the encryption key is not based on `Settings.System.ANDROID_ID` and should be available even if the user has never visited the Market. 
+
+Known problems with this idea:
+ * Obviously, the HTTP client must be implemented, including for good measure code to check the bit quota to prevent abuse. (I've already done most of this as a coding exercise anyway.)
+ * The random bytes, once fetched, must be stored somewhere, ideally not in the database (as it should not be in the same place as the encrypted data). I'm not currently using the built-in preferences API, so that might be an option.
+ * A key derivation scheme must be chosen or designed so we do not use the random bytes directly (i.e. acquiring these bytes will not directly compromise the encrypted data).
+ * New UI elements must be added to ask the user's preference on this option; we don't want to do this without letting them know we're doing it, even if it's in their best interests.
+ * This option must be backward compatible in that if the user chooses not to use a truly random key it should default to the current implementation.
+ * If we're going this far, it makes sense to make this option available on-demand. Current users will need to re-key old `Settings.System.ANDROID_ID` keyed data anyway, so we might as well allow the user to re-key with a new random key any time they want.
+ * And, of course, adding any kind of network access requires the `android.permission.INTERNET` permission to be added to the manifest. Comments in the Market seem to indicate that users _like_ the fact that Cryptnos doesn't access the Internet, so this addition could backfire. We could always get around this by using the built-in pseudo-random number generators provided by the operating system, but that defeats the benefits of using a _truly_ random key.

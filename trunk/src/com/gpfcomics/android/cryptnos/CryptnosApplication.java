@@ -36,6 +36,9 @@
  * UPDATES FOR 1.1:  Added isIntentAvailable() the let activities test to see
  * if a specified Intent is available on the system.
  * 
+ * UPDATES FOR 1.1.1:  Now uses AndroidID wrapper class to get proper version
+ * of ANDROID_ID for the API level we're running under.
+ * 
  * This program is Copyright 2010, Jeffrey T. Darlington.
  * E-mail:  android_support@cryptnos.com
  * Web:     http://www.cryptnos.com/
@@ -72,7 +75,6 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.Message;
-import android.provider.Settings;
 import android.widget.Toast;
 
 /**
@@ -189,16 +191,14 @@ public class CryptnosApplication extends Application {
         // that's really wasteful.  Instead, I've moved it to the application
         // level so it can be easily reused.  By default, we'll use the
         // device's unique ID string, so each salt will be different from
-        // device to device.  Note that Settings.System.ANDROID_ID is
-        // officially deprecated and should be replaced by
-        // Settings.Secure.ANDROID_ID as of API Level 3 (Android 1.5).
-        // However, we're aiming for the lowest common denominator here, so
-        // we're using the old value for now.  When this finally breaks, we'll
-        // need to upgrade our code.
+        // device to device.  To avoid the whole deprecation issue surrounding
+        // Settings.System.ANDROID_ID vs. Settings.Secure.ANDROID_ID, we now
+        // wrap the call to this property inside the AndroidID class.  See
+        // that class for more details.
         String uniqueID = null;
         try {
-        	uniqueID = Settings.System.getString(this.getContentResolver(),
-        			android.provider.Settings.System.ANDROID_ID); ;
+        	AndroidID id = AndroidID.newInstance(this);
+        	uniqueID = id.getAndroidID();
         } catch (Exception e1) { }
         // Check the unique ID we just fetched.  If we didn't get anything,
         // we'll just make up a hard-coded random-ish string and use that as

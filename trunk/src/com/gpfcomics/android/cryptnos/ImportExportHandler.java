@@ -23,6 +23,12 @@
  * option; we'll only export to the new format.  The new XML format should be
  * readable by any version of Cryptnos on any platform.
  * 
+ * UPDATES FOR 1.1.1:  Attempting to fix some text encoding issues by forcing
+ * all text-to-binary and binary-to-text operations to use UTF-8.  I know this
+ * is what the Windows client should be using, but Android Strings seem to
+ * uncertain.  Note that the one place we *CAN'T* do this is the old format
+ * stuff, which requires us to use whatever default the system uses.
+ * 
  * This program is Copyright 2010, Jeffrey T. Darlington.
  * E-mail:  android_support@cryptnos.com
  * Web:     http://www.cryptnos.com/
@@ -240,10 +246,14 @@ public class ImportExportHandler {
 		// Asbestos underpants:
 		try
 		{
-			// Generate our encryption salt.  This has to bee something
+			// Generate our encryption salt.  This has to be something
 			// semi-random but not tied to the device, so we can't use the
 			// unique device ID like CryptnosApplication.PARAMETER_SALT.
 			// We'll derive one from the password by hashing it multiple times.
+			// Note that since this is the *OLD* format cipher, we can't use
+			// the CryptnosApplication.TEXT_ENCODING constant here; this
+			// *MUST* be the default character encoding for the platform for
+			// it to be backward-compatible.
 			byte[] salt = password.getBytes();
 			MessageDigest hasher = MessageDigest.getInstance("SHA-512");
 			for (int i = 0; i < CryptnosApplication.SALT_ITERATION_COUNT; i++)
@@ -307,8 +317,8 @@ public class ImportExportHandler {
 	private static byte[] generateSaltFromPassword(String password)
 		throws Exception
 	{
-		// Get the password as Unicode (UTF-8) bytes:
-		byte[] salt = password.getBytes("UTF8");
+		// Get the password as a series of bytes:
+		byte[] salt = password.getBytes(CryptnosApplication.TEXT_ENCODING);
 		// Try to hash password multiple times using a really strong hash.
 		// This should give us some really random-ish data for the salt.
 		MessageDigest hasher = MessageDigest.getInstance("SHA-512");
@@ -342,8 +352,8 @@ public class ImportExportHandler {
 		// implementations, which are denoted below.
 		try
 		{
-			// Get the password's raw UTF-8 bytes:
-			byte[] pwd = password.getBytes("UTF8");
+			// Get the password's raw bytes:
+			byte[] pwd = password.getBytes(CryptnosApplication.TEXT_ENCODING);
 			byte[] salt = generateSaltFromPassword(password);
 			// From the BC JavaDoc: "Generator for PBE derived keys and IVs as
 			// defined by PKCS 5 V2.0 Scheme 2. This generator uses a SHA-1
@@ -527,7 +537,7 @@ public class ImportExportHandler {
 	            	// above, so we'll ultimately end up with a byte array
 	            	// that contains the compressed XML.
 	            	PrintStream out = new PrintStream(new GZIPOutputStream(ms),
-	            			true, "UTF8");
+	            			true, CryptnosApplication.TEXT_ENCODING);
 	            	// Print our our XML header info.  Note that we're writing
 	            	// a version 1 export file; later changes to the format
 	            	// may require us to update that.  Also note that we'll

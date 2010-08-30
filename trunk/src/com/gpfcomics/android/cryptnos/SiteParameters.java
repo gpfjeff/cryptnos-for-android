@@ -69,6 +69,12 @@
  * UPDATES FOR 1.1:  Added the "default" constructor that creates an empty
  * SiteParameters object for the use with the new cross-platform export format.
  * 
+ * UPDATES FOR 1.1.1:  Added text encoding information everywhere we can to
+ * try and fix some encoding related issues.  All text-to-binary and binary-
+ * to-text operations should use CryptnosApplication.TEXT_ENCODING for
+ * conversions, rather than relying on hard-coded constants or the system
+ * default.  NOTE THAT THIS MAY BREAK SOME INTERNATIONAL USERS' DATA!!!
+ * 
  * This program is Copyright 2010, Jeffrey T. Darlington.
  * E-mail:  android_support@cryptnos.com
  * Web:     http://www.cryptnos.com/
@@ -109,7 +115,6 @@ import org.bouncycastle.util.encoders.Base64;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
-import android.provider.Settings;
 
 /**
  * Encapsulates an atomic set of site parameters for Cryptnos.
@@ -206,7 +211,7 @@ public class SiteParameters {
 			Cipher cipher = createCipher(siteKey, Cipher.DECRYPT_MODE);
 			// Unencrypt the data:
 			String combinedParams  =
-				new String(cipher.doFinal(Base64.decode(encryptedData.getBytes())));
+				new String(cipher.doFinal(Base64.decode(encryptedData.getBytes(CryptnosApplication.TEXT_ENCODING))));
 			// Split it apart based on the pipe character:
 			String[] bits = combinedParams.split("\\|");
 			// This should only be valid if we get five inputs:
@@ -214,11 +219,11 @@ public class SiteParameters {
 			{
 				// Attempt to decode the data and assign it to the internal
 				// values:
-				site = URLDecoder.decode(bits[0], "UTF-8");
-				charTypes = Integer.parseInt(URLDecoder.decode(bits[1], "UTF-8"));
-				charLimit = Integer.parseInt(URLDecoder.decode(bits[2], "UTF-8"));
-				iterations = Integer.parseInt(URLDecoder.decode(bits[3], "UTF-8"));
-				hash = URLDecoder.decode(bits[4], "UTF-8");
+				site = URLDecoder.decode(bits[0], CryptnosApplication.TEXT_ENCODING);
+				charTypes = Integer.parseInt(URLDecoder.decode(bits[1], CryptnosApplication.TEXT_ENCODING));
+				charLimit = Integer.parseInt(URLDecoder.decode(bits[2], CryptnosApplication.TEXT_ENCODING));
+				iterations = Integer.parseInt(URLDecoder.decode(bits[3], CryptnosApplication.TEXT_ENCODING));
+				hash = URLDecoder.decode(bits[4], CryptnosApplication.TEXT_ENCODING);
 				// Generate the site key:
 				key = generateKeyFromSite(site);
 			}
@@ -259,11 +264,11 @@ public class SiteParameters {
 			{
 				// Attempt to decode the data and assign it to the internal
 				// values:
-				site = URLDecoder.decode(bits[0], "UTF-8");
-				charTypes = Integer.parseInt(URLDecoder.decode(bits[1], "UTF-8"));
-				charLimit = Integer.parseInt(URLDecoder.decode(bits[2], "UTF-8"));
-				iterations = Integer.parseInt(URLDecoder.decode(bits[3], "UTF-8"));
-				hash = URLDecoder.decode(bits[4], "UTF-8");
+				site = URLDecoder.decode(bits[0], CryptnosApplication.TEXT_ENCODING);
+				charTypes = Integer.parseInt(URLDecoder.decode(bits[1], CryptnosApplication.TEXT_ENCODING));
+				charLimit = Integer.parseInt(URLDecoder.decode(bits[2], CryptnosApplication.TEXT_ENCODING));
+				iterations = Integer.parseInt(URLDecoder.decode(bits[3], CryptnosApplication.TEXT_ENCODING));
+				hash = URLDecoder.decode(bits[4], CryptnosApplication.TEXT_ENCODING);
 				// Generate the site key:
 				key = generateKeyFromSite(site);
 			}
@@ -358,11 +363,11 @@ public class SiteParameters {
 		try
 		{
 			String combinedParams = 
-				URLEncoder.encode(site, "UTF-8") + "|" +
-				URLEncoder.encode(Integer.toString(charTypes), "UTF-8") + "|" +
-				URLEncoder.encode(Integer.toString(charLimit), "UTF-8") + "|" +
-				URLEncoder.encode(Integer.toString(iterations), "UTF-8") + "|" +
-				URLEncoder.encode(hash, "UTF-8");
+				URLEncoder.encode(site, CryptnosApplication.TEXT_ENCODING) + "|" +
+				URLEncoder.encode(Integer.toString(charTypes), CryptnosApplication.TEXT_ENCODING) + "|" +
+				URLEncoder.encode(Integer.toString(charLimit), CryptnosApplication.TEXT_ENCODING) + "|" +
+				URLEncoder.encode(Integer.toString(iterations), CryptnosApplication.TEXT_ENCODING) + "|" +
+				URLEncoder.encode(hash, CryptnosApplication.TEXT_ENCODING);
 			return combinedParams;
 		}
 		catch (Exception e)
@@ -384,7 +389,7 @@ public class SiteParameters {
 		{
 			String combinedParams = exportUnencryptedString(); 
 			Cipher cipher = createCipher(key, Cipher.ENCRYPT_MODE);
-			return base64String(cipher.doFinal(combinedParams.getBytes()));
+			return base64String(cipher.doFinal(combinedParams.getBytes(CryptnosApplication.TEXT_ENCODING)));
 		}
 		catch (Exception e)
 		{
@@ -431,7 +436,7 @@ public class SiteParameters {
 			{
 				// Concatenate the site and passphrase values, then
 				// convert the string to a byte array for hashing:
-				byte[] result = site.concat(secret).getBytes();
+				byte[] result = site.concat(secret).getBytes(CryptnosApplication.TEXT_ENCODING);
 				// We will use one of two hashing engines.  Internally,
 				// Java supports MD5, SHA-1, and a trio of SHA-2 methods.
 				// We'll assume that since these are built-in, they must
@@ -622,10 +627,17 @@ public class SiteParameters {
 			{
 				// There's a lot of ways we could do this, but perhaps the
 				// easiest is to simply hash the string. and return it.
-				// We'll salt it with the unique system ID of the phone to
-				// make the value unique from device to device.
+				// Originally, the intent was to salt this with the unique
+				// ID of the device
+				// (android.provider.Settings.System.ANDROID_ID or
+				// android.provider.Settings.Secure.ANDROID_ID), but I
+				// screwed up the call and used the identifier string for the
+				// property rather than its value.  In order to keep from
+				// breaking everything, we'll hard-code that string value here
+				// for now, but this really needs to be fixed someday.
 				MessageDigest hasher = MessageDigest.getInstance("SHA-512");
-				return base64String(hasher.digest(theSite.concat(Settings.System.ANDROID_ID).getBytes()));
+				//return base64String(hasher.digest(theSite.concat(Settings.System.ANDROID_ID).getBytes()));
+				return base64String(hasher.digest(theSite.concat("android_id").getBytes(CryptnosApplication.TEXT_ENCODING)));
 			}
 			else return theSite;
 		}

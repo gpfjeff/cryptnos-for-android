@@ -183,7 +183,8 @@ public class ImportExportHandler {
 		if (filename != null && password != null && sites != null &&
 			sites.length > 0)
 		{
-			exporter = new Exporter(caller, handler, sites, password, filename);
+			exporter = new Exporter(caller, handler, sites, password,
+					filename, theApp);
 			exporter.start();
 		}
 		// If any of the inputs were invalid, inform the user:
@@ -251,7 +252,7 @@ public class ImportExportHandler {
 			// unique device ID like CryptnosApplication.PARAMETER_SALT.
 			// We'll derive one from the password by hashing it multiple times.
 			// Note that since this is the *OLD* format cipher, we can't use
-			// the CryptnosApplication.TEXT_ENCODING constant here; this
+			// the CryptnosApplication.getTextEncoding() here; this
 			// *MUST* be the default character encoding for the platform for
 			// it to be backward-compatible.
 			byte[] salt = password.getBytes();
@@ -314,11 +315,12 @@ public class ImportExportHandler {
 	 * @return An array of bytes containing the raw salt value
 	 * @throws Exception Thrown if the salt-generating hash is unavailable
 	 */
-	private static byte[] generateSaltFromPassword(String password)
+	private static byte[] generateSaltFromPassword(String password,
+			CryptnosApplication theApp)
 		throws Exception
 	{
 		// Get the password as a series of bytes:
-		byte[] salt = password.getBytes(CryptnosApplication.TEXT_ENCODING);
+		byte[] salt = password.getBytes(theApp.getTextEncoding());
 		// Try to hash password multiple times using a really strong hash.
 		// This should give us some really random-ish data for the salt.
 		MessageDigest hasher = MessageDigest.getInstance("SHA-512");
@@ -343,7 +345,7 @@ public class ImportExportHandler {
 	 * @throws Exception Thrown whenever anything bad happens
 	 */
 	private static BufferedBlockCipher createXMLFormatCipher(String password,
-			boolean encrypt) throws Exception {
+			boolean encrypt, CryptnosApplication theApp) throws Exception {
 		// I tried a dozen different things, none of which seemed to work
 		// all that well.  I finally resorted to doing everyting the Bouncy
 		// Castle way, simply because it brought things a lot closer to being
@@ -353,8 +355,8 @@ public class ImportExportHandler {
 		try
 		{
 			// Get the password's raw bytes:
-			byte[] pwd = password.getBytes(CryptnosApplication.TEXT_ENCODING);
-			byte[] salt = generateSaltFromPassword(password);
+			byte[] pwd = password.getBytes(theApp.getTextEncoding());
+			byte[] salt = generateSaltFromPassword(password, theApp);
 			// From the BC JavaDoc: "Generator for PBE derived keys and IVs as
 			// defined by PKCS 5 V2.0 Scheme 2. This generator uses a SHA-1
 			// HMac as the calculation function."  This is apparently a standard,
@@ -497,6 +499,7 @@ public class ImportExportHandler {
         /** An array of Strings containing the site tokens of the parameters
          * to export */
 		private String[] mSites = null;
+		private CryptnosApplication theApp = null;
 
         /**
          * The Exporter constructor
@@ -508,12 +511,13 @@ public class ImportExportHandler {
          * @param filename The full path to the export file
          */
         Exporter(Activity caller, Handler handler, String[] sites,
-        		String password, String filename) {
+        		String password, String filename, CryptnosApplication app) {
             mCaller = caller;
         	mHandler = handler;
         	mSites = sites;
         	mPassword = password;
         	mFilename = filename;
+        	theApp = app;
         }
         
         @Override
@@ -537,7 +541,7 @@ public class ImportExportHandler {
 	            	// above, so we'll ultimately end up with a byte array
 	            	// that contains the compressed XML.
 	            	PrintStream out = new PrintStream(new GZIPOutputStream(ms),
-	            			true, CryptnosApplication.TEXT_ENCODING);
+	            			true, theApp.getTextEncoding());
 	            	// Print our our XML header info.  Note that we're writing
 	            	// a version 1 export file; later changes to the format
 	            	// may require us to update that.  Also note that we'll
@@ -573,7 +577,7 @@ public class ImportExportHandler {
 	            	// site from the DB individually.
 	            	for (int i = 0; i < mSites.length; i++) {
 	            		// Get the site from the DB:
-	            		cursor = DBHelper.fetchRecord(SiteParameters.generateKeyFromSite(mSites[i]));
+	            		cursor = DBHelper.fetchRecord(SiteParameters.generateKeyFromSite(mSites[i], theApp));
 	        	        mCaller.startManagingCursor(cursor);
 	        	        cursor.moveToFirst();
 	        	        if (cursor.getCount() == 1) {
@@ -633,7 +637,7 @@ public class ImportExportHandler {
 	            	// encryption mode, and that we're passing in the
 	            	// password:
 	            	BufferedBlockCipher cipher =
-	            		createXMLFormatCipher(mPassword, true);
+	            		createXMLFormatCipher(mPassword, true, theApp);
 	            	// Create our ciphertext container.  Note that we call the
 	                // cipher's getOutputSize() method, which tells us how big
 	                // the resulting ciphertext should be.  In practice, this
@@ -1152,7 +1156,7 @@ public class ImportExportHandler {
 	                mHandler.sendMessage(msg);
 	                // Create our cipher in decrypt mode:
 					BufferedBlockCipher cipher =
-						createXMLFormatCipher(mPassword, false);
+						createXMLFormatCipher(mPassword, false, theApp);
 					// Create our plaintext container:
 					byte[] plaintext =
 						new byte[cipher.getOutputSize(encryptedData.length)];

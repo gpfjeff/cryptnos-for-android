@@ -37,11 +37,10 @@
  * if a specified Intent is available on the system.
  * 
  * UPDATES FOR 1.1.1:  Now uses AndroidID wrapper class to get proper version
- * of ANDROID_ID for the API level we're running under.  Added the
- * TEXT_ENCODING constant to force all internal text encoding operations to
- * use the same text encoding (and switching it can now be done in one place).
- * Moved hard-coded salt-salt to a constant (SALTIER_SALT) so it can be
- * updated in one place if required.
+ * of ANDROID_ID for the API level we're running under.  Moved hard-coded
+ * salt-salt to a constant (SALTIER_SALT) so it can be updated in one place if
+ * required.  Added new text encoding constants and methods to (hopefully)
+ * fix Issue #2 ("New Phone, Weird Passwords").
  * 
  * This program is Copyright 2010, Jeffrey T. Darlington.
  * E-mail:  android_support@cryptnos.com
@@ -62,16 +61,20 @@
 package com.gpfcomics.android.cryptnos;
 
 import java.io.File;
+import java.io.UnsupportedEncodingException;
 import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.List;
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.app.Application;
 import android.app.Dialog;
 import android.app.ProgressDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.database.Cursor;
@@ -111,6 +114,10 @@ public class CryptnosApplication extends Application {
 	 *  list load.  Activities implementing the SiteListListener interface
 	 *  will to use this for their showDialog()/onCreateDialog() methods. */
 	public static final int DIALOG_PROGRESS = 5000;
+	/** A constant identifying the warning dialog displayed if the user
+	 *  upgrades Cryptnos from an old version to 1.2.0, where we try to enforce
+	 *  UTF-8 encoding. */
+	public static final int DIALOG_UPGRADE_TO_UTF8 = 5001;
 	/** This integer constant lets us define a limit beyond which cryptographic
 	 *  hash generation seems to be excessive.  Anything below this should be
 	 *  fine and fairly quick; anything above this may cause the application
@@ -152,14 +159,13 @@ public class CryptnosApplication extends Application {
 	 *  CryptnosApplication.SALT_HASH this many times  before actually being
 	 *  used. */
 	public static final int SALT_ITERATION_COUNT = 10;
-	/** The text encoding to use for all internal text-to-binary and binary-
-	 *  to-text conversions.  This should be declared here so it gets used
-	 *  application-wide.  All methods that must specify a text encoding,
-	 *  such as String.getBytes(), should use this constant rather than using
-	 *  a hard-coded value or relying on the system default.  The only
-	 *  exceptions should be methods providing backward compatibility with
-	 *  older versions that need this functionality. */
-	public static final String TEXT_ENCODING = "UTF8";
+	/** The identifying string for UTF-8 text encoding. */
+	public static final String TEXT_ENCODING_UTF8 = "UTF-8";
+	/** The ID string for text encoding within the shared preferences file */
+	public static final String PREFS_TEXT_ENCODING = "TEXT_ENCODING";
+	/** The ID string for our version number within the shared preferences
+	 *  file. */
+	public static final String PREFS_VERSION = "VERSION";
 	
 	/** The actual site list array */
 	private static String[] siteList = null;
@@ -169,6 +175,18 @@ public class CryptnosApplication extends Application {
 	/** A File representing the root of all import/export activities.  Files
 	 *  will only be written or read from this path. */
 	private static File importExportRoot = null;
+	/** A common SharedPreferences object that can be used by all Cryptnos
+	 *  Activities.  Use getPrefs() below to access it. */
+	private static SharedPreferences prefs = null;
+	/** The user's preference of text encoding.  The default will be the
+	 *  system default, but ideally we want this to be UTF-8.  This value
+	 *  will be stored in the Cryptnos shared preferences.  This can be read
+	 *  and written to by getTextEncoding() and setTextEncoding()
+	 *  respectively. */
+	private static String textEncoding = "UTF8";
+	/** A boolean flag to indicate whether or not the UpgradeManager has run for
+	 *  this particular session. */
+	private static boolean upgradeManagerRan = false;
 
 	/** The calling activity, so we can refer back to it.  This is usually the
 	 *  same as the site list listener, but doesn't necessarily have to be. */
@@ -210,6 +228,62 @@ public class CryptnosApplication extends Application {
 		// hard code this to the root directory of the external storage
 		// device, usually an SD card.  We may change this in the future.
         importExportRoot = Environment.getExternalStorageDirectory();
+		// Get the shared preferences:
+		prefs = getSharedPreferences("CryptnosPrefs", Context.MODE_PRIVATE);
+		// Set the text encoding.  Ideally, we will get this from the shared
+		// preferences, but if it doesn't exist, try to get the default value.
+		// We'll try to get the system "file.encoding" value if we can, but
+		// fall back on UTF-8 as a last resort.  The try/catch is because
+		// System.getProperty() can technically crash on us, but it's probably
+		// not very likely.  Note that whatever we get from wherever we get
+		// it, we'll write it back to the preferences; this is so the
+		// preference gets written at least on the first instance.
+		try
+		{
+			textEncoding = prefs.getString(PREFS_TEXT_ENCODING,
+					System.getProperty("file.encoding", TEXT_ENCODING_UTF8));			
+		}
+		catch (Exception e) {
+			textEncoding = prefs.getString(PREFS_TEXT_ENCODING,
+					TEXT_ENCODING_UTF8);	
+		}
+		SharedPreferences.Editor editor = prefs.edit();
+		editor.putString(PREFS_TEXT_ENCODING, textEncoding);
+		editor.commit();
+		// Generate the parameter salt:
+		refreshParameterSalt();
+	}
+	
+	@Override
+	public void onLowMemory()
+	{
+		// If we ever start running low on memory, clear out the site list
+		// and mark it as "dirty".  This frees up memory and forces us to
+		// rebuild the list again when it's needed.
+		siteList = null;
+		isDirty = true;
+		// Clear out the salt as well:
+		super.onLowMemory();
+	}
+	
+	@Override
+	public void onTerminate()
+	{
+		// If we're closing up shop, there's no need to keep the site list
+		// around; it could even be a security risk.  Clear out the site list
+		// and mark it as "dirty".  This frees up memory and forces us to
+		// rebuild the list again when it's needed.
+		siteList = null;
+		isDirty = true;
+		// Then let the system do whatever else it needs to do:
+		super.onTerminate();
+	}
+	
+	/**
+	 * Regenerate the encryption salt for site parameter data.
+	 */
+	public void refreshParameterSalt()
+	{
         // Generate the encryption salt for site parameter data.  Originally,
         // this was done every time a SiteParamemter object was used, but
         // that's really wasteful.  Instead, I've moved it to the application
@@ -237,7 +311,7 @@ public class CryptnosApplication extends Application {
     	// common text encoding if possible, but fall back on the system
     	// default if that bombs.
     	try {
-    		PARAMETER_SALT = uniqueID.getBytes(CryptnosApplication.TEXT_ENCODING);
+    		PARAMETER_SALT = uniqueID.getBytes(textEncoding);
     	} catch (Exception e) {
     		PARAMETER_SALT = uniqueID.getBytes();
     	}
@@ -250,31 +324,6 @@ public class CryptnosApplication extends Application {
 			for (int i = 0; i < SALT_ITERATION_COUNT; i++)
 				PARAMETER_SALT = hasher.digest(PARAMETER_SALT);
 		} catch (Exception e) {}
-	}
-	
-	@Override
-	public void onLowMemory()
-	{
-		// If we ever start running low on memory, clear out the site list
-		// and mark it as "dirty".  This frees up memory and forces us to
-		// rebuild the list again when it's needed.
-		siteList = null;
-		isDirty = true;
-		// Clear out the salt as well:
-		super.onLowMemory();
-	}
-	
-	@Override
-	public void onTerminate()
-	{
-		// If we're closing up shop, there's no need to keep the site list
-		// around; it could even be a security risk.  Clear out the site list
-		// and mark it as "dirty".  This frees up memory and forces us to
-		// rebuild the list again when it's needed.
-		siteList = null;
-		isDirty = true;
-		// Then let the system do whatever else it needs to do:
-		super.onTerminate();
 	}
 	
 	/**
@@ -334,6 +383,47 @@ public class CryptnosApplication extends Application {
 	public ParamsDbAdapter getDBHelper() { return DBHelper; }
 
 	/**
+	 * Get the application's SharedPreferences object.  If any editing occurs
+	 * while this object is in your possession, make sure to commit your
+	 * changes!
+	 * @return The application's SharedPreferences object
+	 */
+	public SharedPreferences getPrefs() { return prefs; }
+	
+	/**
+	 * Get the user's preferred text encoding (or the default if no
+	 * preference has been set).  Use this for all String.getBytes()
+	 * operations.
+	 * @return
+	 */
+	public String getTextEncoding() { return textEncoding; }
+	
+	/**
+	 * Set the user's preferred text encoding, which will be used for all
+	 * String.getBytes() operations.  This value will automatically be
+	 * written to the shared preferences if successful.
+	 * @param encoding The text encoding ID string of the user's preferred
+	 * encoding
+	 * @throws UnsupportedEncodingException Thrown if the specified encoding
+	 * is not supported
+	 */
+	public void setTextEncoding(String encoding)
+		throws UnsupportedEncodingException
+	{
+		// This may be a bit wasteful, but try to generate some bytes
+		// using the specified encoding.  If this fails, the encoding is
+		// not valid and an UnsupportedEncodingException will be thrown,
+		// which we'll let the calling method handle.
+		"test me".getBytes(encoding);
+		// If we pass that test, update our local value and push that on
+		// to the shared preferences:
+		textEncoding = encoding;
+		SharedPreferences.Editor editor = prefs.edit();
+		editor.putString(PREFS_TEXT_ENCODING, textEncoding);
+		editor.commit();
+	}
+	
+	/**
 	 * Get a File representing the root of all import/export activities.
 	 * Files will only be written or read from this path.
 	 * @return A File representing the import/export root path.
@@ -359,6 +449,25 @@ public class CryptnosApplication extends Application {
 	{
 		return (Environment.getExternalStorageState().compareTo(Environment.MEDIA_MOUNTED) == 0)
 			|| (Environment.getExternalStorageState().compareTo(Environment.MEDIA_MOUNTED_READ_ONLY) == 0);
+	}
+	
+	/**
+	 * Check to see if the UpgradeManager has run for this session
+	 * @return True if the UpgradeManager has run, false otherwise
+	 */
+	public boolean hasUpgradeManagerRun() { return upgradeManagerRan; }
+	
+	/**
+	 * Run the UpgradeManager
+	 * @param caller The calling Activity
+	 */
+	public void runUpgradeManager(Activity caller) {
+		if (!upgradeManagerRan) {
+			this.caller = caller;
+			upgradeManagerRan = true;
+			UpgradeManager um = new UpgradeManager(this, caller);
+			um.performUpgradeCheck();
+		}
 	}
 	
 	/**
@@ -391,6 +500,62 @@ public class CryptnosApplication extends Application {
 	            listBuilderThread = new ListBuilderThread(this, handler);
 	            listBuilderThread.start();
 	            dialog = progressDialog;
+	    		break;
+	    	// If the user is upgrading from a version before 1.2.0 and their
+	    	// default text encoding is not UTF-8, show them a warning message
+	    	// telling them they should really change their encoding for
+	    	// compatibility reasons.  If they agree, take them to the
+	    	// Advanced Settings activity.
+	    	case DIALOG_UPGRADE_TO_UTF8:
+	    		// We'll use the AlertDialog builder to build this one.  Note that we
+	    		// need to grab the message string from the resources and tweak it
+	    		// before setting the message.
+	    		AlertDialog.Builder adb = new AlertDialog.Builder(caller);
+	    		String message = getResources().getString(R.string.error_upgrader_change_encoding_warning);
+	    		message = message.replace(getResources().getString(R.string.meta_replace_token),
+	    				System.getProperty("file.encoding", "No Default"));
+	    		adb.setMessage(message);
+	    		adb.setCancelable(true);
+	    		// What to do when the Yes button is clicked:
+	    		adb.setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
+					// If they said yes, launch the Advanced Settings activity:
+					@Override
+					public void onClick(DialogInterface dialog, int which) {
+			            Intent i1 = new Intent(caller, AdvancedSettingsActivity.class);
+			            startActivity(i1);
+					}
+	    		});
+	    		// What to do when the No button is clicked:
+    			adb.setNegativeButton(android.R.string.no, new DialogInterface.OnClickListener() {
+    				@Override
+ 		           public void onClick(DialogInterface dialog, int id) {
+ 		        	   // For now, just cancel the dialog.  We'll follow
+ 		        	   // up on that below.
+ 		        	   dialog.cancel();
+ 		           }
+ 		       	});
+    			// What to do if the dialog is canceled:
+    			adb.setOnCancelListener(new DialogInterface.OnCancelListener() {
+					@Override
+					public void onCancel(DialogInterface dialog) {
+	    				// If they said no or canceled the dialog, go ahead and set
+						// the app file encoding to the system default and refresh
+						// the salt.
+						try {
+							setTextEncoding(System.getProperty("file.encoding",
+								TEXT_ENCODING_UTF8));
+							refreshParameterSalt();
+						}
+						catch (Exception ex) {}
+						// See the comment above.  Simply canceling the dialog
+						// makes it be reused, causing the message text not to
+						// get refreshed.  We have to actually tell the activity
+						// to remove the dialog and force it to be rebuilt the
+						// next time it is needed.
+						caller.removeDialog(DIALOG_UPGRADE_TO_UTF8);
+					}
+				});
+	    		dialog = (Dialog)adb.create();
 	    		break;
     	}
     	return dialog;

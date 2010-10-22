@@ -105,6 +105,13 @@ public class HelpMenuActivity extends ListActivity {
         	i.putExtra("helptext", R.string.help_text_importexport);
         	startActivity(i);
         }
+        // Launch the "Advanced Settings" help:
+        else if (menuItem.compareTo(res.getString(R.string.help_menu_settings1)) == 0)
+        {
+        	Intent i = new Intent(this, HelpActivity.class);
+        	i.putExtra("helptext", R.string.help_text_settings);
+        	startActivity(i);
+        }
         // Launch the "Disclaimers" help:
         else if (menuItem.compareTo(res.getString(R.string.help_menu_disclaimers1)) == 0)
         {
@@ -175,6 +182,11 @@ public class HelpMenuActivity extends ListActivity {
     	item = new HashMap<String,String>();
     	item.put("line1", res.getString(R.string.help_menu_importexport1));
     	item.put("line2", res.getString(R.string.help_menu_importexport2));
+    	menuItems.add(item);
+        // Add the "Advanced Settings" item:
+    	item = new HashMap<String,String>();
+    	item.put("line1", res.getString(R.string.help_menu_settings1));
+    	item.put("line2", res.getString(R.string.help_menu_settings2));
     	menuItems.add(item);
         // Add the "Disclaimers" item:
     	item = new HashMap<String,String>();

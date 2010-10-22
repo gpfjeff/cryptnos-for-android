@@ -71,9 +71,9 @@
  * 
  * UPDATES FOR 1.1.1:  Added text encoding information everywhere we can to
  * try and fix some encoding related issues.  All text-to-binary and binary-
- * to-text operations should use CryptnosApplication.TEXT_ENCODING for
+ * to-text operations should use CryptnosApplication.getTextEncoding() for
  * conversions, rather than relying on hard-coded constants or the system
- * default.  NOTE THAT THIS MAY BREAK SOME INTERNATIONAL USERS' DATA!!!
+ * default.
  * 
  * This program is Copyright 2010, Jeffrey T. Darlington.
  * E-mail:  android_support@cryptnos.com
@@ -185,7 +185,7 @@ public class SiteParameters {
 		}
 		this.iterations = iterations;
 		// The key is generated:
-		key = generateKeyFromSite(site);
+		key = generateKeyFromSite(site, theApp);
 	}
 	
 	/**
@@ -211,21 +211,24 @@ public class SiteParameters {
 			Cipher cipher = createCipher(siteKey, Cipher.DECRYPT_MODE);
 			// Unencrypt the data:
 			String combinedParams  =
-				new String(cipher.doFinal(Base64.decode(encryptedData.getBytes(CryptnosApplication.TEXT_ENCODING))));
+				new String(cipher.doFinal(Base64.decode(encryptedData.getBytes(theApp.getTextEncoding()))));
 			// Split it apart based on the pipe character:
 			String[] bits = combinedParams.split("\\|");
 			// This should only be valid if we get five inputs:
 			if (bits.length == 5)
 			{
 				// Attempt to decode the data and assign it to the internal
-				// values:
-				site = URLDecoder.decode(bits[0], CryptnosApplication.TEXT_ENCODING);
-				charTypes = Integer.parseInt(URLDecoder.decode(bits[1], CryptnosApplication.TEXT_ENCODING));
-				charLimit = Integer.parseInt(URLDecoder.decode(bits[2], CryptnosApplication.TEXT_ENCODING));
-				iterations = Integer.parseInt(URLDecoder.decode(bits[3], CryptnosApplication.TEXT_ENCODING));
-				hash = URLDecoder.decode(bits[4], CryptnosApplication.TEXT_ENCODING);
+				// values.  Note that we use CryptnosApplication.TEXT_ENCODING_UTF8
+				// rather than CryptnosApplication.getTextEncoding() for
+				// backward compatibility (we *always* used UTF-8 for this
+				// operation).
+				site = URLDecoder.decode(bits[0], CryptnosApplication.TEXT_ENCODING_UTF8);
+				charTypes = Integer.parseInt(URLDecoder.decode(bits[1], CryptnosApplication.TEXT_ENCODING_UTF8));
+				charLimit = Integer.parseInt(URLDecoder.decode(bits[2], CryptnosApplication.TEXT_ENCODING_UTF8));
+				iterations = Integer.parseInt(URLDecoder.decode(bits[3], CryptnosApplication.TEXT_ENCODING_UTF8));
+				hash = URLDecoder.decode(bits[4], CryptnosApplication.TEXT_ENCODING_UTF8);
 				// Generate the site key:
-				key = generateKeyFromSite(site);
+				key = generateKeyFromSite(site, theApp);
 			}
 			// If we didn't get five parts, something's wrong.  Throw an
 			// exception here.  We won't specify anything in the message,
@@ -263,14 +266,16 @@ public class SiteParameters {
 			if (bits.length == 5)
 			{
 				// Attempt to decode the data and assign it to the internal
-				// values:
-				site = URLDecoder.decode(bits[0], CryptnosApplication.TEXT_ENCODING);
-				charTypes = Integer.parseInt(URLDecoder.decode(bits[1], CryptnosApplication.TEXT_ENCODING));
-				charLimit = Integer.parseInt(URLDecoder.decode(bits[2], CryptnosApplication.TEXT_ENCODING));
-				iterations = Integer.parseInt(URLDecoder.decode(bits[3], CryptnosApplication.TEXT_ENCODING));
-				hash = URLDecoder.decode(bits[4], CryptnosApplication.TEXT_ENCODING);
+				// values.  Note the use of CryptnosApplication.TEXT_ENCODING_UTF8
+				// rather than CryptnosApplication.getTextEncoding() for
+				// backward compatibility.
+				site = URLDecoder.decode(bits[0], CryptnosApplication.TEXT_ENCODING_UTF8);
+				charTypes = Integer.parseInt(URLDecoder.decode(bits[1], CryptnosApplication.TEXT_ENCODING_UTF8));
+				charLimit = Integer.parseInt(URLDecoder.decode(bits[2], CryptnosApplication.TEXT_ENCODING_UTF8));
+				iterations = Integer.parseInt(URLDecoder.decode(bits[3], CryptnosApplication.TEXT_ENCODING_UTF8));
+				hash = URLDecoder.decode(bits[4], CryptnosApplication.TEXT_ENCODING_UTF8);
 				// Generate the site key:
-				key = generateKeyFromSite(site);
+				key = generateKeyFromSite(site, theApp);
 			}
 			// If we didn't get five parts, something's wrong.  Throw an
 			// exception here.  We won't specify anything in the message,
@@ -303,7 +308,7 @@ public class SiteParameters {
 		// sense if the site name is not null:
 		if (site != null)
 		{
-			key = generateKeyFromSite(site);
+			key = generateKeyFromSite(site, theApp);
 			return key;
 		}
 		else return null;
@@ -317,7 +322,7 @@ public class SiteParameters {
 	{
 		// In addition to setting the site, regenerate the key:
 		this.site = site;
-		key = generateKeyFromSite(site);
+		key = generateKeyFromSite(site, theApp);
 	}
 	
 	/**
@@ -363,11 +368,11 @@ public class SiteParameters {
 		try
 		{
 			String combinedParams = 
-				URLEncoder.encode(site, CryptnosApplication.TEXT_ENCODING) + "|" +
-				URLEncoder.encode(Integer.toString(charTypes), CryptnosApplication.TEXT_ENCODING) + "|" +
-				URLEncoder.encode(Integer.toString(charLimit), CryptnosApplication.TEXT_ENCODING) + "|" +
-				URLEncoder.encode(Integer.toString(iterations), CryptnosApplication.TEXT_ENCODING) + "|" +
-				URLEncoder.encode(hash, CryptnosApplication.TEXT_ENCODING);
+				URLEncoder.encode(site, CryptnosApplication.TEXT_ENCODING_UTF8) + "|" +
+				URLEncoder.encode(Integer.toString(charTypes), CryptnosApplication.TEXT_ENCODING_UTF8) + "|" +
+				URLEncoder.encode(Integer.toString(charLimit), CryptnosApplication.TEXT_ENCODING_UTF8) + "|" +
+				URLEncoder.encode(Integer.toString(iterations), CryptnosApplication.TEXT_ENCODING_UTF8) + "|" +
+				URLEncoder.encode(hash, CryptnosApplication.TEXT_ENCODING_UTF8);
 			return combinedParams;
 		}
 		catch (Exception e)
@@ -389,7 +394,7 @@ public class SiteParameters {
 		{
 			String combinedParams = exportUnencryptedString(); 
 			Cipher cipher = createCipher(key, Cipher.ENCRYPT_MODE);
-			return base64String(cipher.doFinal(combinedParams.getBytes(CryptnosApplication.TEXT_ENCODING)));
+			return base64String(cipher.doFinal(combinedParams.getBytes(theApp.getTextEncoding())));
 		}
 		catch (Exception e)
 		{
@@ -436,7 +441,7 @@ public class SiteParameters {
 			{
 				// Concatenate the site and passphrase values, then
 				// convert the string to a byte array for hashing:
-				byte[] result = site.concat(secret).getBytes(CryptnosApplication.TEXT_ENCODING);
+				byte[] result = site.concat(secret).getBytes(theApp.getTextEncoding());
 				// We will use one of two hashing engines.  Internally,
 				// Java supports MD5, SHA-1, and a trio of SHA-2 methods.
 				// We'll assume that since these are built-in, they must
@@ -610,7 +615,8 @@ public class SiteParameters {
 	 * @param theSite The site name or token to generate the key from.
 	 * @return A Base64-encoded site key string.
 	 */
-	public static String generateKeyFromSite(String theSite)
+	public static String generateKeyFromSite(String theSite,
+			CryptnosApplication theApp)
 	{
 		// For anyone wondering, note that this is a static method that can
 		// be called at any time, given any input.  This is because we may
@@ -637,7 +643,7 @@ public class SiteParameters {
 				// for now, but this really needs to be fixed someday.
 				MessageDigest hasher = MessageDigest.getInstance("SHA-512");
 				//return base64String(hasher.digest(theSite.concat(Settings.System.ANDROID_ID).getBytes()));
-				return base64String(hasher.digest(theSite.concat("android_id").getBytes(CryptnosApplication.TEXT_ENCODING)));
+				return base64String(hasher.digest(theSite.concat("android_id").getBytes(theApp.getTextEncoding())));
 			}
 			else return theSite;
 		}

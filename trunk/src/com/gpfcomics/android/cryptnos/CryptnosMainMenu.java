@@ -36,6 +36,8 @@
 package com.gpfcomics.android.cryptnos;
 
 import java.util.*;
+
+import android.app.Dialog;
 import android.app.ListActivity;
 import android.content.Intent;
 import android.content.res.Resources;
@@ -101,6 +103,8 @@ public class CryptnosMainMenu extends ListActivity {
     	// to reflect changes that occur based on adding or removing sites.
     	buildMenu();
     	super.onResume();
+    	// Run the UpgradeManager if it hasn't already been run this session:
+    	if (!theApp.hasUpgradeManagerRun()) theApp.runUpgradeManager(this);
     }
     
     @SuppressWarnings("unchecked")
@@ -172,6 +176,12 @@ public class CryptnosMainMenu extends ListActivity {
         	Intent i = new Intent(this, ImportActivity.class);
         	startActivity(i);
         }
+        // Launch the advanced settings activity:
+        else if (menuItem.compareTo(res.getString(R.string.mainmenu_advanced1)) == 0)
+        {
+        	Intent i = new Intent(this, AdvancedSettingsActivity.class);
+        	startActivity(i);
+        }
         // For the moment, nothing is working.  Show a quick Toast to let
         // the user know that's our fault and not theirs.
         else Toast.makeText(this, R.string.error_not_implemented,
@@ -201,6 +211,19 @@ public class CryptnosMainMenu extends ListActivity {
 	    		return true;
     	}
     	return false;
+    }
+	
+    @Override
+    protected Dialog onCreateDialog(int id)
+    {
+    	Dialog dialog = null;
+    	switch (id)
+    	{
+			case CryptnosApplication.DIALOG_UPGRADE_TO_UTF8:
+				dialog = theApp.onCreateDialog(id);
+				break;
+    	}
+    	return dialog;
     }
     
     /**
@@ -278,6 +301,11 @@ public class CryptnosMainMenu extends ListActivity {
 	    	item.put("line2", res.getString(R.string.mainmenu_import2));
 	    	menuItems.add(item);
         }
+        // Add the advanced settings item:
+    	item = new HashMap<String,String>();
+    	item.put("line1", res.getString(R.string.mainmenu_advanced1));
+    	item.put("line2", res.getString(R.string.mainmenu_advanced2));
+    	menuItems.add(item);
         // Add the help/tutorials item:
     	item = new HashMap<String,String>();
     	item.put("line1", res.getString(R.string.mainmenu_help1));

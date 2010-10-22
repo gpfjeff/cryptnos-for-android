@@ -205,7 +205,7 @@ import android.widget.AdapterView.AdapterContextMenuInfo;
  		        	   // Toast:
 		                if (selectedSite != null)
 		                {
-		                	if (DBHelper.deleteRecord(SiteParameters.generateKeyFromSite(selectedSite)))
+		                	if (DBHelper.deleteRecord(SiteParameters.generateKeyFromSite(selectedSite, theApp)))
 		                		Toast.makeText(context,
 		                			context.getResources().getString(R.string.sitelist_dialog_confirmdetele_success).replaceAll(getResources().getString(R.string.meta_replace_token), selectedSite), Toast.LENGTH_LONG).show();
 		                	else
@@ -335,7 +335,7 @@ import android.widget.AdapterView.AdapterContextMenuInfo;
 	            Intent i1 = new Intent(this, EditParametersActivity.class);
 	            i1.putExtra("mode", EditParametersActivity.EDIT_MODE);
 	            i1.putExtra(ParamsDbAdapter.DBFIELD_SITE, 
-	            	SiteParameters.generateKeyFromSite(selectedSite));
+	            	SiteParameters.generateKeyFromSite(selectedSite, theApp));
 	            startActivity(i1);
 	        	break;
 	        // In generate existing mode: all we're doing is giving the user
@@ -343,7 +343,7 @@ import android.widget.AdapterView.AdapterContextMenuInfo;
 	        case EXISTING_MODE:
 	            Intent i2 = new Intent(this, GenerateExistingActivity.class);
 	            i2.putExtra(ParamsDbAdapter.DBFIELD_SITE, 
-	            	SiteParameters.generateKeyFromSite(selectedSite));
+	            	SiteParameters.generateKeyFromSite(selectedSite, theApp));
 	            startActivity(i2);
 	        	break;
 	        // In delete mode, display the confirmation dialog, which will
@@ -396,7 +396,7 @@ import android.widget.AdapterView.AdapterContextMenuInfo;
 	    	case MENU_GENERATE:
 	    		Intent i1 = new Intent(this, GenerateExistingActivity.class);
 	            i1.putExtra(ParamsDbAdapter.DBFIELD_SITE, 
-		            	SiteParameters.generateKeyFromSite(selectedSite));
+		            	SiteParameters.generateKeyFromSite(selectedSite, theApp));
 	    		startActivity(i1);
 	        	return true;
 	        // Edit the selected parameters:
@@ -404,7 +404,7 @@ import android.widget.AdapterView.AdapterContextMenuInfo;
 	            Intent i2 = new Intent(this, EditParametersActivity.class);
 	            i2.putExtra("mode", EditParametersActivity.EDIT_MODE);
 	            i2.putExtra(ParamsDbAdapter.DBFIELD_SITE, 
-	            	SiteParameters.generateKeyFromSite(selectedSite));
+	            	SiteParameters.generateKeyFromSite(selectedSite, theApp));
 	            startActivity(i2);
     			return true;
     		// Delete the selected parameters:

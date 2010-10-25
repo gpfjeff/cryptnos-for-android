@@ -73,13 +73,18 @@ public class UpgradeManager {
 	 *  information has been saved. */
 	private static final int NO_PREVIOUS_VERSION = -1;
 	
-	/** A constant representing the integer version of Cryptnos 1.0, our
-	 *  first public release. */
-	private static final int VERSION_1_0_0 = 1;
+	// We'll comment out the following constants to limit the number of warnings
+	// in Eclipse, but they're here if we need them later.  We weren't really
+	// concerned with upgrade stuff before 1.2.0 so it may be safe to completely
+	// ignore prior versions.
 	
-	/** A constant representing the integer version of Cryptnos 1.1, where
-	 *  we introduced cross-platform import/export. */
-	private static final int VERSION_1_1_0 = 2;
+	///** A constant representing the integer version of Cryptnos 1.0, our
+	// *  first public release. */
+	//private static final int VERSION_1_0_0 = 1;
+	
+	///** A constant representing the integer version of Cryptnos 1.1, where
+	// *  we introduced cross-platform import/export. */
+	//private static final int VERSION_1_1_0 = 2;
 	
 	/** A constant representing the integer version of Cryptnos 1.2, where
 	 *  we introduced the UpgradeManager and UTF-8 as the default text

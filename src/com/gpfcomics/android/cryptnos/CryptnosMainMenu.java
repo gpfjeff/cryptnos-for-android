@@ -15,7 +15,7 @@
  * of parameters, about, and help) while others only appear when there are
  * items in the database (generate existing, edit, or delete).
  * 
- * UPDATES FOR 1.1.1:  Added Help option menu
+ * UPDATES FOR 1.2.0:  Added Help option menu and Advanced Settings menu item.
  * 
  * This program is Copyright 2010, Jeffrey T. Darlington.
  * E-mail:  android_support@cryptnos.com
@@ -37,8 +37,11 @@ package com.gpfcomics.android.cryptnos;
 
 import java.util.*;
 
+import android.app.Activity;
+import android.app.AlertDialog;
 import android.app.Dialog;
 import android.app.ListActivity;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.res.Resources;
 import android.os.Bundle;
@@ -64,6 +67,9 @@ public class CryptnosMainMenu extends ListActivity {
 
 	/** A constant indicating the Help option menu item. */
 	public static final int OPTMENU_HELP = Menu.FIRST;
+	
+	/** A constant representing a warning dialog for the Advanced Settings activity */
+	private static final int DIALOG_ADVANCED_SETTINGS_WARNING = 600;
 
     /** Called when the activity is first created. */
     @Override
@@ -179,8 +185,15 @@ public class CryptnosMainMenu extends ListActivity {
         // Launch the advanced settings activity:
         else if (menuItem.compareTo(res.getString(R.string.mainmenu_advanced1)) == 0)
         {
-        	Intent i = new Intent(this, AdvancedSettingsActivity.class);
-        	startActivity(i);
+        	// The first time they try to launch this, show a warning dialog:
+        	if (theApp.showAdvancedSettingsWarning()) {
+        		theApp.toggleShowAdvancedSettingsWarning();
+        		showDialog(DIALOG_ADVANCED_SETTINGS_WARNING);
+        	// Otherwise, just let them on in:
+        	} else {
+	        	Intent i = new Intent(this, AdvancedSettingsActivity.class);
+	        	startActivity(i);
+        	}
         }
         // For the moment, nothing is working.  Show a quick Toast to let
         // the user know that's our fault and not theirs.
@@ -217,10 +230,46 @@ public class CryptnosMainMenu extends ListActivity {
     protected Dialog onCreateDialog(int id)
     {
     	Dialog dialog = null;
+    	final Activity theActivity = this;
     	switch (id)
     	{
+    		// Let the main app handle the upgrade to UTF-8 warning:
 			case CryptnosApplication.DIALOG_UPGRADE_TO_UTF8:
 				dialog = theApp.onCreateDialog(id);
+				break;
+			// But we'll handle the Advanced Settings warning dialog here:
+			case DIALOG_ADVANCED_SETTINGS_WARNING:
+				AlertDialog.Builder adb = new AlertDialog.Builder(this);
+				adb.setTitle(getResources().getString(R.string.mainmenu_dialog_advanced_settings_title));
+				adb.setMessage(getResources().getString(R.string.mainmenu_dialog_advanced_settings_text));
+	    		adb.setCancelable(true);
+	    		// What to do when the Yes button is clicked:
+	    		adb.setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
+					// If they said yes, launch the Advanced Settings activity:
+					@Override
+					public void onClick(DialogInterface dialog, int which) {
+			            Intent i1 = new Intent(getBaseContext(),
+			            		AdvancedSettingsActivity.class);
+			            startActivity(i1);
+					}
+	    		});
+	    		// What to do when the No button is clicked:
+    			adb.setNegativeButton(android.R.string.no, new DialogInterface.OnClickListener() {
+    				@Override
+ 		           public void onClick(DialogInterface dialog, int id) {
+ 		        	   // For now, just cancel the dialog.  We'll follow
+ 		        	   // up on that below.
+ 		        	   dialog.cancel();
+ 		           }
+ 		       	});
+    			// What to do if the dialog is canceled:
+    			adb.setOnCancelListener(new DialogInterface.OnCancelListener() {
+					@Override
+					public void onCancel(DialogInterface dialog) {
+						theActivity.removeDialog(DIALOG_ADVANCED_SETTINGS_WARNING);
+					}
+				});
+				dialog = (Dialog)adb.create();
 				break;
     	}
     	return dialog;

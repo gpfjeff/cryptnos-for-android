@@ -19,10 +19,10 @@
  * Because decrypting the values in the database takes a while, a progress
  * dialog is displayed whenever the list is being built.
  * 
- * UPDATES FOR 1.1:  Added the Delete All option menu and dialog to allow the
+ * UPDATES FOR 1.1.0:  Added the Delete All option menu and dialog to allow the
  * user to delete all the parameters in the database in one action.
  * 
- * UPDATES FOR 1.1.1:  Added Help option menu
+ * UPDATES FOR 1.2.0:  Added Help option menu
  * 
  * This program is Copyright 2010, Jeffrey T. Darlington.
  * E-mail:  android_support@cryptnos.com

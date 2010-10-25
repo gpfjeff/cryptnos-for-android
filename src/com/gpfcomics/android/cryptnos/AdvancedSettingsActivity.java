@@ -8,7 +8,7 @@
  * REQUIRED BY:   
  * 
  * This activity allows the user to tweak some of the more advanced settings within
- * Cryptnos, such as which text encoding to use.
+ * Cryptnos, such as which text encoding to use.  Added in Cryptnos 1.2.0.
  * 
  * This program is Copyright 2010, Jeffrey T. Darlington.
  * E-mail:  android_support@cryptnos.com
@@ -126,6 +126,7 @@ public class AdvancedSettingsActivity extends Activity {
         		android.R.layout.simple_spinner_item, charsets);
         spinEncodings.setAdapter(adapter);
         spinEncodings.setSelection(lastEncodingSelection);
+        spinEncodings.setPrompt(getResources().getString(R.string.settings_encoding_prompt));
 
         // Set up the encoding spinner's selection listener.  If the user selects
         // anything different from the current selection, show the confirmation

@@ -66,14 +66,14 @@
  * password, complete with all the restrictions.  Any exceptions thrown should
  * be suitable for throwing into a Toast or error dialog.
  * 
- * UPDATES FOR 1.1:  Added the "default" constructor that creates an empty
+ * UPDATES FOR 1.1.0:  Added the "default" constructor that creates an empty
  * SiteParameters object for the use with the new cross-platform export format.
  * 
- * UPDATES FOR 1.1.1:  Added text encoding information everywhere we can to
- * try and fix some encoding related issues.  All text-to-binary and binary-
- * to-text operations should use CryptnosApplication.getTextEncoding() for
- * conversions, rather than relying on hard-coded constants or the system
- * default.
+ * UPDATES FOR 1.2.0:  Added text encoding information everywhere we can to
+ * try and fix some encoding related issues.  Password generation text-to-binary
+ * and binary-to-text operations should use CryptnosApplication.getTextEncoding()
+ * for conversions, rather than relying on hard-coded constants or the system
+ * default.  Anything dealing with import/export, however, should force UTF-8.
  * 
  * This program is Copyright 2010, Jeffrey T. Darlington.
  * E-mail:  android_support@cryptnos.com

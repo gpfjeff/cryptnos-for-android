@@ -21,6 +21,8 @@
 <string name="mainmenu_help2">Help and tutorials on how to use Cryptnos</string>
 <string name="mainmenu_about1">About Cryptnos</string>
 <string name="mainmenu_about2">Additional information about this application</string>
+<string name="mainmenu_dialog_advanced_settings_title">Warning</string>
+<string name="mainmenu_dialog_advanced_settings_text">Modifying the advanced settings may potentially "break" your existing passwords. Are you sure you wish to continue?</string>
 <string name="optmenu_help">Help</string>
 <string name="new_title">Cryptnos: Generate New Password</string>
 <string name="edit_title">Cryptnos: Edit Parameters</string>
@@ -45,6 +47,7 @@
 <string name="edit_iterations_label">Number of hash iterations:</string>
 <string name="edit_iterations_hint">Enter a positive integer > 0</string>
 <string name="edit_chartypes_label">Character restrictions:</string>
+<string name="edit_chartypes_prompt">Character restrictions</string>
 <string name="edit_charlimit_label">Length restrictions:</string>
 <string name="edit_charlimit_hint">Integer > 0, 0 = no limit</string>
 <string name="edit_generate_button_label">Generate</string>
@@ -95,6 +98,7 @@
 <string name="import_complete_message">Import complete. xxx site(s) imported.</string>
 <string name="settings_title">Cryptnos: Advanced Settings</string>
 <string name="settings_encoding_label">Text encoding (We strongly recommend this be set to UTF-8 unless you have explicit need for something different, like backward compatibility):</string>
+<string name="settings_encoding_prompt">Available encodings</string>
 <string name="settings_default_encoding_label">System default encoding: xxx</string>
 <string name="settings_confirm_encoding_change">Are you sure you wish to change the text encoding used by Cryptnos? This may \"break\" your current passwords and make them incompatible with versions of Cryptnos on other platforms!</string>
 <string name="about_title">About Cryptnos</string>

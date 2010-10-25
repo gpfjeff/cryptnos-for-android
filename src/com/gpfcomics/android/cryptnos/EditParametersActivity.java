@@ -15,7 +15,8 @@
  * from the database and continues to work with them, updating their record
  * each time the Generate button is pressed.
  * 
- * UPDATES FOR 1.1.1:  Added Help option menu
+ * UPDATES FOR 1.2.0:  Added Help option menu.  Added prompt for character
+ * type drop-down.
  * 
  * This program is Copyright 2010, Jeffrey T. Darlington.
  * E-mail:  android_support@cryptnos.com
@@ -133,10 +134,11 @@ public class EditParametersActivity extends Activity {
         txtOutput = (EditText)findViewById(R.id.txtOutput);
         btnGenerate = (Button)findViewById(R.id.btnGenerate);
         
-        // Set the prompt for the top of the hash drop-down when it displays.
-        // There's probably a way to set this in the layout XML, but I didn't
-        // bother to look it up.
+        // Set the prompt for the top of the hash and character type drop-downs
+        // when they display.  There's probably a way to set this in the layout
+        // XML, but I didn't bother to look it up.
         hashSpinner.setPromptId(R.string.edit_hash_prompt);
+        charTypesSpinner.setPromptId(R.string.edit_chartypes_prompt);
         
         // Determine what mode we're being called in.  This activity can
         // be used to create a new set of parameters or to edit an existing

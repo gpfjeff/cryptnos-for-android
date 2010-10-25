@@ -26,7 +26,7 @@
  * abstracted that it should be relatively easy to add other file managers
  * if they publish their intents.
  * 
- * UPDATES FOR 1.1.1:  Added Help option menu
+ * UPDATES FOR 1.2.0:  Added Help option menu
  * 
  * This program is Copyright 2010, Jeffrey T. Darlington.
  * E-mail:  android_support@cryptnos.com

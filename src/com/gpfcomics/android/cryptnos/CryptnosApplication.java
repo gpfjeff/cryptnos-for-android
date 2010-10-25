@@ -33,14 +33,15 @@
  * platform-specific export format.  The encryption constants for the new
  * cross-platform export format are stored in the ImportExportHandler class.
  * 
- * UPDATES FOR 1.1:  Added isIntentAvailable() the let activities test to see
+ * UPDATES FOR 1.1.0:  Added isIntentAvailable() the let activities test to see
  * if a specified Intent is available on the system.
  * 
- * UPDATES FOR 1.1.1:  Now uses AndroidID wrapper class to get proper version
+ * UPDATES FOR 1.2.0:  Now uses AndroidID wrapper class to get proper version
  * of ANDROID_ID for the API level we're running under.  Moved hard-coded
  * salt-salt to a constant (SALTIER_SALT) so it can be updated in one place if
  * required.  Added new text encoding constants and methods to (hopefully)
- * fix Issue #2 ("New Phone, Weird Passwords").
+ * fix Issue #2 ("New Phone, Weird Passwords").  Added support methods
+ * for UpgradeManager and Advanced Settings activity.
  * 
  * This program is Copyright 2010, Jeffrey T. Darlington.
  * E-mail:  android_support@cryptnos.com
@@ -187,6 +188,10 @@ public class CryptnosApplication extends Application {
 	/** A boolean flag to indicate whether or not the UpgradeManager has run for
 	 *  this particular session. */
 	private static boolean upgradeManagerRan = false;
+	/** A boolean flag to determine whether or not to show a warning box when the
+	 *  Advanced Settings option is selected from the main menu.  This should be
+	 *  shown the first time this option is selected for a given session. */
+	private static boolean showAdvancedSettingsWarning = true;
 
 	/** The calling activity, so we can refer back to it.  This is usually the
 	 *  same as the site list listener, but doesn't necessarily have to be. */
@@ -470,6 +475,12 @@ public class CryptnosApplication extends Application {
 		}
 	}
 	
+	public boolean showAdvancedSettingsWarning() { return showAdvancedSettingsWarning; }
+	
+	public void toggleShowAdvancedSettingsWarning() {
+		showAdvancedSettingsWarning = false;
+	}
+	
 	/**
 	 * Create and return a dialog box.  Note that Android Application classes
 	 * do not ordinarily control or own individual dialogs; any dialog created
@@ -511,6 +522,7 @@ public class CryptnosApplication extends Application {
 	    		// need to grab the message string from the resources and tweak it
 	    		// before setting the message.
 	    		AlertDialog.Builder adb = new AlertDialog.Builder(caller);
+	    		adb.setTitle(getResources().getString(R.string.mainmenu_dialog_advanced_settings_title));
 	    		String message = getResources().getString(R.string.error_upgrader_change_encoding_warning);
 	    		message = message.replace(getResources().getString(R.string.meta_replace_token),
 	    				System.getProperty("file.encoding", "No Default"));

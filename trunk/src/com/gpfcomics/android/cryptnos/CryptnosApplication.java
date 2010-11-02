@@ -167,6 +167,9 @@ public class CryptnosApplication extends Application {
 	/** The ID string for our version number within the shared preferences
 	 *  file. */
 	public static final String PREFS_VERSION = "VERSION";
+	/** The ID string for our preferred file manager within the shared
+	 *  preferences file. */
+	public static final String PREFS_FILE_MANAGER = "FILE_MANAGER";
 	
 	/** The actual site list array */
 	private static String[] siteList = null;

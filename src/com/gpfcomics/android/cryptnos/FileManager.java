@@ -1,3 +1,42 @@
+/* FileManager.java
+ * 
+ * PROGRAMMER:    Jeffrey T. Darlington
+ * DATE:          November 4, 2010
+ * PROJECT:       Cryptnos (Android)
+ * ANDROID V.:	  1.1
+ * REQUIRES:      
+ * REQUIRED BY:   
+ * 
+ * The FileManager class was added in Cryptnos 1.2.0 to hopefully abstract the
+ * process of using third-party file management applications for selecting import
+ * files and export paths.  By pulling this into its own class, we can hopefully
+ * add and remove file managers with relative ease.  This class will take care of
+ * the process of detecting what recognized file managers are available and
+ * maintaining the user's preference of which file manager to use.  Note that
+ * only the file managers explicity choose to support will be available, and we
+ * can only use those that publish the necessary data and Intents to make these
+ * selections possible.
+ * 
+ * For the initial release, we will support OI File Manager from OpenIntents and
+ * AndExplorer, as these are the only file managers that we know about with
+ * published Intents.
+ * 
+ * This program is Copyright 2010, Jeffrey T. Darlington.
+ * E-mail:  android_support@cryptnos.com
+ * Web:     http://www.cryptnos.com/
+ * 
+ * This program is free software; you can redistribute it and/or modify it under the terms of
+ * the GNU General Public License as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+ * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+ * See theGNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License along with this program;
+ * if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
+ * Boston, MA  02110-1301, USA.
+*/
 package com.gpfcomics.android.cryptnos;
 
 import java.io.File;
@@ -319,6 +358,26 @@ public class FileManager {
 		// this an alias for getSelectedFile() for now and keep it as a separate
 		// method in case future file manager additions require special work here.
 		return getSelectedFile(data);
+	}
+	
+	/**
+	 * Determine whether or not the user has an active preference of preferred
+	 * file manager.
+	 * @return Returns true or false
+	 */
+	public boolean isFileManagerSelected() {
+		if (availableFMs == null) findAvailableFileManagers(); 
+		return preferredFM != NO_FILE_MANAGER;
+	}
+	
+	/**
+	 * Return a string containing a list of recognized file manager names.  This
+	 * is intended to be displayed in the Advanced Settings activity to show the
+	 * user what file managers they can install and use with Cryptnos
+	 * @return A String containing the recognized file manager names
+	 */
+	public String getRecognizedFileManagerNames() {
+		return "\tOI File Manager\n\tAndExplorer";
 	}
 	
 	/* Private methods: ***********************************************************/

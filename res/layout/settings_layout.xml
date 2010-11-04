@@ -22,6 +22,18 @@
 				android:layout_height="wrap_content"
 				android:id="@+id/labelDefaultEncoding"
 				android:text="@string/settings_default_encoding_label"></TextView>
+			<TextView android:layout_width="wrap_content"
+				android:layout_height="wrap_content"
+				android:id="@+id/labelFileManagerPreference"
+				android:text="@string/settings_file_manager_pref_label"></TextView>
+			<Spinner android:layout_width="fill_parent"
+				android:layout_height="wrap_content"
+				android:clickable="true"
+				android:id="@+id/spinFileManagers"></Spinner>
+			<TextView android:layout_width="wrap_content"
+				android:layout_height="wrap_content"
+				android:id="@+id/labelNoFileManagersAvailable"
+				android:text="@string/settings_no_file_managers_available"></TextView>
 		</LinearLayout>
 	</ScrollView>
 </LinearLayout>

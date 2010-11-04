@@ -101,6 +101,9 @@
 <string name="settings_encoding_prompt">Available encodings</string>
 <string name="settings_default_encoding_label">System default encoding: xxx</string>
 <string name="settings_confirm_encoding_change">Are you sure you wish to change the text encoding used by Cryptnos? This may \"break\" your current passwords and make them incompatible with versions of Cryptnos on other platforms!</string>
+<string name="settings_file_manager_pref_label">Preferred file manager:</string>
+<string name="settings_file_manager_prompt">Available file managers</string>
+<string name="settings_no_file_managers_available">No recognized file managers could be found. To take advantage of a third-party file manager during import and export operations, please install one of the following applications:\n\n</string>
 <string name="about_title">About Cryptnos</string>
 <string name="about_header">Version</string>
 <string name="about_link">http://www.cryptnos.com/</string>

@@ -169,10 +169,11 @@ public class ImportActivity extends Activity {
         {
         	// If OI File Manager is available, we'll provide a relatively
         	// easy way for the user to select their file:
-        	if (CryptnosApplication.isIntentAvailable(this,
-        			FILE_SELECT_INTENT_OI)/* ||
-        			CryptnosApplication.isIntentAvailable(this,
-                			FILE_SELECT_INTENT_AND)*/) {
+        	if (theApp.getFileManager().isFileManagerSelected()) {
+//        	if (CryptnosApplication.isIntentAvailable(this,
+//        			FILE_SELECT_INTENT_OI)/* ||
+//        			CryptnosApplication.isIntentAvailable(this,
+//                			FILE_SELECT_INTENT_AND)*/) {
         		// First, hide the old file select spinner and reset the
         		// instruction label to the new instruction set:
         		layout.removeView(spinnerFiles);
@@ -255,34 +256,52 @@ public class ImportActivity extends Activity {
         /** What to do when the Select File button is clicked */
         btnSelectFile.setOnClickListener(new View.OnClickListener() {
 			public void onClick(View v) {
-				// Double-check to make sure a file selection intent is
-				// still available.  This will also let us add support for
-				// other file managers later if we want.
-				if (CryptnosApplication.isIntentAvailable(v.getContext(),
-						FILE_SELECT_INTENT_OI)/* ||
-						CryptnosApplication.isIntentAvailable(v.getContext(),
-								FILE_SELECT_INTENT_AND)*/) {
-					// This should be pretty simple.  Create an intent in the
-					// OI File Manager format and ask it to find a file for
-					// us.  We'll default to OI File Manager if available,
-					// but fall back to the generic Android one if not.
-					Intent intent = null;
-					if (CryptnosApplication.isIntentAvailable(v.getContext(),
-							FILE_SELECT_INTENT_OI))
-							intent = new Intent(FILE_SELECT_INTENT_OI);
-					//else intent = new Intent(FILE_SELECT_INTENT_AND);
-					intent.setData(Uri.parse("file://" +
-							importRootPath.toString()));
-					intent.putExtra("org.openintents.extra.TITLE",
-							getResources().getString(R.string.import_file_dialog_title));
-					intent.putExtra("org.openintents.extra.BUTTON_TEXT",
+				// Get a handier reference to the app's FileManager object:
+				FileManager fm = theApp.getFileManager();
+				// Check to see if the user has an active preference for file
+				// manager.  This should only occur if one is actively available.
+				// If they do, generate the intent for the selected file manager
+				// and start that activity up:
+				if (fm.isFileManagerSelected()) {
+					Intent intent = fm.generateSelectFileIntent(importRootPath.toString(),
+							getResources().getString(R.string.import_file_dialog_title),
 							getResources().getString(R.string.import_file_dialog_button));
-					startActivityForResult(intent, REQUEST_SELECT_FILE_OI);
-				// If we don't have a suitable intent available, throw an
-				// error:
+					startActivityForResult(intent,
+							FileManager.INTENT_REQUEST_SELECT_FILE);
+				// If no file manager is available, this button should be available.
+				// If for some bizarre reason it gets pressed, complain:
 				} else Toast.makeText(v.getContext(),
 						R.string.error_no_external_file_manager,
 						Toast.LENGTH_LONG).show();
+				
+//				// Double-check to make sure a file selection intent is
+//				// still available.  This will also let us add support for
+//				// other file managers later if we want.
+//				if (CryptnosApplication.isIntentAvailable(v.getContext(),
+//						FILE_SELECT_INTENT_OI)/* ||
+//						CryptnosApplication.isIntentAvailable(v.getContext(),
+//								FILE_SELECT_INTENT_AND)*/) {
+//					// This should be pretty simple.  Create an intent in the
+//					// OI File Manager format and ask it to find a file for
+//					// us.  We'll default to OI File Manager if available,
+//					// but fall back to the generic Android one if not.
+//					Intent intent = null;
+//					if (CryptnosApplication.isIntentAvailable(v.getContext(),
+//							FILE_SELECT_INTENT_OI))
+//							intent = new Intent(FILE_SELECT_INTENT_OI);
+//					//else intent = new Intent(FILE_SELECT_INTENT_AND);
+//					intent.setData(Uri.parse("file://" +
+//							importRootPath.toString()));
+//					intent.putExtra("org.openintents.extra.TITLE",
+//							getResources().getString(R.string.import_file_dialog_title));
+//					intent.putExtra("org.openintents.extra.BUTTON_TEXT",
+//							getResources().getString(R.string.import_file_dialog_button));
+//					startActivityForResult(intent, REQUEST_SELECT_FILE_OI);
+//				// If we don't have a suitable intent available, throw an
+//				// error:
+//				} else Toast.makeText(v.getContext(),
+//						R.string.error_no_external_file_manager,
+//						Toast.LENGTH_LONG).show();
 			}
 		});
     }
@@ -292,13 +311,17 @@ public class ImportActivity extends Activity {
     	// Look at the request code:
     	String filename = null;
     	switch (requestCode) {
-    		// If we launched OI File manager to get a file:
-	    	case REQUEST_SELECT_FILE_OI:
-	    		// Make sure we got an OK result and we have actual useful
-	    		// data:
+//    		// If we launched OI File manager to get a file:
+//	    	case REQUEST_SELECT_FILE_OI:
+//	    		// Make sure we got an OK result and we have actual useful
+//	    		// data:
+//	    		if (resultCode == RESULT_OK && data != null)
+//	    			// Get the file name from the resulting data:
+//                    filename = data.getDataString();
+//	    		break;
+	    	case FileManager.INTENT_REQUEST_SELECT_FILE:
 	    		if (resultCode == RESULT_OK && data != null)
-	    			// Get the file name from the resulting data:
-                    filename = data.getDataString();
+	    			filename = theApp.getFileManager().getSelectedFile(data);
 	    		break;
     	}
     	// Now see if we got anything useful:

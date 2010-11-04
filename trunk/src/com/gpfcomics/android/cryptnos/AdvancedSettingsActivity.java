@@ -66,7 +66,17 @@ public class AdvancedSettingsActivity extends Activity {
 	/** The Spinner holding our text encoding options */
 	private Spinner spinEncodings = null;
 	
+	/** A TextView to display the system default encoding, for reference */
 	private TextView labelDefaultEncoding = null;
+	
+	/** A spinner to show the available file manager list */
+	private Spinner spinFileManagers = null;
+	
+	/** A TextView prompt for the file manager spinner */
+	private TextView labelFileManagerPreference = null;
+	
+	/** A Text View displayed if no file managers were found: */
+	private TextView labelNoFileManagersAvailable = null;
 	
 	/** A reference back to the main application */
 	private CryptnosApplication theApp = null;
@@ -79,6 +89,10 @@ public class AdvancedSettingsActivity extends Activity {
 	/** The current selection in the encoding spinner.  This is used to restore the
 	 *  previous selection if the user cancels the change. */
 	private int lastEncodingSelection = 0;
+	
+	/** The current selection in the file manager spinner.  This is used to restore
+	 *  the previous selection if the user cancels the change. */
+	private int lastFileManagerSelection = 0;
 	
     @Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -148,6 +162,67 @@ public class AdvancedSettingsActivity extends Activity {
         	getResources().getString(R.string.settings_default_encoding_label);
         labelDefaultEncoding.setText(labelText.replace(getResources().getString(R.string.meta_replace_token),
         		systemDefault));
+        
+        // Get handy references to the file manager UI elements:
+    	spinFileManagers = (Spinner)findViewById(R.id.spinFileManagers);
+    	labelFileManagerPreference = (TextView)findViewById(R.id.labelFileManagerPreference);
+    	labelNoFileManagersAvailable = (TextView)findViewById(R.id.labelNoFileManagersAvailable);
+
+    	// Get the app FileManager object and a list of available file managers.
+    	// If any file managers were found, set up the spinner to let the user
+    	// chose:
+        FileManager fm = theApp.getFileManager();
+        int[] availableFMs = fm.getAvailableFileManagers();
+        if (availableFMs != null && availableFMs.length > 0) {
+        	// Hide the "no file managers found" label:
+        	labelNoFileManagersAvailable.setVisibility(View.INVISIBLE);
+        	// Get the list of file manager names, as well as the currently
+        	// selected one by name:
+        	String[] fmList = fm.getAvailableFileManagerNames();
+        	String selected = fm.getPreferredFileManagerName();
+        	// Default to the first position in the list, which should be the
+        	// "no preference" option:
+        	lastFileManagerSelection = 0;
+        	// There should be a better way to do this, but step through the list
+        	// and compare the selected name with the names in the list.  If we
+        	// find it, take note of its position.  Fortunately, this list should
+        	// be small, so this should taken long.
+        	for (int i = 0; i < fmList.length; i++) {
+        		if (fmList[i].compareTo(selected) == 0) {
+        			lastFileManagerSelection = i;
+        			break;
+        		}
+        	}
+        	// Set up the adapter with the spinner:
+            ArrayAdapter<String> adapter2 = new ArrayAdapter<String>(this,
+            		android.R.layout.simple_spinner_item, fmList);
+            spinFileManagers.setAdapter(adapter2);
+            // Set the current selection and prompt:
+            spinFileManagers.setSelection(lastFileManagerSelection);
+            spinFileManagers.setPrompt(getResources().getString(R.string.settings_file_manager_prompt));
+
+        } else {
+        	spinFileManagers.setVisibility(View.INVISIBLE);
+        	labelFileManagerPreference.setVisibility(View.INVISIBLE);
+        	labelNoFileManagersAvailable.setText(labelNoFileManagersAvailable.getText().toString() +
+        			fm.getRecognizedFileManagerNames());
+        }
+        
+        // Set the action when the file manager spinner changes.  Basically, we'll
+        // just set the new preference in the FileManager, which will handle the
+        // real work behind the scenes.
+        spinFileManagers.setOnItemSelectedListener(new OnItemSelectedListener() {
+			@Override
+			public void onItemSelected(AdapterView<?> arg0, View arg1,
+					int arg2, long arg3) {
+				if (spinFileManagers.getSelectedItemPosition() != lastFileManagerSelection) {
+					theApp.getFileManager().setPreferredFileManager((String)spinFileManagers.getSelectedItem());
+				}
+			}
+			@Override
+			public void onNothingSelected(AdapterView<?> arg0) { }
+        });
+        
     }
     
     protected Dialog onCreateDialog(int id) {

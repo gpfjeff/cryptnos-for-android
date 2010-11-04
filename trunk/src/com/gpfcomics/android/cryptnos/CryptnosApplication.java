@@ -41,7 +41,8 @@
  * salt-salt to a constant (SALTIER_SALT) so it can be updated in one place if
  * required.  Added new text encoding constants and methods to (hopefully)
  * fix Issue #2 ("New Phone, Weird Passwords").  Added support methods
- * for UpgradeManager and Advanced Settings activity.
+ * for UpgradeManager and Advanced Settings activity.  Added app-wide FileManager
+ * object.
  * 
  * This program is Copyright 2010, Jeffrey T. Darlington.
  * E-mail:  android_support@cryptnos.com
@@ -195,6 +196,8 @@ public class CryptnosApplication extends Application {
 	 *  Advanced Settings option is selected from the main menu.  This should be
 	 *  shown the first time this option is selected for a given session. */
 	private static boolean showAdvancedSettingsWarning = true;
+	/** A global FileManager object for the entire application */
+	private static FileManager fileManager = null;
 
 	/** The calling activity, so we can refer back to it.  This is usually the
 	 *  same as the site list listener, but doesn't necessarily have to be. */
@@ -260,6 +263,10 @@ public class CryptnosApplication extends Application {
 		editor.commit();
 		// Generate the parameter salt:
 		refreshParameterSalt();
+		// Set up the file manager, trying to restore the user's preference of
+		// file manager if at all possible:
+		int preferredFM = prefs.getInt(PREFS_FILE_MANAGER, FileManager.NO_FILE_MANAGER);
+		fileManager = new FileManager(this, preferredFM);
 	}
 	
 	@Override
@@ -397,6 +404,12 @@ public class CryptnosApplication extends Application {
 	 * @return The application's SharedPreferences object
 	 */
 	public SharedPreferences getPrefs() { return prefs; }
+	
+	/**
+	 * Get the application's FileManager object.
+	 * @return The application's FileManager object
+	 */
+	public FileManager getFileManager() { return fileManager; }
 	
 	/**
 	 * Get the user's preferred text encoding (or the default if no

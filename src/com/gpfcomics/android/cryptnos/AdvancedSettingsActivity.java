@@ -146,13 +146,11 @@ public class AdvancedSettingsActivity extends Activity {
         // anything different from the current selection, show the confirmation
         // dialog to make sure they want to make the change.
         spinEncodings.setOnItemSelectedListener(new OnItemSelectedListener() {
-			@Override
 			public void onItemSelected(AdapterView<?> arg0, View arg1,
 					int arg2, long arg3) {
 				if (spinEncodings.getSelectedItemPosition() != lastEncodingSelection)
 					showDialog(DIALOG_CONFIRM_ENCODING_CHANGE);
 			}
-			@Override
 			public void onNothingSelected(AdapterView<?> arg0) { }
         });
         
@@ -212,14 +210,12 @@ public class AdvancedSettingsActivity extends Activity {
         // just set the new preference in the FileManager, which will handle the
         // real work behind the scenes.
         spinFileManagers.setOnItemSelectedListener(new OnItemSelectedListener() {
-			@Override
 			public void onItemSelected(AdapterView<?> arg0, View arg1,
 					int arg2, long arg3) {
 				if (spinFileManagers.getSelectedItemPosition() != lastFileManagerSelection) {
 					theApp.getFileManager().setPreferredFileManager((String)spinFileManagers.getSelectedItem());
 				}
 			}
-			@Override
 			public void onNothingSelected(AdapterView<?> arg0) { }
         });
         
@@ -240,7 +236,6 @@ public class AdvancedSettingsActivity extends Activity {
 					// If they said yes, change the preferences to use the new
 					// character encoding, refresh the parameter salt, and 
 					// take note of the new encoding position.
-					@Override
 					public void onClick(DialogInterface dialog, int which) {
 						try {
 							String newEncoding = (String)spinEncodings.getSelectedItem();
@@ -257,7 +252,6 @@ public class AdvancedSettingsActivity extends Activity {
 				// If they said no, simply cancel the dialog.  Canceling does the
 				// same as saying no, so we'll handle both cases below.
     			adb.setNegativeButton(android.R.string.no, new DialogInterface.OnClickListener() {
-    				@Override
  		           public void onClick(DialogInterface dialog, int id) {
  		        	   dialog.cancel();
  		           }
@@ -265,7 +259,6 @@ public class AdvancedSettingsActivity extends Activity {
     			// If they cancel the dialog, dismiss it and reset the encoding
     			// selection back to where it was before:
     			adb.setOnCancelListener(new DialogInterface.OnCancelListener() {
-					@Override
 					public void onCancel(DialogInterface dialog) {
 						theActivity.dismissDialog(DIALOG_CONFIRM_ENCODING_CHANGE);
 						spinEncodings.setSelection(lastEncodingSelection);

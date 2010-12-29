@@ -547,7 +547,6 @@ public class CryptnosApplication extends Application {
 	    		// What to do when the Yes button is clicked:
 	    		adb.setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
 					// If they said yes, launch the Advanced Settings activity:
-					@Override
 					public void onClick(DialogInterface dialog, int which) {
 			            Intent i1 = new Intent(caller, AdvancedSettingsActivity.class);
 			            startActivity(i1);
@@ -555,7 +554,6 @@ public class CryptnosApplication extends Application {
 	    		});
 	    		// What to do when the No button is clicked:
     			adb.setNegativeButton(android.R.string.no, new DialogInterface.OnClickListener() {
-    				@Override
  		           public void onClick(DialogInterface dialog, int id) {
  		        	   // For now, just cancel the dialog.  We'll follow
  		        	   // up on that below.
@@ -564,7 +562,6 @@ public class CryptnosApplication extends Application {
  		       	});
     			// What to do if the dialog is canceled:
     			adb.setOnCancelListener(new DialogInterface.OnCancelListener() {
-					@Override
 					public void onCancel(DialogInterface dialog) {
 	    				// If they said no or canceled the dialog, go ahead and set
 						// the app file encoding to the system default and refresh

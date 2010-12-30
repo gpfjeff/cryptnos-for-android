@@ -26,7 +26,9 @@
  * abstracted that it should be relatively easy to add other file managers
  * if they publish their intents.
  * 
- * UPDATES FOR 1.2.0:  Added Help option menu
+ * UPDATES FOR 1.2.0:  Added Help option menu.  Changed OI File Manager code
+ * to use the more generic FileManager class so we can let the user decide what
+ * file manager to use.
  * 
  * This program is Copyright 2010, Jeffrey T. Darlington.
  * E-mail:  android_support@cryptnos.com
@@ -84,13 +86,6 @@ public class ImportActivity extends Activity {
 
 	/** A constant indicating that we should show the progress dialog. */
 	static final int DIALOG_PROGRESS = 1200;
-	
-	/** The Intent action for OI File Manager */
-	private static final String FILE_SELECT_INTENT_OI = "org.openintents.action.PICK_FILE";
-	/* The generic Android "pick" Intent action */
-	//private static final String FILE_SELECT_INTENT_AND = "android.intent.action.PICK";
-	/** Code used for selecting a file using OI File Manager */
-	private static final int REQUEST_SELECT_FILE_OI = 5;
 	
 	/** A constant indicating the Help option menu item. */
 	public static final int OPTMENU_HELP = Menu.FIRST;
@@ -166,13 +161,9 @@ public class ImportActivity extends Activity {
         if (importRootPath.isDirectory() && importRootPath.list() != null
         		&& importRootPath.list().length > 0)
         {
-        	// If OI File Manager is available, we'll provide a relatively
-        	// easy way for the user to select their file:
+        	// If the user's selected file manager is available, we'll provide a
+        	// relatively easy way for the user to select their file:
         	if (theApp.getFileManager().isFileManagerSelected()) {
-//        	if (CryptnosApplication.isIntentAvailable(this,
-//        			FILE_SELECT_INTENT_OI)/* ||
-//        			CryptnosApplication.isIntentAvailable(this,
-//                			FILE_SELECT_INTENT_AND)*/) {
         		// First, hide the old file select spinner and reset the
         		// instruction label to the new instruction set:
         		layout.removeView(spinnerFiles);
@@ -272,35 +263,6 @@ public class ImportActivity extends Activity {
 				} else Toast.makeText(v.getContext(),
 						R.string.error_no_external_file_manager,
 						Toast.LENGTH_LONG).show();
-				
-//				// Double-check to make sure a file selection intent is
-//				// still available.  This will also let us add support for
-//				// other file managers later if we want.
-//				if (CryptnosApplication.isIntentAvailable(v.getContext(),
-//						FILE_SELECT_INTENT_OI)/* ||
-//						CryptnosApplication.isIntentAvailable(v.getContext(),
-//								FILE_SELECT_INTENT_AND)*/) {
-//					// This should be pretty simple.  Create an intent in the
-//					// OI File Manager format and ask it to find a file for
-//					// us.  We'll default to OI File Manager if available,
-//					// but fall back to the generic Android one if not.
-//					Intent intent = null;
-//					if (CryptnosApplication.isIntentAvailable(v.getContext(),
-//							FILE_SELECT_INTENT_OI))
-//							intent = new Intent(FILE_SELECT_INTENT_OI);
-//					//else intent = new Intent(FILE_SELECT_INTENT_AND);
-//					intent.setData(Uri.parse("file://" +
-//							importRootPath.toString()));
-//					intent.putExtra("org.openintents.extra.TITLE",
-//							getResources().getString(R.string.import_file_dialog_title));
-//					intent.putExtra("org.openintents.extra.BUTTON_TEXT",
-//							getResources().getString(R.string.import_file_dialog_button));
-//					startActivityForResult(intent, REQUEST_SELECT_FILE_OI);
-//				// If we don't have a suitable intent available, throw an
-//				// error:
-//				} else Toast.makeText(v.getContext(),
-//						R.string.error_no_external_file_manager,
-//						Toast.LENGTH_LONG).show();
 			}
 		});
     }
@@ -310,14 +272,8 @@ public class ImportActivity extends Activity {
     	// Look at the request code:
     	String filename = null;
     	switch (requestCode) {
-//    		// If we launched OI File manager to get a file:
-//	    	case REQUEST_SELECT_FILE_OI:
-//	    		// Make sure we got an OK result and we have actual useful
-//	    		// data:
-//	    		if (resultCode == RESULT_OK && data != null)
-//	    			// Get the file name from the resulting data:
-//                    filename = data.getDataString();
-//	    		break;
+    		// If we're returning from a file selection, get the file name from
+    		// the file manager:
 	    	case FileManager.INTENT_REQUEST_SELECT_FILE:
 	    		if (resultCode == RESULT_OK && data != null)
 	    			filename = theApp.getFileManager().getSelectedFile(data);

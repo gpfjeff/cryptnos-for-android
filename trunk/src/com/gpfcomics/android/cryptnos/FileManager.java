@@ -13,7 +13,7 @@
  * add and remove file managers with relative ease.  This class will take care of
  * the process of detecting what recognized file managers are available and
  * maintaining the user's preference of which file manager to use.  Note that
- * only the file managers explicity choose to support will be available, and we
+ * only the file managers explicitly choose to support will be available, and we
  * can only use those that publish the necessary data and Intents to make these
  * selections possible.
  * 
@@ -106,7 +106,8 @@ public class FileManager {
 	 *  constant values.  Defaults to NO_FILE_MANAGER. */
 	private int preferredFM = NO_FILE_MANAGER;
 	
-	/** A list of currently available file managers by constant code */
+	/** A list of currently available file managers by constant code.  May be null
+	 *  if no recognized file managers are available. */
 	private int[] availableFMs = null;
 	
 	/* Public methods: ***********************************************************/
@@ -201,7 +202,13 @@ public class FileManager {
 	/** Get an array of codes representing all recognized file managers found on
 	 *  the system.  Note that this may return a null or empty list. */
 	public int[] getAvailableFileManagers() {
-		if (availableFMs == null) findAvailableFileManagers();
+		// Originally, we did the search once and stored the list for the sake of
+		// efficiency.  In practice, however, this meant that there was a period of
+		// time during which a file manager could be added or removed and the internal
+		// list would not be in sync with what's on the system.  Since the search is
+		// relatively quick, we'll force this to refresh every time.  We may want to
+		// go back to the old method later if this doesn't work in the long term.
+		findAvailableFileManagers();
 		return availableFMs;
 	}
 	
@@ -211,12 +218,21 @@ public class FileManager {
 	 *  returns a single-element list with a string stating that no file
 	 *  managers were found. */
 	public String[] getAvailableFileManagerNames() {
-		if (availableFMs == null) findAvailableFileManagers();
+		// See getAvailableFileManagers() for why we refresh the list every time.
+		findAvailableFileManagers();
+		// Declare a string array to hold our names:
 		String[] names = null;
+		// If we found any file managers at all, start building the array of names.
+		// Note that we'll add the item for "no file manager selected" first, making
+		// it a valid selection in the Advanced Settings activity.  Then step through
+		// the rest of the available names and add them to the list.
 		if (availableFMs != null && availableFMs.length > 0) {
-			names = new String[availableFMs.length];
-			for (int i = 0; i < names.length; i++)
-				names[i] = mapCodeToName(availableFMs[i]);
+			names = new String[availableFMs.length + 1];
+			names[0] = mapCodeToName(NO_FILE_MANAGER);
+			for (int i = 1; i < names.length; i++)
+				names[i] = mapCodeToName(availableFMs[i - 1]);
+		// If no file managers could be found, return a single-element array with
+		// a message stating as such:
 		} else {
 			names = new String[1];
 			names[0] = "No recognized file managers found";
@@ -272,19 +288,24 @@ public class FileManager {
 	public Intent generateSelectFileIntent(String rootPath, String dialogTitle,
 			String buttonText) {
 		switch (preferredFM) {
+			// Generate an OI File Manager intent:
 			case OI_FILE_MANAGER:
 				Intent oii = new Intent(FILE_SELECT_INTENT_OI);
 				oii.setData(Uri.parse("file://" + rootPath));
 				oii.putExtra("org.openintents.extra.TITLE", dialogTitle);
 				oii.putExtra("org.openintents.extra.BUTTON_TEXT", buttonText);
 				return oii;
+			// Generate an AndExplorer intent:
 			case ANDEXPLORER:
 				Intent aei = new Intent();
 				aei.setAction(Intent.ACTION_PICK);
 				aei.setDataAndType(Uri.fromFile(new File(rootPath)),
 						FILE_SELECT_INTENT_AE);
 				aei.putExtra("explorer_title", dialogTitle);
+				aei.putExtra("browser_list_layout", "0");
 				return aei;
+			// If there's no preference or it's something we don't recognize,
+			// do nothing:
 			case NO_FILE_MANAGER:
 			default:
 				return null;
@@ -297,12 +318,14 @@ public class FileManager {
 	public Intent generateSelectFolderIntent(String rootPath, String dialogTitle,
 			String buttonText) {
 		switch (preferredFM) {
+			// Generate an OI File Manager intent:
 			case OI_FILE_MANAGER:
 				Intent oii = new Intent(DIR_SELECT_INTENT_OI);
 				oii.setData(Uri.parse("file://" + rootPath));
 				oii.putExtra("org.openintents.extra.TITLE", dialogTitle);
 				oii.putExtra("org.openintents.extra.BUTTON_TEXT", buttonText);
 				return oii;
+			// Generate an AndExplorer intent:
 			case ANDEXPLORER:
 				Intent aei = new Intent();
 				aei.setAction(Intent.ACTION_PICK);
@@ -310,6 +333,8 @@ public class FileManager {
 						DIR_SELECT_INTENT_AE);
 				aei.putExtra("explorer_title", dialogTitle);
 				return aei;
+			// If there's no preference or it's something we don't recognize,
+			// do nothing:
 			case NO_FILE_MANAGER:
 			default:
 				return null;
@@ -326,8 +351,11 @@ public class FileManager {
 	public String getSelectedFile(Intent data) {
 		if (data == null) return null;
 		switch (preferredFM) {
+			// Getting the file from OI File Manager is pretty simple:
 			case OI_FILE_MANAGER:
 				return data.getDataString();
+			// AndExplorer takes a bit more work, and it may technically not return
+			// anything useful:
 			case ANDEXPLORER:
 				Uri uri = data.getData();
 				if (uri != null)
@@ -338,6 +366,8 @@ public class FileManager {
 				    else return null;
 				}
 				else return null;
+			// If there's no preference or it's something we don't recognize,
+			// do nothing:
 			case NO_FILE_MANAGER:
 			default:
 				return null;
@@ -361,13 +391,29 @@ public class FileManager {
 	}
 	
 	/**
-	 * Determine whether or not the user has an active preference of preferred
-	 * file manager.
+	 * Determine whether or not the user has an active preference of file manager.
+	 * Note that if the user previously set a preference and that file manager is
+	 * subsequently uninstalled, this will automatically return false and the
+	 * user's preference will be lost; the FileManager class will revert to no
+	 * file manager having been selected. 
 	 * @return Returns true or false
 	 */
 	public boolean isFileManagerSelected() {
-		if (availableFMs == null) findAvailableFileManagers(); 
-		return preferredFM != NO_FILE_MANAGER;
+		// See getAvailableFileManagers() for why we refresh the list every time.
+		findAvailableFileManagers();
+		// There is a chance that the user set a preferred FM but then later
+		// uninstalled it.  Thus, we can't just rely on a simple check to see
+		// if the preferred FM isn't the "no file manager" selection.  So first
+		// we'll check to see if the preferred FM is actually available, *then*
+		// we'll make the check.
+		if (codeInAvailableList(preferredFM)) return preferredFM != NO_FILE_MANAGER;
+		// If we couldn't find the preferred FM in the available list, force
+		// the preference back to nothing selected and return false.  This will
+		// revert us back to the default behavior.
+		else {
+			setPreferredFileManager(NO_FILE_MANAGER);
+			return false;
+		}
 	}
 	
 	/**
@@ -389,6 +435,8 @@ public class FileManager {
 	 * recognized
 	 */
 	private String mapCodeToName(int code) {
+		// Simple enough:  Switch on code and return a string.  If it's a code
+		// we don't recognize, throw an exception:
 		switch (code) {
 			case NO_FILE_MANAGER:
 				return "No file manager selected";
@@ -407,6 +455,10 @@ public class FileManager {
 	 * @return The file manager's code, or NO_FILE_MANAGER if any error occurs
 	 */
 	private int mapNameToCode(String name) {
+		// This is the inverse of mapCodeToName(), but a bit more forgiving.
+		// Compare the name to the recognized strings and return the appropriate
+		// code.  If the name isn't recognize, default back to no file manager
+		// preference.
 		if (name.compareTo("No recognized file managers found") == 0)
 			return NO_FILE_MANAGER;
 		if (name.compareTo("No file manager selected") == 0)
@@ -426,9 +478,16 @@ public class FileManager {
 	 * @return True if the file manager is available, false otherwise
 	 */
 	private boolean codeInAvailableList(int code) {
+		// This is a bit of a kludge, but always return true if we happen to
+		// get passed in the "no file manager selected" code.  After all, no
+		// selection at all is technically a valid one.
+		if (code == NO_FILE_MANAGER) return true;
+		// Otherwise, step through the available list and return true if we can
+		// find the code.  I wish there were a more efficient way to do this, but
+		// fortunately our lists should be small.
 		if (availableFMs != null & availableFMs.length > 0) {
 			for (int i = 0; i < availableFMs.length; i++)
-				if (code == availableFMs[i])  return true;
+				if (code == availableFMs[i]) return true;
 		}
 		return false;
 	}

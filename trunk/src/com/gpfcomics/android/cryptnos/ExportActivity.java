@@ -27,7 +27,9 @@
  * to the root of the SD card.  This should be abstracted enough that other
  * file managers can be slipped in if their intents are known.
  * 
- * UPDATES FOR 1.2.0:  Added Help option menu
+ * UPDATES FOR 1.2.0:  Added Help option menu.  Changed OI File Manager code
+ * to use the more generic FileManager class so we can let the user decide what
+ * file manager to use.
  * 
  * This program is Copyright 2010, Jeffrey T. Darlington.
  * E-mail:  android_support@cryptnos.com
@@ -116,13 +118,6 @@ public class ExportActivity extends Activity implements
 	/** A constant indicating the Help option menu item. */
 	public static final int OPTMENU_HELP = Menu.FIRST;
 
-	/** The Intent action for OI File Manager */
-	private static final String DIR_SELECT_INTENT_OI = "org.openintents.action.PICK_DIRECTORY";
-	/* The Intent action for OI File Manager */
-	//private static final String DIR_SELECT_INTENT_AND = "android.intent.action.PICK";
-	/** Code used for selecting a file using OI File Manager */
-	private static final int REQUEST_SELECT_DIR_OI = 5;
-	
 	/** A reference to our top-level application */
 	private CryptnosApplication theApp = null;
 	/** A handy reference to the ProgressDialog used when loading encrypted
@@ -186,8 +181,6 @@ public class ExportActivity extends Activity implements
         // instructions label contains the old text by default, so update it
         // to reflect the instructions including this button.
         if (theApp.getFileManager().isFileManagerSelected()) {
-//        if (CryptnosApplication.isIntentAvailable(this, DIR_SELECT_INTENT_OI)/* ||
-//        		CryptnosApplication.isIntentAvailable(this, DIR_SELECT_INTENT_AND)*/) {
         	btnPickPath.setText(getResources().getString(R.string.export_file_pick_path_button_label) +
         			" " + exportRootPath.getAbsolutePath());
         	labelInstructions.setText(R.string.export_file_label_pick_path);
@@ -284,44 +277,22 @@ public class ExportActivity extends Activity implements
         /** What to do when the Selected Path button is clicked */
         btnPickPath.setOnClickListener(new View.OnClickListener() {
 			public void onClick(View v) {
+				// This should only get called if we have a valid file manager
+				// selected, but were should double-check that this is valid
+				// anyway:
 				FileManager fm = theApp.getFileManager();
 				if (fm.isFileManagerSelected()) {
+					// Use the FileManager class to generate our select folder
+					// intent, then fire it off:
 					Intent intent = fm.generateSelectFolderIntent(exportRootPath.toString(),
 							getResources().getString(R.string.export_file_dialog_title),
 							getResources().getString(R.string.import_file_dialog_button));
 					startActivityForResult(intent,
 							FileManager.INTENT_REQUEST_SELECT_FOLDER);
+				// If for some reason no file manager was selected, complain:
 				} else Toast.makeText(v.getContext(),
 						R.string.error_no_external_file_manager,
 						Toast.LENGTH_LONG).show();
-				
-//				// Double-check to make sure the OI File Manager intent is
-//				// still available.  This will also let us add support for
-//				// other file managers later if we want.
-//				if (CryptnosApplication.isIntentAvailable(v.getContext(),
-//						DIR_SELECT_INTENT_OI)/* ||
-//						CryptnosApplication.isIntentAvailable(v.getContext(),
-//								DIR_SELECT_INTENT_AND)*/) {
-//					// This should be pretty simple.  Create an intent in the
-//					// OI File Manager format and ask it to find a file for
-//					// us:
-//					Intent intent = null;
-//					if (CryptnosApplication.isIntentAvailable(v.getContext(),
-//						DIR_SELECT_INTENT_OI))
-//						intent = new Intent(DIR_SELECT_INTENT_OI);
-//					//else intent = new Intent(DIR_SELECT_INTENT_AND);
-//					intent.setData(Uri.parse("file://" +
-//							exportRootPath.toString()));
-//					intent.putExtra("org.openintents.extra.TITLE",
-//							getResources().getString(R.string.export_file_dialog_title));
-//					intent.putExtra("org.openintents.extra.BUTTON_TEXT",
-//							getResources().getString(R.string.import_file_dialog_button));
-//					startActivityForResult(intent, REQUEST_SELECT_DIR_OI);
-//				// If we don't have a suitable intent available, throw an
-//				// error:
-//				} else Toast.makeText(v.getContext(),
-//						R.string.error_no_external_file_manager,
-//						Toast.LENGTH_LONG).show();
 			}
 		});
         
@@ -336,14 +307,8 @@ public class ExportActivity extends Activity implements
     	String filename = null;
     	// Look at the request code:
     	switch (requestCode) {
-    		// If we launched OI File manager to get a file:
-//	    	case REQUEST_SELECT_DIR_OI:
-//	    		// Make sure we got an OK result and we have actual useful
-//	    		// data:
-//	    		if (resultCode == RESULT_OK && data != null)
-//	    			// Get the file name from the resulting data:
-//                    filename = data.getDataString();
-//	    		break;
+    		// If we're returning from a folder selection, try to get the folder
+    		// name:
 	    	case FileManager.INTENT_REQUEST_SELECT_FOLDER:
 	    		if (resultCode == RESULT_OK && data != null)
                     filename = theApp.getFileManager().getSelectedFolder(data);

@@ -18,6 +18,9 @@
  * UPDATES FOR 1.2.0:  Added Help option menu.  Added prompt for character
  * type drop-down.
  * 
+ * UPDATES FOR 1.2.1:  Minor UI enhancements to make things prettier and (hopefully)
+ * easier to use.
+ * 
  * This program is Copyright 2010, Jeffrey T. Darlington.
  * E-mail:  android_support@cryptnos.com
  * Web:     http://www.cryptnos.com/
@@ -45,6 +48,9 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.View.OnFocusChangeListener;
+import android.widget.AdapterView;
+import android.widget.AdapterView.OnItemSelectedListener;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Spinner;
@@ -61,7 +67,7 @@ import android.widget.Toast;
  * parameters are saved to the database and the generated password is
  * displayed to the user.
  * @author Jeffrey T. Darlington
- * @version 1.0
+ * @version 1.2.1
  * @since 1.0
  */
 public class EditParametersActivity extends Activity {
@@ -91,8 +97,8 @@ public class EditParametersActivity extends Activity {
 	/** The Spinner view that lets the user choose what types of characters
 	 *  to include or exclude from the final password. */
 	private Spinner charTypesSpinner = null;
-	/** The EditText view containing length restriction value. */
-	private EditText txtCharLimit = null;
+	/** The Spinner containing length restriction value. */
+	private Spinner spinCharLimit = null;
 	/** The EditText view that will eventually contain the final password. */
 	private EditText txtOutput = null;
 	/** The Button that actually generates the password and saves it to
@@ -130,15 +136,16 @@ public class EditParametersActivity extends Activity {
         hashSpinner = (Spinner)findViewById(R.id.spinHashes);
         txtIterations = (EditText)findViewById(R.id.txtIterations);
         charTypesSpinner = (Spinner)findViewById(R.id.spinCharTypes);
-        txtCharLimit = (EditText)findViewById(R.id.txtCharLimit);
+        spinCharLimit = (Spinner)findViewById(R.id.spinCharLimit);
         txtOutput = (EditText)findViewById(R.id.txtOutput);
         btnGenerate = (Button)findViewById(R.id.btnGenerate);
         
-        // Set the prompt for the top of the hash and character type drop-downs
-        // when they display.  There's probably a way to set this in the layout
-        // XML, but I didn't bother to look it up.
+        // Set the prompt for the top of the drop-downs when they display.
+        // There's probably a way to set this in the layout XML, but I didn't
+        // bother to look it up.
         hashSpinner.setPromptId(R.string.edit_hash_prompt);
         charTypesSpinner.setPromptId(R.string.edit_chartypes_prompt);
+        spinCharLimit.setPromptId(R.string.edit_charlimit_prompt);
         
         // Determine what mode we're being called in.  This activity can
         // be used to create a new set of parameters or to edit an existing
@@ -180,16 +187,19 @@ public class EditParametersActivity extends Activity {
 	        						c.getString(1),
 	        						c.getString(2));
 	        				// Populate the GUI elements with the old data.
-	        				// Note that the hash spinner and character limit
-	        				// need special treatment, and that the site box
-	        				// is disabled from editing.
+	        				// Note that the spinners need special treatment, and
+	        				// that the site box is disabled from editing.
 	        				txtSite.setText(params.getSite());
 	        				txtSite.setEnabled(false);
 	        		        hashSpinner.setSelection(getHashPosition(params.getHash()));
 	        		        txtIterations.setText(Integer.toString(params.getIterations()));
 	        		        charTypesSpinner.setSelection(params.getCharTypes());
-	        		        if (params.getCharLimit() != 0)
-	        		        	txtCharLimit.setText(Integer.toString(params.getCharLimit()));
+	        		        rebuildCharLimitSpinner(params.getHash());
+	        		        if (params.getCharLimit() < 0 ||
+	        		        		params.getCharLimit() > theApp.getEncodedHashLength(params.getHash()))
+	        		        	spinCharLimit.setSelection(0, true);
+	        		        else
+	        		        	spinCharLimit.setSelection(params.getCharLimit(), true);
 	        		        lastSite = params.getSite();
         				}
         				// If we didn't get exactly one row, throw an error:
@@ -230,9 +240,12 @@ public class EditParametersActivity extends Activity {
 	        	this.setTitle(R.string.new_title);
 	            // If we're generating a new passphrase, set some sane
 	        	// defaults.  For hashes, make the default SHA-1.  For the
-	        	// number of iterations, one is usually sufficient.
+	        	// number of iterations, one is usually sufficient.  For
+	        	// the character limit, set it to unrestricted.
 	            hashSpinner.setSelection(1);
 	            txtIterations.setText("1");
+	            rebuildCharLimitSpinner("SHA-1");
+	            spinCharLimit.setSelection(0, true);
         }
         
         btnGenerate.setOnClickListener(new View.OnClickListener() {
@@ -243,8 +256,8 @@ public class EditParametersActivity extends Activity {
 				String passphrase = txtPassphrase.getText().toString();
 				String hash = (String)hashSpinner.getSelectedItem();
 				int charType = charTypesSpinner.getSelectedItemPosition();
+				int charLimit = spinCharLimit.getSelectedItemPosition();
 				int iterations = 1;
-				int charLimit = 0;
 				// If we were called in "new" mode and the site token has
 				// changed since the last time we hit Generate, assume that
 				// we're about to add a new site to the database, rather than
@@ -278,21 +291,7 @@ public class EditParametersActivity extends Activity {
 					String messages = new String();
 					try
 					{
-						// The character limit and iterations boxes take a bit
-						// more work.  *SUPPOSEDLY* the restrictions we place in
-						// the layout on the respective views should prohibit
-						// non-numeric input, but we won't take that for granted.
-						// Here we'll do some sanity checking to get things
-						// moving.
-						//
-						// Start off by checking the character limit.  It's OK to
-						// leave this blank; in that case, we'll default to zero,
-						// which means no limit will be applied.  But if the limit
-						// is there, try to parse it:
-						if (txtCharLimit.getText().toString().length() > 0)
-							charLimit =
-								Integer.parseInt(txtCharLimit.getText().toString());
-						// Now try to parse the iteration box value:
+						// Try to parse the iteration box value:
 						iterations =
 							Integer.parseInt(txtIterations.getText().toString());
 						// Proceed only if the two values are legal:
@@ -415,6 +414,7 @@ public class EditParametersActivity extends Activity {
 								Toast.makeText(v.getContext(),
 										R.string.error_bad_iterations,
 										Toast.LENGTH_LONG).show();
+								txtIterations.setText(String.valueOf(1));
 							// In testing, I found iterations of 500 or more
 							// started showing visible pauses on both the
 							// emulator and my personal Motorola Droid, which
@@ -426,11 +426,15 @@ public class EditParametersActivity extends Activity {
 								Toast.makeText(v.getContext(),
 										R.string.error_excessive_hashing,
 										Toast.LENGTH_LONG).show();
+								txtIterations.setText(String.valueOf(theApp.HASH_ITERATION_WARNING_LIMIT));
 							}
 						// If the string was empty, that's invalid:
-						} else Toast.makeText(v.getContext(),
+						} else {
+							Toast.makeText(v.getContext(),
 								R.string.error_bad_iterations,
 								Toast.LENGTH_LONG).show();
+							txtIterations.setText(String.valueOf(1));
+						}
 					}
 					// The most likely situation where this will blow up is
 					// if the integer parsing fails.  In theory, this should
@@ -441,6 +445,7 @@ public class EditParametersActivity extends Activity {
 						Toast.makeText(v.getContext(),
 								R.string.error_bad_iterations,
 								Toast.LENGTH_LONG).show();
+						txtIterations.setText(String.valueOf(1));
 					}
 				}
 			}
@@ -472,6 +477,20 @@ public class EditParametersActivity extends Activity {
 					// For now, ignore any exceptions:
 					catch (Exception e) { }
 				}
+			}
+        });
+        
+        hashSpinner.setOnItemSelectedListener(new OnItemSelectedListener() {
+			public void onItemSelected(AdapterView<?> parent, View v,
+					int position, long id) {
+				// When the hash spinner changes, get the string value of the
+				// new selection and feed that to the character limit spinner
+				// builder to rebuild the spinner's acceptable values:
+				String hash = (String)hashSpinner.getSelectedItem();
+				rebuildCharLimitSpinner(hash);
+			}
+			public void onNothingSelected(AdapterView<?> arg0) {
+				// What should we do here?  For now, nothing.
 			}
         });
  
@@ -516,6 +535,47 @@ public class EditParametersActivity extends Activity {
     		if (hash.compareTo(hashes[i]) == 0)
     			return i;
     	return 1;
+    }
+    
+    /**
+     * Rebuild the items in the character limit spinner based on the hash algorithm
+     * name specified
+     * @param hash The name of the new hash algorithm
+     */
+    private void rebuildCharLimitSpinner(String hash) {
+    	// Get the current position of the spinner, if any:
+    	int currentPosition = spinCharLimit.getSelectedItemPosition();
+    	// Get the length of the Base64-encoded result of the hash:
+    	int hashLength = theApp.getEncodedHashLength(hash);
+    	// As long as the above did not generate an error:
+    	if (hashLength != -1) {
+    		// Create a String array just big enough to hold all the hash
+    		// length values, plus one more:
+    		String[] charLimits = new String[hashLength + 1];
+    		// Set the first item in the list to the "None" value:
+    		charLimits[0] = getResources().getString(R.string.edit_charlimit_none);
+    		// Now populate the rest of the list with the numeric values between
+    		// one and the total hash length:
+    		for (int i = 1; i <= hashLength; i++)
+    			charLimits[i] = String.valueOf(i);
+    		// Create a adapter to work with this new array and assign it to the
+    		// spinner:
+    		ArrayAdapter<String> adapter = new ArrayAdapter<String>(this,
+    				android.R.layout.simple_spinner_item, charLimits);
+    		adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+    		spinCharLimit.setAdapter(adapter);
+    		// If the old position of the spinner is outside the bounds of the new
+    		// one, set the position to zero, or "None".  Anything less than zero
+    		// isn't valid anyway, and anything above our current hash length is
+    		// the same thing as saying no limit at all.
+    		if (currentPosition < 0 || currentPosition > hashLength)
+    			spinCharLimit.setSelection(0, true);
+    		// Otherwise, just restore the old position:
+    		else spinCharLimit.setSelection(currentPosition, true);
+    	// If anything blew up, complain:
+    	} else Toast.makeText(getBaseContext(),
+				"ERROR: Invalid hash algorithm name",
+				Toast.LENGTH_LONG).show();
     }
 
 }

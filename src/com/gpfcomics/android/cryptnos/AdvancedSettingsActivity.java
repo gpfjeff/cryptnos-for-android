@@ -10,7 +10,9 @@
  * This activity allows the user to tweak some of the more advanced settings within
  * Cryptnos, such as which text encoding to use.  Added in Cryptnos 1.2.0.
  * 
- * This program is Copyright 2010, Jeffrey T. Darlington.
+ * UPDATES FOR 1.2.1:  Minor UI enhancements
+ * 
+ * This program is Copyright 2011, Jeffrey T. Darlington.
  * E-mail:  android_support@cryptnos.com
  * Web:     http://www.cryptnos.com/
  * 
@@ -138,6 +140,7 @@ public class AdvancedSettingsActivity extends Activity {
         }
         ArrayAdapter<String> adapter = new ArrayAdapter<String>(this,
         		android.R.layout.simple_spinner_item, charsets);
+		adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         spinEncodings.setAdapter(adapter);
         spinEncodings.setSelection(lastEncodingSelection);
         spinEncodings.setPrompt(getResources().getString(R.string.settings_encoding_prompt));
@@ -194,6 +197,7 @@ public class AdvancedSettingsActivity extends Activity {
         	// Set up the adapter with the spinner:
             ArrayAdapter<String> adapter2 = new ArrayAdapter<String>(this,
             		android.R.layout.simple_spinner_item, fmList);
+    		adapter2.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
             spinFileManagers.setAdapter(adapter2);
             // Set the current selection and prompt:
             spinFileManagers.setSelection(lastFileManagerSelection);

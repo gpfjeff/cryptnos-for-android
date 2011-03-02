@@ -62,11 +62,19 @@
 */
 package com.gpfcomics.android.cryptnos;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.UnsupportedEncodingException;
 import java.security.MessageDigest;
 import java.util.ArrayList;
+import java.util.Hashtable;
 import java.util.List;
+
+import org.bouncycastle.crypto.Digest;
+import org.bouncycastle.crypto.digests.RIPEMD160Digest;
+import org.bouncycastle.crypto.digests.TigerDigest;
+import org.bouncycastle.crypto.digests.WhirlpoolDigest;
+import org.bouncycastle.util.encoders.Base64;
 
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -226,6 +234,8 @@ public class CryptnosApplication extends Application {
 	 *  best we can do.*/
 	private static final String SALTIER_SALT = "KnVcUpHHAB5K9HW2Vbq8D9CAk2P7sGiwhQLPeF6wI3UVSCTpJioStD4NFcrR1";
 
+	private static Hashtable<String, Integer> hashLengths = null;
+	
 	@Override
 	public void onCreate()
 	{
@@ -267,6 +277,60 @@ public class CryptnosApplication extends Application {
 		// file manager if at all possible:
 		int preferredFM = prefs.getInt(PREFS_FILE_MANAGER, FileManager.NO_FILE_MANAGER);
 		fileManager = new FileManager(this, preferredFM);
+		// Now build our hash table of hash algorithms to lengths.  This is a bit
+		// convoluted and I wish it were simpler, but here goes:
+		try {
+			// Get the list of hashes from the string resources:
+			String[] hashes = getResources().getStringArray(R.array.hashList);
+			// Declare our hash table and initialize its size to the same size
+			// as the string array of hash names:
+			hashLengths = new Hashtable<String, Integer>(hashes.length);
+			// We're using two different hashing engines, the internal one and the
+			// Bouncy Castle one, so we'll need a reference to both:
+			MessageDigest internalHasher = null;
+			Digest bcHasher = null;
+			// Declare integers to hold the raw byte length and the Base64-encoded
+			// length of each digest:
+			int byteLength = 0;
+			int b64Length = 0;
+			// Loop through the hash name list:
+			for (int i = 0; i < hashes.length; i++) {
+				// If we're using an internal hasher, get the a copy of the
+				// engine and find out its byte length:
+				if (hashes[i].compareTo("MD5") == 0 ||
+					hashes[i].compareTo("SHA-1") == 0 ||
+					hashes[i].compareTo("SHA-256") == 0 ||
+					hashes[i].compareTo("SHA-384") == 0 ||
+					hashes[i].compareTo("SHA-512") == 0) {
+					internalHasher = MessageDigest.getInstance(hashes[i]);
+					byteLength = internalHasher.getDigestLength();
+				}
+				// For the Bouncy Castle engines, we'll need to declare each
+				// individual object and then get its byte length:
+				else if (hashes[i].compareTo("RIPEMD-160") == 0) {
+					bcHasher = new RIPEMD160Digest();
+					byteLength = bcHasher.getDigestSize();
+				}
+				else if (hashes[i].compareTo("Tiger") == 0) {
+					bcHasher = new TigerDigest();
+					byteLength = bcHasher.getDigestSize();
+				}
+				else if (hashes[i].compareTo("Whirlpool") == 0) {
+					bcHasher = new WhirlpoolDigest();
+					byteLength = bcHasher.getDigestSize();
+				}
+				// Now calculate the Base64-encoded length.  This formula comes
+				// from the Base64 Wikipedia article:
+				// https://secure.wikimedia.org/wikipedia/en/wiki/Base64
+				b64Length = (byteLength + 2 - ((byteLength + 2) % 3)) / 3 * 4;
+				// Now store the hash name and length into the hash table:
+				hashLengths.put(hashes[i], new Integer(b64Length));
+			}
+		// If anything blows up, set the hash table to null, which we'll catch
+		// as an error later:
+		} catch (Exception e1) {
+			hashLengths = null;
+		}
 	}
 	
 	@Override
@@ -491,10 +555,33 @@ public class CryptnosApplication extends Application {
 		}
 	}
 	
+	/**
+	 * Determine whether or not to show the Advanced Settings warning dialog.
+	 * @return True if the dialog should be shown, false otherwise
+	 */
 	public boolean showAdvancedSettingsWarning() { return showAdvancedSettingsWarning; }
 	
+	/**
+	 * Toggle the setting to show the Advanced Settings warning dialog.  Calling
+	 * this method always turns this flag off, so showAdvancedSettingsWarning()
+	 * will always return false after this.
+	 */
 	public void toggleShowAdvancedSettingsWarning() {
 		showAdvancedSettingsWarning = false;
+	}
+	
+	/**
+	 * Get the Base64-encoded length of the specified cryptographic hash
+	 * @param hash The name string of the hash algorithm
+	 * @return The length of the hash digest Base64-encoded, or -1 if an error
+	 * occurs.
+	 */
+	public int getEncodedHashLength(String hash) {
+		if (hashLengths != null) {
+			Integer i = hashLengths.get(hash);
+			if (i != null) return i.intValue();
+			else return -1;
+		} else return -1;
 	}
 	
 	/**
@@ -761,5 +848,5 @@ public class CryptnosApplication extends Application {
                         PackageManager.MATCH_DEFAULT_ONLY);
         return list.size() > 0;
     }
-
+    
 }

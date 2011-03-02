@@ -32,8 +32,11 @@
  * If the current running version of Cryptnos is less than the version from the
  * preferences file, then the user must have "downgraded".  We won't officially
  * support this scenario and this will throw an error.
+ *
+ * UPDATES FOR 1.2.1:  Added 1.2.1 version code.  This is a minor update, so it
+ * probably isn't even needed.  Still, for completeness, we've added it in.
  * 
- * This program is Copyright 2010, Jeffrey T. Darlington.
+ * This program is Copyright 2011, Jeffrey T. Darlington.
  * E-mail:  android_support@cryptnos.com
  * Web:     http://www.cryptnos.com/
  * 
@@ -64,7 +67,7 @@ import android.widget.Toast;
  * changed or "upgraded" if the currently running version of Cryptnos is different
  * than the last run version.
  * @author Jeffrey T. Darlington
- * @version 1.2
+ * @version 1.2.1
  * @since 1.2
  */
 public class UpgradeManager {
@@ -90,6 +93,10 @@ public class UpgradeManager {
 	 *  we introduced the UpgradeManager and UTF-8 as the default text
 	 *  encoding. */
 	private static final int VERSION_1_2_0 = 3;
+	
+	/** A constant representing the integer version of Cryptnos 1.2.1, which
+	    mostly consists of minor UI enhancements. */
+	private static final int VERSION_1_2_1 = 4;
 	
 	/** A regular expression Pattern for matching the UTF-8 character
 	 *  encoding string.  This pattern is case insensitive. */

@@ -23,8 +23,10 @@
  * user to delete all the parameters in the database in one action.
  * 
  * UPDATES FOR 1.2.0:  Added Help option menu
+ *
+ * UPDATES FOR 1.2.1:  Minor code changes to support new UI enhancements
  * 
- * This program is Copyright 2010, Jeffrey T. Darlington.
+ * This program is Copyright 2011, Jeffrey T. Darlington.
  * E-mail:  android_support@cryptnos.com
  * Web:     http://www.cryptnos.com/
  * 
@@ -371,6 +373,7 @@ import android.widget.AdapterView.AdapterContextMenuInfo;
 		// be at the top, but then I thought it might be confusing for the
 		// context menu to change all the time.  Thus, the order is hard-
 		// coded to what you see here.
+		menu.setHeaderTitle(R.string.sitelist_contextmenu_header);
         menu.add(0, MENU_GENERATE, 0, R.string.menu_generate);
         menu.add(0, MENU_EDIT, 1, R.string.menu_edit);
         menu.add(0, MENU_DELETE, 2, R.string.menu_delete);
@@ -387,8 +390,9 @@ import android.widget.AdapterView.AdapterContextMenuInfo;
     	// this will totally break if the layout ever changes dramatically.
 		AdapterContextMenuInfo info =
 			(AdapterContextMenuInfo)item.getMenuInfo();
-		LinearLayout ll = (LinearLayout)info.targetView;
-		TextView tv = (TextView)(ll.getChildAt(0));
+		//LinearLayout ll = (LinearLayout)info.targetView;
+		//TextView tv = (TextView)(ll.getChildAt(0));
+		TextView tv = (TextView)info.targetView;
 		selectedSite = tv.getText().toString();
 		// Now determine what to do depending on which item was selected:
 		switch(item.getItemId()) {

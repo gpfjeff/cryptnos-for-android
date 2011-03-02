@@ -34,7 +34,8 @@
 				android:id="@+id/txtOutput"
 				android:ellipsize="none"
 				android:saveEnabled="false"
-				android:hint="@string/edit_output_hint"></EditText>
+				android:hint="@string/edit_output_hint"
+				android:inputType="none"></EditText>
 			<Button android:layout_width="fill_parent"
 				android:layout_height="wrap_content"
 				android:id="@+id/btnGenerate"

@@ -44,6 +44,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.LinearLayout;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -80,6 +81,9 @@ public class AdvancedSettingsActivity extends Activity {
 	/** A Text View displayed if no file managers were found: */
 	private TextView labelNoFileManagersAvailable = null;
 	
+	/** A reference to the linear layout that contains our UI elements */
+	private LinearLayout layout = null;
+
 	/** A reference back to the main application */
 	private CryptnosApplication theApp = null;
 	
@@ -105,6 +109,9 @@ public class AdvancedSettingsActivity extends Activity {
         // Get references to the app and preferences:
         theApp = (CryptnosApplication)getApplication();
         prefs = theApp.getPrefs();
+        
+        // Get a reference to our layout:
+        layout = (LinearLayout)findViewById(R.id.layoutSettings);
         
         // Get the current system default text encoding.  We'll use this to display
         // the default in a label later.
@@ -176,7 +183,8 @@ public class AdvancedSettingsActivity extends Activity {
         int[] availableFMs = fm.getAvailableFileManagers();
         if (availableFMs != null && availableFMs.length > 0) {
         	// Hide the "no file managers found" label:
-        	labelNoFileManagersAvailable.setVisibility(View.INVISIBLE);
+        	//labelNoFileManagersAvailable.setVisibility(View.INVISIBLE);
+        	layout.removeView(labelNoFileManagersAvailable);
         	// Get the list of file manager names, as well as the currently
         	// selected one by name:
         	String[] fmList = fm.getAvailableFileManagerNames();
@@ -204,8 +212,10 @@ public class AdvancedSettingsActivity extends Activity {
             spinFileManagers.setPrompt(getResources().getString(R.string.settings_file_manager_prompt));
 
         } else {
-        	spinFileManagers.setVisibility(View.INVISIBLE);
-        	labelFileManagerPreference.setVisibility(View.INVISIBLE);
+        	//spinFileManagers.setVisibility(View.INVISIBLE);
+        	//labelFileManagerPreference.setVisibility(View.INVISIBLE);
+        	layout.removeView(spinFileManagers);
+        	layout.removeView(labelFileManagerPreference);
         	labelNoFileManagersAvailable.setText(labelNoFileManagersAvailable.getText().toString() +
         			fm.getRecognizedFileManagerNames());
         }

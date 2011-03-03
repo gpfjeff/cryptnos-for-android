@@ -60,7 +60,6 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ContextMenu.ContextMenuInfo;
-import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.SimpleAdapter;
 import android.widget.TextView;
@@ -76,7 +75,7 @@ import android.widget.AdapterView.AdapterContextMenuInfo;
  * will also bring up a context menu that will allow any of the subsequent
  * actions to be selected.
  * @author Jeffrey T. Darlington
- * @version 1.1
+ * @version 1.2.1
  * @since 1.0
  */public class SiteListActivity extends ListActivity implements
  		SiteListListener {
@@ -381,17 +380,11 @@ import android.widget.AdapterView.AdapterContextMenuInfo;
     
     @Override
 	public boolean onContextItemSelected(MenuItem item) {
-    	// Get the selected site token from the menu item selected.  This is
-    	// a bit more complicated than I anticipated, but here we go.  Get the
+    	// Get the selected site token from the menu item selected.  Get the
     	// menu info from the menu item, then get the target View from there.
-    	// That gives us the top level View, which in this case is the
-    	// LinearLayout from sitelist_row.xml.  Next, get the TextView under
-    	// the layout.  From the text view, extract the text value.  Note that
-    	// this will totally break if the layout ever changes dramatically.
+    	// From the text view, extract the text value.
 		AdapterContextMenuInfo info =
 			(AdapterContextMenuInfo)item.getMenuInfo();
-		//LinearLayout ll = (LinearLayout)info.targetView;
-		//TextView tv = (TextView)(ll.getChildAt(0));
 		TextView tv = (TextView)info.targetView;
 		selectedSite = tv.getText().toString();
 		// Now determine what to do depending on which item was selected:

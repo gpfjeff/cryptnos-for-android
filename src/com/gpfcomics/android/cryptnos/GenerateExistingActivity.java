@@ -67,6 +67,8 @@ public class GenerateExistingActivity extends Activity {
 
 	/** The EditText view containing the user's passphrase. */
 	private EditText txtPassphrase = null;
+	/** The TextView that will display the site name */
+	private TextView lblSiteName = null;
 	/** The TextView that will display the other parameters in a read-only
 	 *  fashion. */
 	private TextView lblOtherParams = null;
@@ -97,6 +99,7 @@ public class GenerateExistingActivity extends Activity {
         dbHelper = theApp.getDBHelper();
         // Get handier references to our various input/output controls:
         txtPassphrase = (EditText)findViewById(R.id.txtPassphrase);
+        lblSiteName = (TextView)findViewById(R.id.labelSiteName);
         lblOtherParams = (TextView)findViewById(R.id.labelOtherParams);
         txtOutput = (EditText)findViewById(R.id.txtOutput);
         btnGenerate = (Button)findViewById(R.id.btnGenerate);
@@ -130,10 +133,11 @@ public class GenerateExistingActivity extends Activity {
         				// parameters other than the passphrase.  All of this
         				// is essentially read-only info in this case, so
         				// it's purely informative.
+        				lblSiteName.setText(params.getSite());
         				String nl = System.getProperty("line.separator");
         				lblOtherParams.setText(
-        					getResources().getString(R.string.gen_exist_site_prompt) + " " +
-        					params.getSite() + nl +
+        					//getResources().getString(R.string.gen_exist_site_prompt) + " " +
+        					//params.getSite() + nl +
         					getResources().getString(R.string.gen_exist_hash_prompt) + " " +
         					params.getHash() + nl +
         					getResources().getString(R.string.gen_exist_iterations_prompt) + " " +

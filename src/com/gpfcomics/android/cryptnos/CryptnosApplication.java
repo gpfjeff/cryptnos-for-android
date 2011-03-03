@@ -44,7 +44,11 @@
  * for UpgradeManager and Advanced Settings activity.  Added app-wide FileManager
  * object.
  * 
- * This program is Copyright 2010, Jeffrey T. Darlington.
+ * UPDATES FOR 1.2.1:  Added the hash length hash table and method to support the
+ * new character length restriction Spinner in the New/Edit Parameters activity.
+ * Added a few missing comments.
+ * 
+ * This program is Copyright 2011, Jeffrey T. Darlington.
  * E-mail:  android_support@cryptnos.com
  * Web:     http://www.cryptnos.com/
  * 
@@ -62,7 +66,6 @@
 */
 package com.gpfcomics.android.cryptnos;
 
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.UnsupportedEncodingException;
 import java.security.MessageDigest;
@@ -74,7 +77,6 @@ import org.bouncycastle.crypto.Digest;
 import org.bouncycastle.crypto.digests.RIPEMD160Digest;
 import org.bouncycastle.crypto.digests.TigerDigest;
 import org.bouncycastle.crypto.digests.WhirlpoolDigest;
-import org.bouncycastle.util.encoders.Base64;
 
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -115,7 +117,7 @@ import android.widget.Toast;
  * mark the list as "dirty", forcing it to be reloaded the next time it is
  * requested.
  * @author Jeffrey T. Darlington
- * @version 1.1
+ * @version 1.2.1
  * @since 1.0
  */
 public class CryptnosApplication extends Application {
@@ -233,7 +235,13 @@ public class CryptnosApplication extends Application {
 	 *  itself, PARAMETER_SALT will *NOT* be unique per device, but that's the
 	 *  best we can do.*/
 	private static final String SALTIER_SALT = "KnVcUpHHAB5K9HW2Vbq8D9CAk2P7sGiwhQLPeF6wI3UVSCTpJioStD4NFcrR1";
-
+	/** This Hashtable contains a mapping of hash algorithm names to the length
+	 *  of their Base64-encoded digest strings.  This is used primarily by the
+	 *  New/Edit Parameters activity, which now uses a Spinner for character length
+	 *  restrictions.  When a new hash algorithm is selected, we'll query this hash
+	 *  table to find out what the maximum number of characters should be in the
+	 *  Spinner.  We'll populate and store this once so the list can be queried as
+	 *  many times as needed.*/
 	private static Hashtable<String, Integer> hashLengths = null;
 	
 	@Override
@@ -277,8 +285,7 @@ public class CryptnosApplication extends Application {
 		// file manager if at all possible:
 		int preferredFM = prefs.getInt(PREFS_FILE_MANAGER, FileManager.NO_FILE_MANAGER);
 		fileManager = new FileManager(this, preferredFM);
-		// Now build our hash table of hash algorithms to lengths.  This is a bit
-		// convoluted and I wish it were simpler, but here goes:
+		// Now build our hash table of hash algorithms to lengths:
 		try {
 			// Get the list of hashes from the string resources:
 			String[] hashes = getResources().getStringArray(R.array.hashList);

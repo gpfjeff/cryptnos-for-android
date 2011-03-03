@@ -53,7 +53,7 @@ import android.widget.AdapterView.OnItemSelectedListener;
  * This activity allows the user to tweak some of the more advanced settings within
  * Cryptnos, such as which text encoding to use.
  * @author Jeffrey T. Darlington
- * @version 1.2
+ * @version 1.2.1
  * @since 1.2
  */
 public class AdvancedSettingsActivity extends Activity {
@@ -142,7 +142,7 @@ public class AdvancedSettingsActivity extends Activity {
         		android.R.layout.simple_spinner_item, charsets);
 		adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         spinEncodings.setAdapter(adapter);
-        spinEncodings.setSelection(lastEncodingSelection);
+        spinEncodings.setSelection(lastEncodingSelection, true);
         spinEncodings.setPrompt(getResources().getString(R.string.settings_encoding_prompt));
 
         // Set up the encoding spinner's selection listener.  If the user selects
@@ -200,7 +200,7 @@ public class AdvancedSettingsActivity extends Activity {
     		adapter2.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
             spinFileManagers.setAdapter(adapter2);
             // Set the current selection and prompt:
-            spinFileManagers.setSelection(lastFileManagerSelection);
+            spinFileManagers.setSelection(lastFileManagerSelection, true);
             spinFileManagers.setPrompt(getResources().getString(R.string.settings_file_manager_prompt));
 
         } else {
@@ -265,7 +265,7 @@ public class AdvancedSettingsActivity extends Activity {
     			adb.setOnCancelListener(new DialogInterface.OnCancelListener() {
 					public void onCancel(DialogInterface dialog) {
 						theActivity.dismissDialog(DIALOG_CONFIRM_ENCODING_CHANGE);
-						spinEncodings.setSelection(lastEncodingSelection);
+						spinEncodings.setSelection(lastEncodingSelection, true);
 					}
 				});
 				dialog = (Dialog)adb.create();

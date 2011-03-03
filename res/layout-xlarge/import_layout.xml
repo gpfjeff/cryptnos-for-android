@@ -4,15 +4,16 @@
     android:layout_width="fill_parent"
     android:layout_height="fill_parent">
 <ScrollView android:id="@+id/ScrollView01"
-	android:layout_width="wrap_content"
-	android:layout_height="wrap_content">
-	<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+	android:layout_width="fill_parent"
+	android:layout_height="fill_parent">
+	<LinearLayout
 	    android:orientation="vertical"
 	    android:layout_width="fill_parent"
 	    android:layout_height="fill_parent"
 	    android:id="@+id/layoutImport">
 			<TextView android:layout_width="wrap_content"
 				android:layout_height="wrap_content"
+				android:textSize="20sp"
 				android:id="@+id/labelImportFile"
 				android:text="@string/import_file_label_nofile"></TextView>
 			<Button android:layout_width="fill_parent"
@@ -25,6 +26,8 @@
 				android:id="@+id/spinImportFiles"></Spinner>
 			<TextView android:layout_width="wrap_content"
 				android:layout_height="wrap_content"
+				android:textSize="20sp"
+				android:paddingTop="10dp"
 				android:id="@+id/labelPassphraseImport"
 				android:text="@string/import_password_label"></TextView>
 			<EditText android:layout_width="fill_parent"
@@ -36,6 +39,8 @@
 				android:password="true"></EditText>
 			<TextView android:layout_width="wrap_content"
 				android:layout_height="wrap_content"
+				android:textSize="20sp"
+				android:paddingTop="10dp"
 				android:id="@+id/labelImportWarning"
 				android:text="@string/import_warning_label"></TextView>
 			<Button android:layout_width="fill_parent"

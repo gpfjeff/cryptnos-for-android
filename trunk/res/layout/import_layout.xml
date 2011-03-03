@@ -31,7 +31,7 @@
 				android:id="@+id/txtPassphraseImport"
 				android:ellipsize="none"
 				android:saveEnabled="false"
-				android:hint="@string/edit_password_hint"
+				android:hint="@string/export_password1_hint"
 				android:password="true"></EditText>
 			<TextView android:layout_width="wrap_content"
 				android:layout_height="wrap_content"

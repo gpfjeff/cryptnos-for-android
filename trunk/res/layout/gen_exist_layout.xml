@@ -12,7 +12,15 @@
     		android:layout_height="fill_parent">
 			<TextView android:layout_width="wrap_content"
 				android:layout_height="wrap_content"
+				android:id="@+id/labelSiteName"
+				android:textSize="20sp"
+		        android:textStyle="bold"
+		        android:paddingBottom="2dp"
+				android:text=""></TextView>
+			<TextView android:layout_width="wrap_content"
+				android:layout_height="wrap_content"
 				android:id="@+id/labelOtherParams"
+		        android:paddingBottom="5dp"
 				android:text=""></TextView>
 			<TextView android:layout_width="wrap_content"
 				android:layout_height="wrap_content"

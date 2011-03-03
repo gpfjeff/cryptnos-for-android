@@ -95,7 +95,9 @@ public class UpgradeManager {
 	private static final int VERSION_1_2_0 = 3;
 	
 	/** A constant representing the integer version of Cryptnos 1.2.1, which
-	    mostly consists of minor UI enhancements. */
+	    mostly consists of minor UI enhancements.  Since there are not any
+	    changes major enough to require upgrading, this constant may get
+	    removed later. */
 	private static final int VERSION_1_2_1 = 4;
 	
 	/** A regular expression Pattern for matching the UTF-8 character

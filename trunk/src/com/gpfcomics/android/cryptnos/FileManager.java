@@ -21,7 +21,9 @@
  * AndExplorer, as these are the only file managers that we know about with
  * published Intents.
  * 
- * This program is Copyright 2010, Jeffrey T. Darlington.
+ * UPDATES FOR 1.2.1:  Added ES File Explorer
+ * 
+ * This program is Copyright 2011, Jeffrey T. Darlington.
  * E-mail:  android_support@cryptnos.com
  * Web:     http://www.cryptnos.com/
  * 
@@ -55,11 +57,13 @@ import android.net.Uri;
  * provide sufficient abstraction to allow new file managers to be added over time
  * as new Intents are discovered.
  * @author Jeffrey T. Darlington
- * @version 1.2
+ * @version 1.2.1
  * @since 1.2
  */
 public class FileManager {
 
+	/* Public Constants *******************************************************/
+	
 	/** A constant used to represent the case where no file manager is currently
 	 *  selected.  This could be the user's preference, or it could be that no
 	 *  known file manager is currently available. */
@@ -73,6 +77,10 @@ public class FileManager {
 	 *  user's preferred file manager. */
 	public static final int ANDEXPLORER = 2;
 	
+	/** A constant used to represent that ES File Explorer is selected as the
+	 *  user's preferred file manager. */
+	public static final int ES_FILE_EXPLORER = 3;
+	
 	/** The return code expected when we call startActivityForResult() with our
 	 *  generated Intent to select a file. */
 	public static final int INTENT_REQUEST_SELECT_FILE = 4321;
@@ -81,11 +89,16 @@ public class FileManager {
 	 *  generated Intent to select a folder or directory. */
 	public static final int INTENT_REQUEST_SELECT_FOLDER = 4322;
 
+	/* Private Constants ********************************************************/
+	
 	/** The package name for OI File Manager */
 	private static final String PACKAGE_OI_FILE_MANAGER = "org.openintents.filemanager";
 	
 	/** The package name for AndExplorer */
 	private static final String PACKAGE_ANDEXPLORER = "lysesoft.andexplorer";
+	
+	/** The package name for ES File Explorer */
+	private static final String PACKAGE_ES_FILE_EXPLORER = "com.estrongs.android.pop";
 	
 	/** The select file Intent action for OI File Manager */
 	private static final String FILE_SELECT_INTENT_OI = "org.openintents.action.PICK_FILE";
@@ -96,8 +109,16 @@ public class FileManager {
 	/** The select file Intent action for AndExplorer */
 	private static final String FILE_SELECT_INTENT_AE = "vnd.android.cursor.dir/lysesoft.andexplorer.file";
 	
-	/** The select folder Intent action for OI AndExplorer */
+	/** The select folder Intent action for AndExplorer */
 	private static final String DIR_SELECT_INTENT_AE = "vnd.android.cursor.dir/lysesoft.andexplorer.directory";
+	
+	/** The select file Intent action for ES File Explorer */
+	private static final String FILE_SELECT_INTENT_ES = "com.estrongs.action.PICK_FILE";
+	
+	/** The select folder Intent action for ES File Explorer */
+	private static final String DIR_SELECT_INTENT_ES = "com.estrongs.action.PICK_DIRECTORY";
+	
+	/* Private Members **********************************************************/
 	
 	/** Internal reference for the main Cryptnos app */
 	private CryptnosApplication theApp = null;
@@ -164,6 +185,12 @@ public class FileManager {
 			fmList.add(new Integer(ANDEXPLORER));
 		}
 		catch (PackageManager.NameNotFoundException ex2) {}
+		// ES File Explorer:
+		try {
+			pm.getPackageInfo(PACKAGE_ES_FILE_EXPLORER, 0);
+			fmList.add(new Integer(ES_FILE_EXPLORER));
+		}
+		catch (PackageManager.NameNotFoundException ex3) {}
 		// Now check the ArrayList's size.  If we got anything at all, we found
 		// at least one of them.  Convert the ArrayList to a simple integer array:
 		if (fmList.size() > 0) {
@@ -261,7 +288,8 @@ public class FileManager {
 		// if the code is anything else, make sure it's in the list of available
 		// file managers before adding it.
 		if (code == NO_FILE_MANAGER ||
-				((code == OI_FILE_MANAGER || code == ANDEXPLORER)) &&
+				((code == OI_FILE_MANAGER || code == ANDEXPLORER ||
+						code == ES_FILE_EXPLORER)) &&
 				codeInAvailableList(code)) {
 			// Store the preference, first locally then in the shared preferences:
 			preferredFM = code;
@@ -304,6 +332,11 @@ public class FileManager {
 				aei.putExtra("explorer_title", dialogTitle);
 				aei.putExtra("browser_list_layout", "0");
 				return aei;
+			// ES File Explorer:
+			case ES_FILE_EXPLORER:
+				Intent esi = new Intent(FILE_SELECT_INTENT_ES);
+				esi.putExtra("com.estrongs.intent.extra.TITLE", buttonText);
+				return esi;
 			// If there's no preference or it's something we don't recognize,
 			// do nothing:
 			case NO_FILE_MANAGER:
@@ -333,6 +366,11 @@ public class FileManager {
 						DIR_SELECT_INTENT_AE);
 				aei.putExtra("explorer_title", dialogTitle);
 				return aei;
+			// ES File Explorer:
+			case ES_FILE_EXPLORER:
+				Intent esi = new Intent(DIR_SELECT_INTENT_ES);
+				esi.putExtra("com.estrongs.intent.extra.TITLE", buttonText);
+				return esi;
 			// If there's no preference or it's something we don't recognize,
 			// do nothing:
 			case NO_FILE_MANAGER:
@@ -366,6 +404,12 @@ public class FileManager {
 				    else return null;
 				}
 				else return null;
+			// This was taken pretty much verbatim from the ES File Explorer
+			// Developers page (http://www.estrongs.com/en/support/developers.html):
+			case ES_FILE_EXPLORER:
+				Uri uri2 = data.getData();
+				if (uri2 != null) return uri2.getPath();
+				else return null;    
 			// If there's no preference or it's something we don't recognize,
 			// do nothing:
 			case NO_FILE_MANAGER:
@@ -423,7 +467,7 @@ public class FileManager {
 	 * @return A String containing the recognized file manager names
 	 */
 	public String getRecognizedFileManagerNames() {
-		return "\tOI File Manager\n\tAndExplorer";
+		return "\tOI File Manager\n\tAndExplorer\n\tES File Explorer";
 	}
 	
 	/* Private methods: ***********************************************************/
@@ -444,6 +488,8 @@ public class FileManager {
 				return "OI File Manager";
 			case ANDEXPLORER:
 				return "AndExplorer";
+			case ES_FILE_EXPLORER:
+				return "ES File Explorer";
 			default:
 				throw new IllegalArgumentException("Invalid file manager code");
 		}
@@ -467,6 +513,8 @@ public class FileManager {
 			return OI_FILE_MANAGER;
 		if (name.compareTo("AndExplorer") == 0)
 			return ANDEXPLORER;
+		if (name.compareTo("ES File Explorer") == 0)
+			return ES_FILE_EXPLORER;
 		return NO_FILE_MANAGER;
 	}
 	

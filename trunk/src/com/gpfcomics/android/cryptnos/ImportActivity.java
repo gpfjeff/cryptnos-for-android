@@ -30,7 +30,9 @@
  * to use the more generic FileManager class so we can let the user decide what
  * file manager to use.
  * 
- * This program is Copyright 2010, Jeffrey T. Darlington.
+ * UPDATES FOR 1.2.1:  Minor UI enhancements
+ * 
+ * This program is Copyright 2011, Jeffrey T. Darlington.
  * E-mail:  android_support@cryptnos.com
  * Web:     http://www.cryptnos.com/
  * 
@@ -79,7 +81,7 @@ import android.widget.Toast;
  * but this class will be responsible for gathering the inputs and creating
  * the progress dialog that the handler will update.
  * @author Jeffrey T. Darlington
- * @version 1.0
+ * @version 1.2.1
  * @since 1.0
  */
 public class ImportActivity extends Activity {
@@ -197,6 +199,7 @@ public class ImportActivity extends Activity {
             		java.util.Arrays.sort(fileList, String.CASE_INSENSITIVE_ORDER);
             		ArrayAdapter<String> fileAdapter = new ArrayAdapter<String>(this,
             				android.R.layout.simple_spinner_item, fileList);
+            		fileAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
             		spinnerFiles.setAdapter(fileAdapter);
             		spinnerFiles.setPromptId(R.string.import_file_prompt);
             		labelInstructions.setText(R.string.import_file_label_filefound);

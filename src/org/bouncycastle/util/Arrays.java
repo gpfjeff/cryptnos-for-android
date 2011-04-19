@@ -41,6 +41,36 @@ public final class Arrays
     }
 
     public static boolean areEqual(
+        char[]  a,
+        char[]  b)
+    {
+        if (a == b)
+        {
+            return true;
+        }
+
+        if (a == null || b == null)
+        {
+            return false;
+        }
+
+        if (a.length != b.length)
+        {
+            return false;
+        }
+
+        for (int i = 0; i != a.length; i++)
+        {
+            if (a[i] != b[i])
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    public static boolean areEqual(
         byte[]  a,
         byte[]  b)
     {
@@ -68,6 +98,43 @@ public final class Arrays
         }
 
         return true;
+    }
+
+    /**
+     * A constant time equals comparison - does not terminate early if
+     * test will fail.
+     *
+     * @param a first array
+     * @param b second array
+     * @return true if arrays equal, false otherwise.
+     */
+    public static boolean constantTimeAreEqual(
+        byte[]  a,
+        byte[]  b)
+    {
+        if (a == b)
+        {
+            return true;
+        }
+
+        if (a == null || b == null)
+        {
+            return false;
+        }
+
+        if (a.length != b.length)
+        {
+            return false;
+        }
+
+        int nonEqual = 0;
+
+        for (int i = 0; i != a.length; i++)
+        {
+            nonEqual |= (a[i] ^ b[i]);
+        }
+
+        return nonEqual == 0;
     }
 
     public static boolean areEqual(

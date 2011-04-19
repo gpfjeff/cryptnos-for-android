@@ -18,7 +18,13 @@
  * 
  * UPDATES FOR 1.2.0:  Added Help option menu
  * 
- * This program is Copyright 2010, Jeffrey T. Darlington.
+ * UPDATES FOR 1.2.2:  Added code to temporarily save and restore state if the
+ * user rotates the screen or slides out a physical keyboard.  Android handles
+ * these events by destroying the activity and rebuilding it, which results in
+ * the master and generated passwords being wiped out.  It should now hold onto
+ * these values temporarily and restore them once the rebuild is complete.
+ * 
+ * This program is Copyright 2011, Jeffrey T. Darlington.
  * E-mail:  android_support@cryptnos.com
  * Web:     http://www.cryptnos.com/
  * 
@@ -57,7 +63,7 @@ import android.widget.Toast;
  * view, allowing the user to generate the password for a given site without
  * worrying about fat-fingering something and screwing up the site's settings. 
  * @author Jeffrey T. Darlington
- * @version 1.0
+ * @version 1.2.2
  * @since 1.0
  */
 public class GenerateExistingActivity extends Activity {
@@ -103,119 +109,126 @@ public class GenerateExistingActivity extends Activity {
         lblOtherParams = (TextView)findViewById(R.id.labelOtherParams);
         txtOutput = (EditText)findViewById(R.id.txtOutput);
         btnGenerate = (Button)findViewById(R.id.btnGenerate);
-
-        // This activity doesn't make any sense if we don't get anything
-        // from the caller, so make sure we get valid input:
-        Bundle extras = getIntent().getExtras();
-        if (extras != null)
-        {
-        	try
-        	{
-    			// Try to get the site token from the intent bundle.  If
-    			// get got one, try to load the parameters from the
-    			// database:
-    			String site =
-    				extras.getString(ParamsDbAdapter.DBFIELD_SITE);
-    			if (site != null)
-    			{
-    				Cursor c = dbHelper.fetchRecord(site);
-    				startManagingCursor(c);
-    				// Got our record:
-    				if (c.getCount() == 1)
-    				{
-        				// Get the parameters.  Note that we need both the
-        				// site key and the full encrypted string to get
-        				// everything back out.
-        				params = new SiteParameters(theApp,
-        						c.getString(1),
-        						c.getString(2));
-        				// Populate the other parameters label with the
-        				// parameters other than the passphrase.  All of this
-        				// is essentially read-only info in this case, so
-        				// it's purely informative.
-        				lblSiteName.setText(params.getSite());
-        				String nl = System.getProperty("line.separator");
-        				lblOtherParams.setText(
-        					//getResources().getString(R.string.gen_exist_site_prompt) + " " +
-        					//params.getSite() + nl +
-        					getResources().getString(R.string.gen_exist_hash_prompt) + " " +
-        					params.getHash() + nl +
-        					getResources().getString(R.string.gen_exist_iterations_prompt) + " " +
-        					Integer.toString(params.getIterations()) + nl +
-        					getResources().getString(R.string.gen_exist_chartypes_prompt) + " " +
-        					getResources().getStringArray(R.array.charTypeList)[params.getCharTypes()] + nl +
-        					getResources().getString(R.string.gen_exist_charlimit_prompt) + " " +
-        					(params.getCharLimit() == 0 ?
-        						getResources().getString(R.string.gen_exist_charlimit_none) : 
-        						Integer.toString(params.getCharLimit())));
-    				}
-    				// If we didn't get exactly one row, throw an error:
-    				else
-    				{
-    					Toast.makeText(this, R.string.error_bad_restore,
-    						Toast.LENGTH_LONG).show();
-    				}
-    				c.close();
-    			}
-    			// If the site name was not in the intent bundle, throw
-    			// an error:
-    			else
-    			{
-					Toast.makeText(this, R.string.error_bad_restore,
-   						Toast.LENGTH_LONG).show();
-    			}
-        		
-        	}
-        	catch (Exception e)
-        	{
-				Toast.makeText(this, R.string.error_bad_restore,
-					Toast.LENGTH_LONG).show();
-
-        	}
-        }
-        else Toast.makeText(this, R.string.error_bad_restore,
-				Toast.LENGTH_LONG).show();
         
-        // Now define what to do if the Generate button is clicked:
-        btnGenerate.setOnClickListener(new View.OnClickListener() {
-			public void onClick(View v) {
-				// Make sure the passphrase box isn't empty:
-				if (txtPassphrase.getText() == null ||
-					txtPassphrase.getText().length() == 0)
-						Toast.makeText(v.getContext(),
-							R.string.error_edit_bad_password,
-							Toast.LENGTH_LONG).show();
-				// Otherwise, try to generate the password:
-				else
-				{
-					try
-					{
-						// In theory, this part should be easy:
-						String password =
-							params.generatePassword(txtPassphrase.getText().toString());
-						// Display the generated password in the output text
-						// box: 
-						txtOutput.setText(password);
-						// Because we most likely wanted to copy the password
-						// to the clipboard to paste it into a password form
-						// somewhere else, go ahead and copy it into the
-						// clipboard now:
-						ClipboardManager clippy =
-							(ClipboardManager)getSystemService(CLIPBOARD_SERVICE);
-						clippy.setText(password);
-						// We'll assume both of those tasks were successful:
-						Toast.makeText(v.getContext(), R.string.edit_gen_success,
+        // Asbestos underpants:
+        try {
+        	// Check to see if we currently have a saved state for this activity,
+        	// such as before a screen rotate or before the user slides out a
+        	// physical keyboard.  If such a state exists, we want to restore it:
+	        final ParameterViewState state =
+	        	(ParameterViewState)getLastNonConfigurationInstance();
+	        // We found a previously saved state, so re-populate the form:
+	        if (state != null) {
+	        	params = state.getSiteParameters();
+	        	populateParametersLabel();
+	        	txtPassphrase.setText(state.getMasterPassword());
+	        	txtOutput.setText(state.getGeneratedPassword());
+	        // There was no saved state, so proceed to the next step:
+	        } else {
+	            // This activity doesn't make any sense if we don't get anything
+	            // from the caller, so make sure we get valid input:
+	            Bundle extras = getIntent().getExtras();
+	            if (extras != null)
+	            {
+        			// Try to get the site token from the intent bundle.  If
+        			// get got one, try to load the parameters from the
+        			// database:
+        			String site =
+        				extras.getString(ParamsDbAdapter.DBFIELD_SITE);
+        			if (site != null)
+        			{
+        				Cursor c = dbHelper.fetchRecord(site);
+        				startManagingCursor(c);
+        				// Got our record:
+        				if (c.getCount() == 1)
+        				{
+            				// Get the parameters.  Note that we need both the
+            				// site key and the full encrypted string to get
+            				// everything back out.
+            				params = new SiteParameters(theApp,
+            						c.getString(1),
+            						c.getString(2));
+            				// Populate the other parameters label with the
+            				// parameters other than the passphrase.  All of this
+            				// is essentially read-only info in this case, so
+            				// it's purely informative.
+            				populateParametersLabel();
+        				}
+        				// If we didn't get exactly one row, throw an error:
+        				else
+        				{
+        					Toast.makeText(this, R.string.error_bad_restore,
+        						Toast.LENGTH_LONG).show();
+        					finish();
+        				}
+        				c.close();
+        			}
+        			// If the site name was not in the intent bundle, throw
+        			// an error:
+        			else
+        			{
+    					Toast.makeText(this, R.string.error_bad_restore,
+       						Toast.LENGTH_LONG).show();
+    					finish();
+        			}
+	            }
+	            // The bundle was empty, which shouldn't happen:
+	            else
+	            {
+	            	Toast.makeText(this, R.string.error_bad_restore,
+	    				Toast.LENGTH_LONG).show();
+					finish();
+	            }
+	        }
+	        
+	        // Now define what to do if the Generate button is clicked:
+	        btnGenerate.setOnClickListener(new View.OnClickListener() {
+				public void onClick(View v) {
+					// Make sure the passphrase box isn't empty:
+					if (txtPassphrase.getText() == null ||
+						txtPassphrase.getText().length() == 0)
+							Toast.makeText(v.getContext(),
+								R.string.error_edit_bad_password,
 								Toast.LENGTH_LONG).show();
-					}
-					catch (Exception e)
+					// Otherwise, try to generate the password:
+					else
 					{
-						Toast.makeText(v.getContext(), R.string.error_bad_generate,
-								Toast.LENGTH_LONG).show();
+						try
+						{
+							// In theory, this part should be easy:
+							String password =
+								params.generatePassword(txtPassphrase.getText().toString());
+							// Display the generated password in the output text
+							// box: 
+							txtOutput.setText(password);
+							// Because we most likely wanted to copy the password
+							// to the clipboard to paste it into a password form
+							// somewhere else, go ahead and copy it into the
+							// clipboard now:
+							ClipboardManager clippy =
+								(ClipboardManager)getSystemService(CLIPBOARD_SERVICE);
+							clippy.setText(password);
+							// We'll assume both of those tasks were successful:
+							Toast.makeText(v.getContext(), R.string.edit_gen_success,
+									Toast.LENGTH_LONG).show();
+						}
+						catch (Exception e)
+						{
+							Toast.makeText(v.getContext(), R.string.error_bad_generate,
+									Toast.LENGTH_LONG).show();
+						}
 					}
 				}
-			}
-        });
+	        });
+
+	    // Something blew up alone the way:
+        } catch (Exception e) {
+			Toast.makeText(this, R.string.error_bad_restore,
+					Toast.LENGTH_LONG).show();
+			finish();
+        }
 	}
+	
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
     	// Add the "Help" menu item:
@@ -238,4 +251,41 @@ public class GenerateExistingActivity extends Activity {
     	return false;
     }
 
+	public Object onRetainNonConfigurationInstance() {
+		// This gets called primarily if the user rotates the screen or slides out
+		// the physical keyboard.  In these cases, we don't want to wipe out the
+		// user's data from the form, so we'll need to preserve it.  Stuff the
+		// site parameters, the user's master password, and the generated password
+		// into a temporary object and hold onto that until we return from the
+		// rebuilding process.
+		final ParameterViewState state = new ParameterViewState(params,
+				txtPassphrase.getText().toString(),
+				txtOutput.getText().toString());
+		return state;
+	}
+
+	/**
+	 * Populate the parameter labels using the data in the SiteParameters object.
+	 * This has been pulled out into its own function since it technically gets
+	 * called multiple times.
+	 */
+	private void populateParametersLabel() {
+		// As a safety measure, make sure the parameters object exists before
+		// we start reading from it:
+		if (params != null) {
+			lblSiteName.setText(params.getSite());
+			String nl = System.getProperty("line.separator");
+			lblOtherParams.setText(
+				getResources().getString(R.string.gen_exist_hash_prompt) + " " +
+				params.getHash() + nl +
+				getResources().getString(R.string.gen_exist_iterations_prompt) + " " +
+				Integer.toString(params.getIterations()) + nl +
+				getResources().getString(R.string.gen_exist_chartypes_prompt) + " " +
+				getResources().getStringArray(R.array.charTypeList)[params.getCharTypes()] + nl +
+				getResources().getString(R.string.gen_exist_charlimit_prompt) + " " +
+				(params.getCharLimit() == 0 ?
+					getResources().getString(R.string.gen_exist_charlimit_none) : 
+					Integer.toString(params.getCharLimit())));
+		}
+	}
 }

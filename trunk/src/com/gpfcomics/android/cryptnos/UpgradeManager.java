@@ -36,6 +36,10 @@
  * UPDATES FOR 1.2.1:  Added 1.2.1 version code.  This is a minor update, so it
  * probably isn't even needed.  Still, for completeness, we've added it in.
  * 
+ * UPDATES FOR 1.2.2:  Added the 1.2.2 version code, but commented out both it and
+ * the 1.2.1 code.  These aren't currently needed but are present primarily for
+ * documentation purposes.
+ * 
  * This program is Copyright 2011, Jeffrey T. Darlington.
  * E-mail:  android_support@cryptnos.com
  * Web:     http://www.cryptnos.com/
@@ -67,7 +71,7 @@ import android.widget.Toast;
  * changed or "upgraded" if the currently running version of Cryptnos is different
  * than the last run version.
  * @author Jeffrey T. Darlington
- * @version 1.2.1
+ * @version 1.2.2
  * @since 1.2
  */
 public class UpgradeManager {
@@ -94,12 +98,18 @@ public class UpgradeManager {
 	 *  encoding. */
 	private static final int VERSION_1_2_0 = 3;
 	
-	/** A constant representing the integer version of Cryptnos 1.2.1, which
-	    mostly consists of minor UI enhancements.  Since there are not any
-	    changes major enough to require upgrading, this constant may get
-	    removed later. */
-	private static final int VERSION_1_2_1 = 4;
+	///** A constant representing the integer version of Cryptnos 1.2.1, which
+	//    mostly consists of minor UI enhancements.  Since there are not any
+	//    changes major enough to require upgrading, this constant is currently
+	//    commented out until needed. */
+	//private static final int VERSION_1_2_1 = 4;
 	
+	///** A constant representing the integer version of Cryptnos 1.2.2, which
+    //    mostly consists of minor UI enhancements.  Since there are not any
+	//    changes major enough to require upgrading, this constant is currently
+	//    commented out until needed. */
+	//private static final int VERSION_1_2_2 = 5;
+
 	/** A regular expression Pattern for matching the UTF-8 character
 	 *  encoding string.  This pattern is case insensitive. */
 	private Pattern regex_utf8 =

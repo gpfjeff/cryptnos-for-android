@@ -26,6 +26,10 @@
  *
  * UPDATES FOR 1.2.1:  Minor code changes to support new UI enhancements
  * 
+ * UPDATES FOR 1.2.2:  Commented out the onStop() method to prevent the user
+ * from being forced back to the main menu for small configuration changes,
+ * like rotating the screen or sliding out a physical keyboard.
+ * 
  * This program is Copyright 2011, Jeffrey T. Darlington.
  * E-mail:  android_support@cryptnos.com
  * Web:     http://www.cryptnos.com/
@@ -75,7 +79,7 @@ import android.widget.AdapterView.AdapterContextMenuInfo;
  * will also bring up a context menu that will allow any of the subsequent
  * actions to be selected.
  * @author Jeffrey T. Darlington
- * @version 1.2.1
+ * @version 1.2.2
  * @since 1.0
  */public class SiteListActivity extends ListActivity implements
  		SiteListListener {
@@ -148,18 +152,25 @@ import android.widget.AdapterView.AdapterContextMenuInfo;
         theApp.requestSiteList(this, this);
     }
 
-    @Override
-    protected void onStop()
-    {
+    // Commented out the onStop() declaration.  Odds are we don't really need
+    // it, and there's the side effect that small configuration changes like
+    // rotating the screen or sliding out a physical keyboard call this too,
+    // forcing the user back to the main menu whenever these changes occur.
+    // We can always add this back in if we find it to be more secure, but
+    // for now the caveats seem to outweigh the benefits.
+    //
+    //@Override
+    //protected void onStop()
+    //{
     	// This may seem a bit weird, but whenever we stop this activity
     	// (i.e., switch to another one, either by moving to the next one in
     	// the task flow or canceling out and moving to a different task), we
     	// don't want to come back to this step.  Rather, we want to take the
     	// user back to the main menu.  So whenever this task gets stopped,
     	// go ahead and finish it.
-    	super.onStop();
-    	finish();
-    }
+    	//super.onStop();
+    	//finish();
+    //}
     
     @Override
     protected Dialog onCreateDialog(int id)

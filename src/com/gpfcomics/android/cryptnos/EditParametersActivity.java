@@ -21,7 +21,13 @@
  * UPDATES FOR 1.2.1:  Minor UI enhancements to make things prettier and (hopefully)
  * easier to use.
  * 
- * This program is Copyright 2010, Jeffrey T. Darlington.
+ * UPDATES FOR 1.2.2:  Added code to temporarily save and restore state if the
+ * user rotates the screen or slides out a physical keyboard.  Android handles
+ * these events by destroying the activity and rebuilding it, which results in
+ * the master and generated passwords being wiped out.  It should now hold onto
+ * these values temporarily and restore them once the rebuild is complete.
+ * 
+ * This program is Copyright 2011, Jeffrey T. Darlington.
  * E-mail:  android_support@cryptnos.com
  * Web:     http://www.cryptnos.com/
  * 
@@ -67,7 +73,7 @@ import android.widget.Toast;
  * parameters are saved to the database and the generated password is
  * displayed to the user.
  * @author Jeffrey T. Darlington
- * @version 1.2.1
+ * @version 1.2.2
  * @since 1.0
  */
 public class EditParametersActivity extends Activity {
@@ -147,105 +153,133 @@ public class EditParametersActivity extends Activity {
         charTypesSpinner.setPromptId(R.string.edit_chartypes_prompt);
         spinCharLimit.setPromptId(R.string.edit_charlimit_prompt);
         
-        // Determine what mode we're being called in.  This activity can
-        // be used to create a new set of parameters or to edit an existing
-        // set.  Note that the default is new mode, and if an invalid mode
-        // has been specified or the data cannot be restored for some reason,
-        // that's what we go into as well.
-        Bundle extras = getIntent().getExtras();
-        if (extras != null)
-        {
-        	mode = extras.getInt("mode");
-        	if (mode < NEW_MODE || mode > EDIT_MODE) mode = NEW_MODE;
-        	// If we're supposed to be in edit mode, we need data to edit:
-        	if (mode == EDIT_MODE)
-        	{
-        		try
-        		{
-        			// Try to get the site token from the intent bundle.  If
-        			// get got one, try to load the parameters from the
-        			// database:
-        			String site =
-        				extras.getString(ParamsDbAdapter.DBFIELD_SITE);
-        			if (site != null)
-        			{
-        				Cursor c = dbHelper.fetchRecord(site);
-        				startManagingCursor(c);
-        				// Got our record:
-        				if (c.getCount() == 1)
-        				{
-        					// The row ID uniquely identifies us in the
-        					// database, but isn't directly associated with
-        					// the parameters themselves.  Even if we change
-        					// the site, this will keep the record the same.
-	        				rowID = c.getLong(0);
-	        				// Get the parameters.  Note that we need both the
-	        				// site key and the full encrypted string to get
-	        				// everything back out.
-	        				SiteParameters params =
-	        					new SiteParameters(theApp,
-	        						c.getString(1),
-	        						c.getString(2));
-	        				// Populate the GUI elements with the old data.
-	        				// Note that the spinners need special treatment, and
-	        				// that the site box is disabled from editing.
-	        				txtSite.setText(params.getSite());
-	        				txtSite.setEnabled(false);
-	        		        hashSpinner.setSelection(getHashPosition(params.getHash()));
-	        		        txtIterations.setText(Integer.toString(params.getIterations()));
-	        		        charTypesSpinner.setSelection(params.getCharTypes());
-	        		        rebuildCharLimitSpinner(params.getHash());
-	        		        if (params.getCharLimit() < 0 ||
-	        		        		params.getCharLimit() > theApp.getEncodedHashLength(params.getHash()))
-	        		        	spinCharLimit.setSelection(0, true);
-	        		        else
-	        		        	spinCharLimit.setSelection(params.getCharLimit(), true);
-	        		        lastSite = params.getSite();
-        				}
-        				// If we didn't get exactly one row, throw an error:
-        				else
-        				{
+    	// Check to see if we currently have a saved state for this activity,
+    	// such as before a screen rotate or before the user slides out a
+    	// physical keyboard.  If such a state exists, we want to restore it:
+        final ParameterViewState state =
+        	(ParameterViewState)getLastNonConfigurationInstance();
+        // We found a previously saved state, so re-populate the form:
+        if (state != null) {
+        	mode = state.getMode();
+        	lastSite = state.getLastSite();
+        	rowID = state.getRowID();
+        	txtSite.setText(state.getSite());
+	        hashSpinner.setSelection(getHashPosition(state.getHash()));
+	        txtIterations.setText(state.getIterations());
+	        charTypesSpinner.setSelection(state.getCharTypes());
+	        rebuildCharLimitSpinner(state.getHash());
+	        spinCharLimit.setSelection(state.getCharLimit(), true);
+	        txtPassphrase.setText(state.getMasterPassword());
+	        txtOutput.setText(state.getGeneratedPassword());
+        // There was no saved state, so proceed to the next step:
+        } else {
+            // Determine what mode we're being called in.  This activity can
+            // be used to create a new set of parameters or to edit an existing
+            // set.  Note that the default is new mode, and if an invalid mode
+            // has been specified or the data cannot be restored for some reason,
+            // that's what we go into as well.
+            Bundle extras = getIntent().getExtras();
+            if (extras != null)
+            {
+            	mode = extras.getInt("mode");
+            	if (mode < NEW_MODE || mode > EDIT_MODE) mode = NEW_MODE;
+            	// If we're supposed to be in edit mode, we need data to edit:
+            	if (mode == EDIT_MODE)
+            	{
+            		try
+            		{
+            			// Try to get the site token from the intent bundle.  If
+            			// get got one, try to load the parameters from the
+            			// database:
+            			String site =
+            				extras.getString(ParamsDbAdapter.DBFIELD_SITE);
+            			if (site != null)
+            			{
+            				Cursor c = dbHelper.fetchRecord(site);
+            				startManagingCursor(c);
+            				// Got our record:
+            				if (c.getCount() == 1)
+            				{
+            					// The row ID uniquely identifies us in the
+            					// database, but isn't directly associated with
+            					// the parameters themselves.  Even if we change
+            					// the site, this will keep the record the same.
+    	        				rowID = c.getLong(0);
+    	        				// Get the parameters.  Note that we need both the
+    	        				// site key and the full encrypted string to get
+    	        				// everything back out.
+    	        				SiteParameters params =
+    	        					new SiteParameters(theApp,
+    	        						c.getString(1),
+    	        						c.getString(2));
+    	        				// Populate the GUI elements with the old data.
+    	        				// Note that the spinners need special treatment, and
+    	        				// that the site box is disabled from editing.
+    	        				txtSite.setText(params.getSite());
+    	        				txtSite.setEnabled(false);
+    	        		        hashSpinner.setSelection(getHashPosition(params.getHash()));
+    	        		        txtIterations.setText(Integer.toString(params.getIterations()));
+    	        		        charTypesSpinner.setSelection(params.getCharTypes());
+    	        		        rebuildCharLimitSpinner(params.getHash());
+    	        		        if (params.getCharLimit() < 0 ||
+    	        		        		params.getCharLimit() > theApp.getEncodedHashLength(params.getHash()))
+    	        		        	spinCharLimit.setSelection(0, true);
+    	        		        else
+    	        		        	spinCharLimit.setSelection(params.getCharLimit(), true);
+    	        		        lastSite = params.getSite();
+            				}
+            				// If we didn't get exactly one row, throw an error:
+            				else
+            				{
+            					Toast.makeText(this, R.string.error_bad_restore,
+            						Toast.LENGTH_LONG).show();
+            					mode = NEW_MODE;
+            				}
+            				c.close();
+            			}
+            			// If the site name was not in the intent bundle, throw
+            			// an error:
+            			else
+            			{
         					Toast.makeText(this, R.string.error_bad_restore,
-        						Toast.LENGTH_LONG).show();
-        					mode = NEW_MODE;
-        				}
-        				c.close();
-        			}
-        			// If the site name was not in the intent bundle, throw
-        			// an error:
-        			else
-        			{
+           						Toast.LENGTH_LONG).show();
+            				mode = NEW_MODE;
+            			}
+            		}
+            		// If anything else blew up, throw an error:
+            		catch (Exception e1)
+            		{
     					Toast.makeText(this, R.string.error_bad_restore,
        						Toast.LENGTH_LONG).show();
         				mode = NEW_MODE;
-        			}
-        		}
-        		// If anything else blew up, throw an error:
-        		catch (Exception e1)
-        		{
-					Toast.makeText(this, R.string.error_bad_restore,
-   						Toast.LENGTH_LONG).show();
-    				mode = NEW_MODE;
-        		}
-        	}
+            		}
+            	}
+            }
+            // If new mode was specified anywhere above, set some sane
+            // defaults.  For hashes, make the default SHA-1.  For the
+        	// number of iterations, one is usually sufficient.  For
+        	// the character limit, set it to unrestricted.  Note that
+            // the location of this check means that these tasks do not
+            // get performed if we're restoring a previous state; in that
+            // case, we want the values the user previously had, not the
+            // defaults.
+            if (mode == NEW_MODE) {
+                hashSpinner.setSelection(1);
+                txtIterations.setText("1");
+                rebuildCharLimitSpinner("SHA-1");
+                spinCharLimit.setSelection(0, true);
+            }
         }
         
         // Depending on the mode, make a few last minute tweaks:
         switch (mode)
         {
 	        case EDIT_MODE:
-	        	this.setTitle(R.string.edit_title);
+	        	setTitle(R.string.edit_title);
+	        	txtSite.setEnabled(false);
 	        	break;
 	        default:
-	        	this.setTitle(R.string.new_title);
-	            // If we're generating a new passphrase, set some sane
-	        	// defaults.  For hashes, make the default SHA-1.  For the
-	        	// number of iterations, one is usually sufficient.  For
-	        	// the character limit, set it to unrestricted.
-	            hashSpinner.setSelection(1);
-	            txtIterations.setText("1");
-	            rebuildCharLimitSpinner("SHA-1");
-	            spinCharLimit.setSelection(0, true);
+	        	setTitle(R.string.new_title);
         }
         
         btnGenerate.setOnClickListener(new View.OnClickListener() {
@@ -521,6 +555,26 @@ public class EditParametersActivity extends Activity {
     	return false;
     }
     
+	public Object onRetainNonConfigurationInstance() {
+		// This gets called primarily if the user rotates the screen or slides out
+		// the physical keyboard.  In these cases, we don't want to wipe out the
+		// user's data from the form, so we'll need to preserve it.  Stuff the
+		// site parameters, the user's master password, and the generated password
+		// into a temporary object and hold onto that until we return from the
+		// rebuilding process.
+		final ParameterViewState state = new ParameterViewState(
+				txtSite.getText().toString(),
+				txtPassphrase.getText().toString(),
+				(String)hashSpinner.getSelectedItem(),
+				txtIterations.getText().toString(),
+				charTypesSpinner.getSelectedItemPosition(),
+				spinCharLimit.getSelectedItemPosition(),
+				txtOutput.getText().toString(),
+				mode, lastSite, rowID);
+		return state;
+	}
+
+
     /**
      * Return the position of the specified hash name string in the hash
      * list array.

@@ -875,7 +875,6 @@ public class ImportExportHandler {
 	    			// decryption:
 	    			if (ImportExportHandler.haveSufficientMemory(cipher, file.length(),
 	    					mActivity)) {
-		                // ******************************************************
 						// There's no way around this, but we need to allocate a
 						// full-size buffer to contain the entire decrypted XML:
 						byte[] plaintext =
@@ -883,11 +882,13 @@ public class ImportExportHandler {
 						// Next, declare a few variables for the decryption.  We
 						// need to keep track of the total number of bytes read,
 						// as well as how many bytes we read in a given pass.
-						// We'll also grab the block size of the cipher so we don't
-						// have to call the getBlockSize() method every time.
+						// We'll also grab the block size of the cipher and the
+						// file length so we don't have to call object methods and
+						// cast longs to ints all the time.
 		                int bytesSoFar = 0;
 		                int bytesRead = 0;
 		                int blockSize = cipher.getBlockSize();
+		                int fileLength = (int)file.length();
 		                // Allocate a buffer to read in one block of the encrypted
 		                // data at a time.  This will prevent us from having to
 		                // slurp the entire file just to decrypt it.
@@ -895,19 +896,27 @@ public class ImportExportHandler {
 		                // Open the file, then start looping through the data, one
 		                // block at a time:
 		            	FileInputStream fis = new FileInputStream(file);
-		            	while (bytesSoFar < (int)file.length()) {
+		            	while (bytesSoFar < fileLength) {
 		            		// Read a block into the buffer.  If we didn't read
 		            		// any data, we're done and we'll break the loop.
 		            		bytesRead = fis.read(buffer, 0, blockSize);
 		            		if (bytesRead <= 0) break;
 		            		// Run the block through the cipher and put the decrypted
 		            		// data into the "plain text" buffer:
-		            		//bytesRead = cipher.processBytes(buffer, 0,
-		            		//		bytesRead, plaintext, bytesSoFar);
 		            		bytesRead = cipher.update(buffer, 0, bytesRead, plaintext,
 		            				bytesSoFar);
 		            		// Bump up the total number of bytes read:
 		            		bytesSoFar += bytesRead;
+		            		// Send a message to the handler to update the progress
+		            		// dialog.  We'll assume that decrypting the data is
+		            		// half the work, so scale the percentage to 1-50%
+		        	        msg = mHandler.obtainMessage();
+			                b = new Bundle();
+			                b.putInt("percent_done",
+			                	(int)(Math.floor(((double)bytesSoFar / (double)fileLength * 50.0d))));
+			                b.putInt("site_count", 0);
+			                msg.setData(b);
+			                mHandler.sendMessage(msg);
 		            	}
 		            	// By now we should have exhausted the file.  Close the
 		            	// stream and null out it and the buffer so that memory
@@ -918,35 +927,18 @@ public class ImportExportHandler {
 		            	// Do the final pass on the cipher.  After this step, the
 		            	// "plain text" array should have the fully decrypted data.
 		            	cipher.doFinal(plaintext, bytesSoFar);
+		            	// Convert the plain text bytes into a string:
 		            	String unencryptedData = new String(plaintext);
+		            	// Now free up some memory by nulling out the byte array
+		            	// and releasing the cipher:
 		            	plaintext = null;
 		            	cipher = null;
-		            	// ******************************************************
-//		            	// Open the file and read its raw binary contents.  The
-//		            	// file shouldn't be very large, so we should have no
-//		            	// trouble putting it into memory.
-//		            	FileInputStream fis = new FileInputStream(file);
-//		            	byte[] encryptedData = new byte[(int)file.length()];
-//		            	fis.read(encryptedData, 0, encryptedData.length);
-//		            	fis.close();
-//			        	msg = mHandler.obtainMessage();
-//		                b = new Bundle();
-//		                b.putInt("percent_done", 5);
-//		                b.putInt("site_count", 0);
-//		                msg.setData(b);
-//		                mHandler.sendMessage(msg);
-//		                // Decrypt the data and put it into a string:
-//		    			String unencryptedData = new String(cipher.doFinal(encryptedData));
-//		    			// We don't need the encrypted data anymore, so go ahead and
-//		    			// free that memory:
-//		    			encryptedData = null;
-//		    			fis = null;
 		                // Split the decrypted data based on newlines, then step
 		                // through the list:
 		    			String[] sites = unencryptedData.split("\n");
 			        	msg = mHandler.obtainMessage();
 		                b = new Bundle();
-		                b.putInt("percent_done", 10);
+		                b.putInt("percent_done", 50);
 		                b.putInt("site_count", sites.length);
 		                msg.setData(b);
 		                mHandler.sendMessage(msg);
@@ -961,13 +953,13 @@ public class ImportExportHandler {
 		    				DBHelper.createRecord(params);
 		    				// Update the progress dialog.  Note that we're at the tail
 		    				// end of the process here, so we're saying that reading the
-		    				// file and decrypting the data amounts to 10% of the work.
-		    				// We're doing the remaining 90%, so scale what we've done
-		    				// to 1-90 and add the remaining 10% on top.
+		    				// file and decrypting the data amounts to half of the work.
+		    				// We're doing the remaining 50%, so scale what we've done
+		    				// to 1-50 and add the remaining 50% on top.
 		        	        msg = mHandler.obtainMessage();
 			                b = new Bundle();
 			                b.putInt("percent_done",
-			                	(int)(Math.floor(((double)i / (double)sites.length * 90.0d))) + 10);
+			                	(int)(Math.floor(((double)i / (double)sites.length * 50.0d))) + 50);
 			                b.putInt("site_count", sites.length);
 			                msg.setData(b);
 			                mHandler.sendMessage(msg);
@@ -1255,13 +1247,13 @@ public class ImportExportHandler {
 	                siteList.add(currentSite);
 	                inSiteTag = false;
 	                // For our percent done, we're scaling this part of the
-	                // process to be between 15-50%, or a range of 35.  The
-	                // first 15% is the reading and decrypting of the data,
-	                // while the remaining 50% will be updating the database.
+	                // process one third of the work, or 34-66%.  The
+	                // first 33% is the reading and decrypting of the data,
+	                // while the remaining 33% will be updating the database.
 		        	msg = topHandler.obtainMessage();
 	                b = new Bundle();
 	                b.putInt("percent_done",
-		                	(int)(Math.floor(((double)siteList.size() / (double)siteCount * 35.0d))) + 15);	                b.putInt("site_count", 0);
+		                	(int)(Math.floor(((double)siteList.size() / (double)siteCount * 33.0d))) + 33);	                b.putInt("site_count", 0);
 	                b.putInt("site_count", siteCount);
 	                msg.setData(b);
 	                topHandler.sendMessage(msg);
@@ -1345,7 +1337,6 @@ public class ImportExportHandler {
 					// enough memory on hand to decrypt the data:
 					if (ImportExportHandler.haveSufficientMemory(cipher, false,
 							file.length(), mActivity)) {
-		                // ******************************************************
 						// There's no way around this, but we need to allocate a
 						// full-size buffer to contain the entire decrypted XML:
 						byte[] plaintext =
@@ -1353,11 +1344,13 @@ public class ImportExportHandler {
 						// Next, declare a few variables for the decryption.  We
 						// need to keep track of the total number of bytes read,
 						// as well as how many bytes we read in a given pass.
-						// We'll also grab the block size of the cipher so we don't
-						// have to call the getBlockSize() method every time.
+						// We'll also grab the block size of the cipher and the
+						// file length so we don't have to call the object
+						// methods and cast longs to ints repeatedly.
 		                int bytesSoFar = 0;
 		                int bytesRead = 0;
 		                int blockSize = cipher.getBlockSize();
+		                int fileLength = (int)file.length();
 		                // Allocate a buffer to read in one block of the encrypted
 		                // data at a time.  This will prevent us from having to
 		                // slurp the entire file just to decrypt it.
@@ -1365,7 +1358,7 @@ public class ImportExportHandler {
 		                // Open the file, then start looping through the data, one
 		                // block at a time:
 		            	FileInputStream fis = new FileInputStream(file);
-		            	while (bytesSoFar < (int)file.length()) {
+		            	while (bytesSoFar < fileLength) {
 		            		// Read a block into the buffer.  If we didn't read
 		            		// any data, we're done and we'll break the loop.
 		            		bytesRead = fis.read(buffer, 0, blockSize);
@@ -1376,6 +1369,16 @@ public class ImportExportHandler {
 		            				bytesRead, plaintext, bytesSoFar);
 		            		// Bump up the total number of bytes read:
 		            		bytesSoFar += bytesRead;
+		            		// Update the progress bar by sending a message to the
+		            		// handler.  We'll assume that decrypting the file is
+		            		// 33% of the work, so we'll scale it appropriately.
+		            		msg = mHandler.obtainMessage();
+			                b = new Bundle();
+			                b.putInt("percent_done",
+			                	(int)(Math.floor(((double)bytesRead / (double)fileLength * 33.0d))));
+			                b.putInt("site_count", 0);
+			                msg.setData(b);
+			                mHandler.sendMessage(msg);
 		            	}
 		            	// By now we should have exhausted the file.  Close the
 		            	// stream and null out it and the buffer so that memory
@@ -1386,38 +1389,14 @@ public class ImportExportHandler {
 		            	// Do the final pass on the cipher.  After this step, the
 		            	// "plain text" array should have the fully decrypted data.
 		            	cipher.doFinal(plaintext, bytesSoFar);
-		                // ******************************************************
-//		            	// Open the file and read its raw binary contents.  The
-//		            	// file shouldn't be very large, but that's why we have
-//						// the memory check above.
-//		            	FileInputStream fis = new FileInputStream(file);
-//		            	byte[] encryptedData = new byte[(int)file.length()];
-//		            	fis.read(encryptedData, 0, encryptedData.length);
-//		            	fis.close();
-//			        	msg = mHandler.obtainMessage();
-//		                b = new Bundle();
-//		                b.putInt("percent_done", 5);
-//		                b.putInt("site_count", 0);
-//		                msg.setData(b);
-//		                mHandler.sendMessage(msg);
-//		                // Create our plaintext container:
-//						byte[] plaintext =
-//							new byte[cipher.getOutputSize(encryptedData.length)];
-//						// Decrypt the data.  See the export method for notes on
-//						// decryption here vs decryption in .NET.
-//						int bytesSoFar = cipher.processBytes(encryptedData, 0,
-//								encryptedData.length, plaintext, 0);
-//						cipher.doFinal(plaintext, bytesSoFar);
 			        	msg = mHandler.obtainMessage();
 		                b = new Bundle();
-		                b.putInt("percent_done", 10);
+		                b.putInt("percent_done", 33);
 		                b.putInt("site_count", 0);
 		                msg.setData(b);
 		                mHandler.sendMessage(msg);
-		                // Now that we're done decrypting, empty out the encrypted
-		                // data byte array.  No sense holding onto that and letting
-		                // it chew up extra memory.
-		                //encryptedData = null;
+		                // Now that we're done decrypting, release the cipher
+		                // and free up memory:
 		                cipher = null;
 		                // Now we need to parse the decrypted data.  To do that,
 		                // we'll need to unzip it and parse the XML.  We'll chain
@@ -1451,13 +1430,13 @@ public class ImportExportHandler {
 			    				DBHelper.createRecord((SiteParameters)sites[i]);
 			    				// Update the progress dialog.  Note that we're at the tail
 			    				// end of the process here, so we're saying that reading the
-			    				// file and decrypting the data amounts to 10% of the work.
-			    				// We're doing the remaining 50%, so scale what we've done
-			    				// to 1-50 and add the remaining 50% on top.
+			    				// file and decrypting the data amounts to 66% of the work.
+			    				// We're doing the remaining 33%, so scale what we've done
+			    				// to 1-33 and add the remaining 66% on top.
 			        	        msg = mHandler.obtainMessage();
 				                b = new Bundle();
 				                b.putInt("percent_done",
-				                	(int)(Math.floor(((double)i / (double)sites.length * 50.0d))) + 50);
+				                	(int)(Math.floor(((double)i / (double)sites.length * 33.0d))) + 66);
 				                b.putInt("site_count", sites.length);
 				                msg.setData(b);
 				                mHandler.sendMessage(msg);

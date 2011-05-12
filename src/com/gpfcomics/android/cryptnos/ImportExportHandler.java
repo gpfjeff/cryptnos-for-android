@@ -933,45 +933,67 @@ public class ImportExportHandler {
 		            	// and releasing the cipher:
 		            	plaintext = null;
 		            	cipher = null;
-		                // Split the decrypted data based on newlines, then step
-		                // through the list:
+		                // Split the decrypted data based on newlines:
 		    			String[] sites = unencryptedData.split("\n");
-			        	msg = mHandler.obtainMessage();
-		                b = new Bundle();
-		                b.putInt("percent_done", 50);
-		                b.putInt("site_count", sites.length);
-		                msg.setData(b);
-		                mHandler.sendMessage(msg);
-		    			for (int i = 0; i < sites.length; i++)
-		    			{
-		    				// Try to recreate the site parameters object from the
-		    				// data.  Note that this will blow up if the data is
-		    				// invalid.
-		    				SiteParameters params =
-		    					new SiteParameters(theApp, sites[i]);
-		    				// Write the data to the database:
-		    				DBHelper.createRecord(params);
-		    				// Update the progress dialog.  Note that we're at the tail
-		    				// end of the process here, so we're saying that reading the
-		    				// file and decrypting the data amounts to half of the work.
-		    				// We're doing the remaining 50%, so scale what we've done
-		    				// to 1-50 and add the remaining 50% on top.
-		        	        msg = mHandler.obtainMessage();
+		                // Note that we're using the length of the site list minus
+		    			// one as our stopping point.  This was added in version
+		    			// 1.2.3 because I discovered that the original exporter
+		    			// code added an extra, empty line at the end of the file,
+		    			// resulting in an empty final string here.  Thus, whenever
+		    			// an old format file was being imported, it would blow up,
+		    			// stating that the file was invalid, while all the sites
+		    			// were actually imported successfully.  Skipping the last
+		    			// string in the array should eliminate this problem.
+		    			int siteCount = sites.length - 1;
+		    			// If there are any sites in the file to import:
+		    			if (siteCount > 0) {
+				        	msg = mHandler.obtainMessage();
 			                b = new Bundle();
-			                b.putInt("percent_done",
-			                	(int)(Math.floor(((double)i / (double)sites.length * 50.0d))) + 50);
-			                b.putInt("site_count", sites.length);
+			                b.putInt("percent_done", 50);
+			                b.putInt("site_count", siteCount);
+			                msg.setData(b);
+			                mHandler.sendMessage(msg);
+			                // Loop through the sites:
+			    			for (int i = 0; i < siteCount; i++)
+			    			{
+			    				// Try to recreate the site parameters object from the
+			    				// data.  Note that this will blow up if the data is
+			    				// invalid.
+			    				SiteParameters params =
+			    					new SiteParameters(theApp, sites[i]);
+			    				// Write the data to the database:
+			    				DBHelper.createRecord(params);
+			    				// Update the progress dialog.  Note that we're at the tail
+			    				// end of the process here, so we're saying that reading the
+			    				// file and decrypting the data amounts to half of the work.
+			    				// We're doing the remaining 50%, so scale what we've done
+			    				// to 1-50 and add the remaining 50% on top.
+			        	        msg = mHandler.obtainMessage();
+				                b = new Bundle();
+				                b.putInt("percent_done",
+				                	(int)(Math.floor(((double)i / (double)siteCount * 50.0d))) + 50);
+				                b.putInt("site_count", siteCount);
+				                msg.setData(b);
+				                mHandler.sendMessage(msg);
+			    			}
+			    			// Just to make sure, force the progress dialog to say we're at
+			    			// 100%:
+				        	msg = mHandler.obtainMessage();
+			                b = new Bundle();
+			                b.putInt("percent_done", 100);
+			                b.putInt("site_count", siteCount);
+			                msg.setData(b);
+			                mHandler.sendMessage(msg);
+			            // There were no sites in the file, so say it was
+			            // invalid:
+		    			} else {
+				        	msg = mHandler.obtainMessage();
+			                b = new Bundle();
+			                b.putInt("percent_done", -1);
+			                b.putInt("site_count", 0);
 			                msg.setData(b);
 			                mHandler.sendMessage(msg);
 		    			}
-		    			// Just to make sure, force the progress dialog to say we're at
-		    			// 100%:
-			        	msg = mHandler.obtainMessage();
-		                b = new Bundle();
-		                b.putInt("percent_done", 100);
-		                b.putInt("site_count", sites.length);
-		                msg.setData(b);
-		                mHandler.sendMessage(msg);
 		            // Insufficient memory to decrypt:
 	    			} else {
 			        	msg = mHandler.obtainMessage();

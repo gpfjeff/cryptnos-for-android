@@ -129,7 +129,7 @@
 <string name="error_edit_params_not_saved">Error: Parameters failed to be saved to the database.</string>
 <string name="error_bad_generate">Error: An error occurred while attempting to generate your password.</string>
 <string name="error_bad_export_params">Error: You must specify a file name, password, and at least once site token to export.</string>
-<string name="error_insufficient_memory">Error: There is insufficient memory available to import or export to or from a file. Try freeing some memory, importing a smaller file or exporting a smaller number of sites.</string>
+<string name="error_insufficient_memory">Error: Insufficient memory. Try freeing some memory, importing a smaller file or exporting a smaller number of sites.</string>
 <string name="error_bad_export">Error: An unrecoverable error occurred during the export process. Your parameters were not exported.</string>
 <string name="error_bad_import_params">Error: You must specify a file name and password to import.</string>
 <string name="error_bad_import_file">Error: The specified file either does not exist, could not be read, or is not a file at all.</string>

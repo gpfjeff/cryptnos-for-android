@@ -27,6 +27,9 @@
  * the master and generated passwords being wiped out.  It should now hold onto
  * these values temporarily and restore them once the rebuild is complete.
  * 
+ * UPDATES FOR 1.2.4:  Enabled "copy to clipboard" setting added.  The user can
+ * no enable and disable copying the generated password to the clipboard.
+ *
  * This program is Copyright 2011, Jeffrey T. Darlington.
  * E-mail:  android_support@cryptnos.com
  * Web:     http://www.cryptnos.com/
@@ -73,7 +76,7 @@ import android.widget.Toast;
  * parameters are saved to the database and the generated password is
  * displayed to the user.
  * @author Jeffrey T. Darlington
- * @version 1.2.2
+ * @version 1.2.4
  * @since 1.0
  */
 public class EditParametersActivity extends Activity {
@@ -342,16 +345,19 @@ public class EditParametersActivity extends Activity {
 									charType, charLimit, hash, iterations);
 							String password = params.generatePassword(passphrase);
 							txtOutput.setText(password);
-							// Because they most likely wanted to copy the password to
-							// the clipboard to paste it into a password form somewhere
-							// else, go ahead and copy it into the clipboard now:
-							ClipboardManager clippy =
-								(ClipboardManager)getSystemService(CLIPBOARD_SERVICE);
-							clippy.setText(password);
-							// We'll assume both of those tasks were successful, so
-							// start our status Toast stating such.  We'll append the
-							// database status below.
-							messages = getResources().getString(R.string.edit_gen_success);
+							// If the user chose to copy the password to the clipboard,
+							// go ahead and copy it now:
+							if (theApp.copyPasswordsToClipboard()) {
+								ClipboardManager clippy =
+									(ClipboardManager)getSystemService(CLIPBOARD_SERVICE);
+								clippy.setText(password);
+								// We'll assume both of those tasks were successful, so
+								// start our status Toast stating such.  We'll append the
+								// database status below.
+								messages = getResources().getString(R.string.edit_gen_success);
+							// If the user doesn't want to copy the password to the
+							// clipboard, just let them know we were successful.
+							} else messages = getResources().getString(R.string.edit_gen_success_no_copy);
 							// Save parameters to the database.  If this is an
 							// existing record, make sure we update the existing
 							// record.  Otherwise, create a new one and take note

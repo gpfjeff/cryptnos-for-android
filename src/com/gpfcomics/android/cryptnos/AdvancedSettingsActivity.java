@@ -12,6 +12,8 @@
  * 
  * UPDATES FOR 1.2.1:  Minor UI enhancements
  * 
+ * UPDATES FOR 1.2.4:  Added checkbox to manage the "copy to clipboard" setting
+ * 
  * This program is Copyright 2011, Jeffrey T. Darlington.
  * E-mail:  android_support@cryptnos.com
  * Web:     http://www.cryptnos.com/
@@ -42,8 +44,10 @@ import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.View.OnClickListener;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.CheckBox;
 import android.widget.LinearLayout;
 import android.widget.Spinner;
 import android.widget.TextView;
@@ -54,7 +58,7 @@ import android.widget.AdapterView.OnItemSelectedListener;
  * This activity allows the user to tweak some of the more advanced settings within
  * Cryptnos, such as which text encoding to use.
  * @author Jeffrey T. Darlington
- * @version 1.2.1
+ * @version 1.2.4
  * @since 1.2
  */
 public class AdvancedSettingsActivity extends Activity {
@@ -78,8 +82,11 @@ public class AdvancedSettingsActivity extends Activity {
 	/** A TextView prompt for the file manager spinner */
 	private TextView labelFileManagerPreference = null;
 	
-	/** A Text View displayed if no file managers were found: */
+	/** A Text View displayed if no file managers were found */
 	private TextView labelNoFileManagersAvailable = null;
+	
+	/** A CheckBox to manage the "copy password to clipboard" setting */
+	private CheckBox chkCopyPasswordsToClipboard = null;
 	
 	/** A reference to the linear layout that contains our UI elements */
 	private LinearLayout layout = null;
@@ -231,6 +238,18 @@ public class AdvancedSettingsActivity extends Activity {
 				}
 			}
 			public void onNothingSelected(AdapterView<?> arg0) { }
+        });
+        
+        // Get the checkbox to handle the "copy passwords to clipboard" setting
+        // and set it to the current state of the setting.  Then give the checkbox
+        // some functionality and let it toggle the setting in the preferences.
+        chkCopyPasswordsToClipboard =
+        	(CheckBox)findViewById(R.id.chkCopyPasswordsToClipboard);
+        chkCopyPasswordsToClipboard.setChecked(theApp.copyPasswordsToClipboard());
+        chkCopyPasswordsToClipboard.setOnClickListener(new OnClickListener() {
+			public void onClick(View v) {
+				theApp.toggleCopyPasswordsToClipboard();
+			}
         });
         
     }

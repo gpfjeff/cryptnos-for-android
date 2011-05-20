@@ -42,6 +42,9 @@
  * 
  * UPDATES FOR 1.2.3:  Added the 1.2.3 version code, commented out for now.
  * 
+ * UPDATES FOR 1.2.4:  Added the 1.2.4 version code and logic to add the new "copy
+ * passwords to clipboard" setting to the shared preferences.
+ * 
  * This program is Copyright 2011, Jeffrey T. Darlington.
  * E-mail:  android_support@cryptnos.com
  * Web:     http://www.cryptnos.com/
@@ -73,7 +76,7 @@ import android.widget.Toast;
  * changed or "upgraded" if the currently running version of Cryptnos is different
  * than the last run version.
  * @author Jeffrey T. Darlington
- * @version 1.2.3
+ * @version 1.2.4
  * @since 1.2
  */
 public class UpgradeManager {
@@ -117,6 +120,13 @@ public class UpgradeManager {
 	//    changes major enough to require upgrading, this constant is currently
 	//    commented out until needed. */
 	//private static final int VERSION_1_2_3 = 6;
+
+	/** A constant representing the integer version of Cryptnos 1.2.4, which
+        introduces the checkbox to toggle on and off copying passcodes to the
+        clipboard.  Since this setting was not previously saved anywhere (it
+        defaulted to always on,) we'll need the UpgradeManager to add it to
+        the preferences file. */
+	private static final int VERSION_1_2_4 = 7;
 
 	/** A regular expression Pattern for matching the UTF-8 character
 	 *  encoding string.  This pattern is case insensitive. */
@@ -187,6 +197,10 @@ public class UpgradeManager {
 	        // Now compare the version numbers.  If we're running a newer
 	        // version, it's time to perform some upgrade logic.
 	        if (oldVersion < newVersion) {
+	        	// Get a reference to the shared preferences editor.  We'll
+	        	// put this near the top because multiple checks may need
+	        	// to add or remove preferences.
+	        	SharedPreferences.Editor editor = prefs.edit();
 	        	// This section should consist of a series of if statements,
 	        	// one after another.  Each if should check for a specific
 	        	// version number case where we want to upgrade our data.
@@ -255,6 +269,15 @@ public class UpgradeManager {
 	        			oldVersion = VERSION_1_2_0;
 	        		}
 	        	}
+	        	// In version 1.2.4 we introduced a checkbox in the Advanced Settings
+	        	// activity to let the user enable and disable the copy passwords to
+	        	// the clipboard setting.  Previously, this was an always-on, hard-
+	        	// coded thing, so we'll need to add the setting to the preferences
+	        	// and default it to true.
+	        	if (oldVersion < VERSION_1_2_4) {
+	        		editor.putBoolean(CryptnosApplication.PREFS_COPY_TO_CLIPBOARD, true);
+	        		oldVersion = VERSION_1_2_4;
+	        	}
 	        	// Additional version checks should follow here, allowing
 	        	// them to chain from check to check:
 	        	// if (oldVersion < VERSION_x_y_z) {
@@ -262,7 +285,6 @@ public class UpgradeManager {
 	        	// Now that we're done, write the new version number to the
 	        	// shared preferences so we'll know next time that we're
 	        	// up to date:
-	        	SharedPreferences.Editor editor = prefs.edit();
 	        	editor.putInt(CryptnosApplication.PREFS_VERSION, newVersion);
 	        	editor.commit();
 	        // If the old version is higher than the new version, the user is

@@ -24,6 +24,9 @@
  * the master and generated passwords being wiped out.  It should now hold onto
  * these values temporarily and restore them once the rebuild is complete.
  * 
+ * UPDATES FOR 1.2.4:  Enabled "copy to clipboard" setting added.  The user can
+ * no enable and disable copying the generated password to the clipboard.
+ *
  * This program is Copyright 2011, Jeffrey T. Darlington.
  * E-mail:  android_support@cryptnos.com
  * Web:     http://www.cryptnos.com/
@@ -63,7 +66,7 @@ import android.widget.Toast;
  * view, allowing the user to generate the password for a given site without
  * worrying about fat-fingering something and screwing up the site's settings. 
  * @author Jeffrey T. Darlington
- * @version 1.2.2
+ * @version 1.2.4
  * @since 1.0
  */
 public class GenerateExistingActivity extends Activity {
@@ -201,15 +204,19 @@ public class GenerateExistingActivity extends Activity {
 							// Display the generated password in the output text
 							// box: 
 							txtOutput.setText(password);
-							// Because we most likely wanted to copy the password
-							// to the clipboard to paste it into a password form
-							// somewhere else, go ahead and copy it into the
-							// clipboard now:
-							ClipboardManager clippy =
-								(ClipboardManager)getSystemService(CLIPBOARD_SERVICE);
-							clippy.setText(password);
-							// We'll assume both of those tasks were successful:
-							Toast.makeText(v.getContext(), R.string.edit_gen_success,
+							// If the user chose to copy the password to the clipboard,
+							// go ahead and copy it now:
+							if (theApp.copyPasswordsToClipboard()) {
+								ClipboardManager clippy =
+									(ClipboardManager)getSystemService(CLIPBOARD_SERVICE);
+								clippy.setText(password);
+								// We'll assume both of those tasks were successful:
+								Toast.makeText(v.getContext(), R.string.edit_gen_success,
+										Toast.LENGTH_LONG).show();
+							// Otherwise, just confirm to the user that the password
+							// was generated:
+							} else Toast.makeText(v.getContext(),
+									R.string.edit_gen_success_no_copy,
 									Toast.LENGTH_LONG).show();
 						}
 						catch (Exception e)

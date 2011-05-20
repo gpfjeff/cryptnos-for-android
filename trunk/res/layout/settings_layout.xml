@@ -10,6 +10,11 @@
     		android:orientation="vertical"
     		android:layout_width="fill_parent"
     		android:layout_height="fill_parent">
+			<CheckBox android:id="@+id/chkCopyPasswordsToClipboard"
+				android:text="@string/settings_copy_passwords"
+				android:layout_width="wrap_content"
+				android:layout_height="wrap_content"
+				android:layout_gravity="center_horizontal"></CheckBox>
 			<TextView android:layout_width="wrap_content"
 				android:layout_height="wrap_content"
 				android:id="@+id/labelEncoding"

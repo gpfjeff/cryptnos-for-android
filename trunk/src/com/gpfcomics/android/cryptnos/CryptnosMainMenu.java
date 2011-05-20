@@ -17,7 +17,14 @@
  * 
  * UPDATES FOR 1.2.0:  Added Help option menu and Advanced Settings menu item.
  * 
- * This program is Copyright 2010, Jeffrey T. Darlington.
+ * UPDATES FOR 1.2.4:  Modified the Advanced Settings menu item to disable the
+ * warning dialog.  I've left the dialog code in place for now but just removed the
+ * call to it.  While I like the idea of warning the user about changing the
+ * text encoding, there are more settings in that activity now that don't
+ * warrant the warning, so it's likely confusing.  There's a warning on the
+ * encoding drop-down itself which should be sufficient.
+ * 
+ * This program is Copyright 2011, Jeffrey T. Darlington.
  * E-mail:  android_support@cryptnos.com
  * Web:     http://www.cryptnos.com/
  * 
@@ -55,7 +62,7 @@ import android.widget.Toast;
 /**
  * The main menu activity for the Cryptnos Android application. 
  * @author Jeffrey T. Darlington
- * @version 1.0
+ * @version 1.2.4
  * @since 1.0
  */
 public class CryptnosMainMenu extends ListActivity {
@@ -83,6 +90,8 @@ public class CryptnosMainMenu extends ListActivity {
             // DB helper:
             theApp = (CryptnosApplication)getApplication();
             mDBHelper = theApp.getDBHelper();
+        	// Run the UpgradeManager if it hasn't already been run this session:
+        	if (!theApp.hasUpgradeManagerRun()) theApp.runUpgradeManager(this);
         }
         // If anything blew up, show an error message in a Toast.  This
         // may not be the best way to do it, but we'll experiment with
@@ -109,8 +118,6 @@ public class CryptnosMainMenu extends ListActivity {
     	// to reflect changes that occur based on adding or removing sites.
     	buildMenu();
     	super.onResume();
-    	// Run the UpgradeManager if it hasn't already been run this session:
-    	if (!theApp.hasUpgradeManagerRun()) theApp.runUpgradeManager(this);
     }
     
     @SuppressWarnings("unchecked")
@@ -185,15 +192,8 @@ public class CryptnosMainMenu extends ListActivity {
         // Launch the advanced settings activity:
         else if (menuItem.compareTo(res.getString(R.string.mainmenu_advanced1)) == 0)
         {
-        	// The first time they try to launch this, show a warning dialog:
-        	if (theApp.showAdvancedSettingsWarning()) {
-        		theApp.toggleShowAdvancedSettingsWarning();
-        		showDialog(DIALOG_ADVANCED_SETTINGS_WARNING);
-        	// Otherwise, just let them on in:
-        	} else {
-	        	Intent i = new Intent(this, AdvancedSettingsActivity.class);
-	        	startActivity(i);
-        	}
+        	Intent i = new Intent(this, AdvancedSettingsActivity.class);
+        	startActivity(i);
         }
         // For the moment, nothing is working.  Show a quick Toast to let
         // the user know that's our fault and not theirs.

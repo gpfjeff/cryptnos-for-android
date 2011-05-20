@@ -39,6 +39,11 @@
 				android:textSize="20sp"
 				android:id="@+id/labelNoFileManagersAvailable"
 				android:text="@string/settings_no_file_managers_available"></TextView>
+			<CheckBox android:id="@+id/chkCopyPasswordsToClipboard"
+				android:text="@string/settings_copy_passwords"
+				android:layout_width="wrap_content"
+				android:layout_height="wrap_content"
+				android:layout_gravity="center_horizontal"></CheckBox>
 		</LinearLayout>
 	</ScrollView>
 </LinearLayout>

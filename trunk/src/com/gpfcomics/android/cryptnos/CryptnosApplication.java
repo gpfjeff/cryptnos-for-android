@@ -48,6 +48,10 @@
  * new character length restriction Spinner in the New/Edit Parameters activity.
  * Added a few missing comments.
  * 
+ * UPDATES FOR 1.2.4:  Added members and methods to support the new "copy to
+ * clipboard" setting, which was previously hard-coded to be always true.  This
+ * setting will now be saved to the shared preferences.
+ * 
  * This program is Copyright 2011, Jeffrey T. Darlington.
  * E-mail:  android_support@cryptnos.com
  * Web:     http://www.cryptnos.com/
@@ -117,7 +121,7 @@ import android.widget.Toast;
  * mark the list as "dirty", forcing it to be reloaded the next time it is
  * requested.
  * @author Jeffrey T. Darlington
- * @version 1.2.1
+ * @version 1.2.4
  * @since 1.0
  */
 public class CryptnosApplication extends Application {
@@ -181,6 +185,9 @@ public class CryptnosApplication extends Application {
 	/** The ID string for our preferred file manager within the shared
 	 *  preferences file. */
 	public static final String PREFS_FILE_MANAGER = "FILE_MANAGER";
+	/** The ID string for the copy to clipboard setting within the shared
+	 *  preferences file. */
+	public static final String PREFS_COPY_TO_CLIPBOARD = "COPY_TO_CLIPBOARD";
 	
 	/** The actual site list array */
 	private static String[] siteList = null;
@@ -208,6 +215,9 @@ public class CryptnosApplication extends Application {
 	private static boolean showAdvancedSettingsWarning = true;
 	/** A global FileManager object for the entire application */
 	private static FileManager fileManager = null;
+	/** A boolean flag indicating whether or not we should copy generated passwords
+	 *  to the system clipboard. */
+	private static boolean copyPasswordsToClipboard = true;
 
 	/** The calling activity, so we can refer back to it.  This is usually the
 	 *  same as the site list listener, but doesn't necessarily have to be. */
@@ -285,6 +295,8 @@ public class CryptnosApplication extends Application {
 		// file manager if at all possible:
 		int preferredFM = prefs.getInt(PREFS_FILE_MANAGER, FileManager.NO_FILE_MANAGER);
 		fileManager = new FileManager(this, preferredFM);
+		// Get our copy-to-clipboard preference:
+		copyPasswordsToClipboard = prefs.getBoolean(PREFS_COPY_TO_CLIPBOARD, true);
 		// Now build our hash table of hash algorithms to lengths:
 		try {
 			// Get the list of hashes from the string resources:
@@ -589,6 +601,26 @@ public class CryptnosApplication extends Application {
 			if (i != null) return i.intValue();
 			else return -1;
 		} else return -1;
+	}
+	
+	/**
+	 * Determine whether or not we should copy generated passwords to the system
+	 * clipboard.
+	 * @return True if we should copy passwords, false otherwise
+	 */
+	public boolean copyPasswordsToClipboard() {
+		return copyPasswordsToClipboard;
+	}
+	
+	/**
+	 * Toggle the "copy passwords to clipboard" setting and save the new value
+	 * to the application preferences.
+	 */
+	public void toggleCopyPasswordsToClipboard() {
+		copyPasswordsToClipboard = !copyPasswordsToClipboard;
+		SharedPreferences.Editor editor = prefs.edit();
+		editor.putBoolean(PREFS_COPY_TO_CLIPBOARD, copyPasswordsToClipboard);
+		editor.commit();
 	}
 	
 	/**

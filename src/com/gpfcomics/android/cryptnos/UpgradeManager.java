@@ -45,6 +45,8 @@
  * UPDATES FOR 1.2.4:  Added the 1.2.4 version code and logic to add the new "copy
  * passwords to clipboard" setting to the shared preferences.
  * 
+ * UPDATES FOR 1.2.5:  Added the 1.2.5 version code, commented out for now.
+ * 
  * This program is Copyright 2011, Jeffrey T. Darlington.
  * E-mail:  android_support@cryptnos.com
  * Web:     http://www.cryptnos.com/
@@ -76,7 +78,7 @@ import android.widget.Toast;
  * changed or "upgraded" if the currently running version of Cryptnos is different
  * than the last run version.
  * @author Jeffrey T. Darlington
- * @version 1.2.4
+ * @version 1.2.5
  * @since 1.2
  */
 public class UpgradeManager {
@@ -127,6 +129,12 @@ public class UpgradeManager {
         defaulted to always on,) we'll need the UpgradeManager to add it to
         the preferences file. */
 	private static final int VERSION_1_2_4 = 7;
+
+	///** A constant representing the integer version of Cryptnos 1.2.5, which
+    //    mostly consists of a bug fix.  Since there are not any
+	//    changes major enough to require upgrading, this constant is currently
+	//    commented out until needed. */
+	//private static final int VERSION_1_2_5 = 8;
 
 	/** A regular expression Pattern for matching the UTF-8 character
 	 *  encoding string.  This pattern is case insensitive. */

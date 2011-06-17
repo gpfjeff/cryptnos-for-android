@@ -52,6 +52,10 @@
  * clipboard" setting, which was previously hard-coded to be always true.  This
  * setting will now be saved to the shared preferences.
  * 
+ * UPDATES FOR 1.2.5:  Fix for Issue #5, "FC in Generate Existing on Honeycomb".
+ * Updated the site list building code to tell the calling activity to stop
+ * managing the database cursor before closing it.
+ * 
  * This program is Copyright 2011, Jeffrey T. Darlington.
  * E-mail:  android_support@cryptnos.com
  * Web:     http://www.cryptnos.com/
@@ -121,7 +125,7 @@ import android.widget.Toast;
  * mark the list as "dirty", forcing it to be reloaded the next time it is
  * requested.
  * @author Jeffrey T. Darlington
- * @version 1.2.4
+ * @version 1.2.5
  * @since 1.0
  */
 public class CryptnosApplication extends Application {
@@ -783,10 +787,11 @@ public class CryptnosApplication extends Application {
             Bundle b = null;
             
             // Asbestos underpants:
+            Cursor cursor = null;
             try
             {
     	        // Get our list of parameter information:
-    	        Cursor cursor = DBHelper.fetchAllSites();
+    	        cursor = DBHelper.fetchAllSites();
     	        caller.startManagingCursor(cursor);
     	        cursor.moveToFirst();
     	        mSiteCount = cursor.getCount();
@@ -830,6 +835,7 @@ public class CryptnosApplication extends Application {
     	        }
     	        // At this point, we're done with the database.  Go ahead and
     	        // close the cursor:
+    	        caller.stopManagingCursor(cursor);
     	        cursor.close();
     	        // Now we want to sort the list to be more presentable to the
     	        // user.  To do that, we need to move the ArrayList into an
@@ -855,6 +861,11 @@ public class CryptnosApplication extends Application {
             // If anything blew up, inform the user:
             catch (Exception e)
             {
+            	if (cursor != null) 
+            	{
+	    	        caller.stopManagingCursor(cursor);
+	    	        cursor.close();
+            	}
 	        	msg = mHandler.obtainMessage();
                 b = new Bundle();
                 b.putInt("percent_done", -1);

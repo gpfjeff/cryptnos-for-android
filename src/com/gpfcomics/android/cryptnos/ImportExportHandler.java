@@ -682,7 +682,6 @@ public class ImportExportHandler {
 	            	for (int i = 0; i < mSites.length; i++) {
 	            		// Get the site from the DB:
 	            		cursor = DBHelper.fetchRecord(SiteParameters.generateKeyFromSite(mSites[i], theApp));
-	        	        mCaller.startManagingCursor(cursor);
 	        	        cursor.moveToFirst();
 	        	        if (cursor.getCount() == 1) {
 		        	        // Convert it to a SiteParamemters object: 

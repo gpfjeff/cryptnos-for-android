@@ -792,7 +792,6 @@ public class CryptnosApplication extends Application {
             {
     	        // Get our list of parameter information:
     	        cursor = DBHelper.fetchAllSites();
-    	        caller.startManagingCursor(cursor);
     	        cursor.moveToFirst();
     	        mSiteCount = cursor.getCount();
     	        // Unfortunately, since we're encrypting all our data, we can't
@@ -835,7 +834,6 @@ public class CryptnosApplication extends Application {
     	        }
     	        // At this point, we're done with the database.  Go ahead and
     	        // close the cursor:
-    	        caller.stopManagingCursor(cursor);
     	        cursor.close();
     	        // Now we want to sort the list to be more presentable to the
     	        // user.  To do that, we need to move the ArrayList into an
@@ -863,7 +861,7 @@ public class CryptnosApplication extends Application {
             {
             	if (cursor != null) 
             	{
-	    	        caller.stopManagingCursor(cursor);
+	    	        //caller.stopManagingCursor(cursor);
 	    	        cursor.close();
             	}
 	        	msg = mHandler.obtainMessage();

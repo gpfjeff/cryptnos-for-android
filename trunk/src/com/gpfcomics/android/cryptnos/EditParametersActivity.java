@@ -52,7 +52,6 @@ import android.app.Activity;
 import android.content.Intent;
 import android.database.Cursor;
 import android.os.Bundle;
-import android.text.ClipboardManager;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -199,7 +198,6 @@ public class EditParametersActivity extends Activity {
             			if (site != null)
             			{
             				Cursor c = dbHelper.fetchRecord(site);
-            				startManagingCursor(c);
             				// Got our record:
             				if (c.getCount() == 1)
             				{
@@ -348,8 +346,7 @@ public class EditParametersActivity extends Activity {
 							// If the user chose to copy the password to the clipboard,
 							// go ahead and copy it now:
 							if (theApp.copyPasswordsToClipboard()) {
-								ClipboardManager clippy =
-									(ClipboardManager)getSystemService(CLIPBOARD_SERVICE);
+								ClipboardManager clippy = ClipboardManager.newInstance(theApp);
 								clippy.setText(password);
 								// We'll assume both of those tasks were successful, so
 								// start our status Toast stating such.  We'll append the

@@ -31,7 +31,11 @@
  * to use the more generic FileManager class so we can let the user decide what
  * file manager to use.
  * 
- * This program is Copyright 2010, Jeffrey T. Darlington.
+ * UPDATES FOR 1.2.6:  Fix for Issue #6, "ActivityNotFoundException in
+ * Instrumentation.checkStartActivityResult()".  Added try/catch block around
+ * calling third-party file manager intent.
+ * 
+ * This program is Copyright 2011, Jeffrey T. Darlington.
  * E-mail:  android_support@cryptnos.com
  * Web:     http://www.cryptnos.com/
  * 
@@ -86,7 +90,7 @@ import android.widget.Toast;
  * but this class will be responsible for gathering the inputs and creating
  * the progress dialog that the handler will update.
  * @author Jeffrey T. Darlington
- * @version 1.0
+ * @version 1.2.6
  * @since 1.0
  */
 public class ExportActivity extends Activity implements
@@ -281,18 +285,30 @@ public class ExportActivity extends Activity implements
 				// selected, but were should double-check that this is valid
 				// anyway:
 				FileManager fm = theApp.getFileManager();
-				if (fm.isFileManagerSelected()) {
-					// Use the FileManager class to generate our select folder
-					// intent, then fire it off:
-					Intent intent = fm.generateSelectFolderIntent(exportRootPath.toString(),
-							getResources().getString(R.string.export_file_dialog_title),
-							getResources().getString(R.string.import_file_dialog_button));
-					startActivityForResult(intent,
-							FileManager.INTENT_REQUEST_SELECT_FOLDER);
-				// If for some reason no file manager was selected, complain:
-				} else Toast.makeText(v.getContext(),
-						R.string.error_no_external_file_manager,
-						Toast.LENGTH_LONG).show();
+				try {
+					if (fm.isFileManagerSelected()) {
+						// Use the FileManager class to generate our select folder
+						// intent, then fire it off:
+						Intent intent = fm.generateSelectFolderIntent(exportRootPath.toString(),
+								getResources().getString(R.string.export_file_dialog_title),
+								getResources().getString(R.string.import_file_dialog_button));
+						startActivityForResult(intent,
+								FileManager.INTENT_REQUEST_SELECT_FOLDER);
+					// If for some reason no file manager was selected, complain:
+					} else Toast.makeText(v.getContext(),
+							R.string.error_no_external_file_manager,
+							Toast.LENGTH_LONG).show();
+					// There is a chance that we'll try to fire off the intent to pick a
+					// directory and end up generating an exception.  (See Issue $6.)  The most
+					// likely exception is ActivityNotFoundException, but we'll be generic
+					// here to play it safe.  If we throw an exception above, warn the user
+					// to check their file manager preference in the settings.
+				} catch (Exception e) {
+					String message = getResources().getString(R.string.error_file_manager_not_found);
+					message = message.replace(getResources().getString(R.string.meta_replace_token),
+							fm.getPreferredFileManagerName());
+					Toast.makeText(v.getContext(), message, Toast.LENGTH_LONG).show();
+				}
 			}
 		});
         

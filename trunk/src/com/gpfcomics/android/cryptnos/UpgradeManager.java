@@ -78,7 +78,7 @@ import android.widget.Toast;
  * changed or "upgraded" if the currently running version of Cryptnos is different
  * than the last run version.
  * @author Jeffrey T. Darlington
- * @version 1.2.5
+ * @version 1.2.7
  * @since 1.2
  */
 public class UpgradeManager {
@@ -135,6 +135,18 @@ public class UpgradeManager {
 	//    changes major enough to require upgrading, this constant is currently
 	//    commented out until needed. */
 	//private static final int VERSION_1_2_5 = 8;
+
+	///** A constant representing the integer version of Cryptnos 1.2.6, which
+    //    mostly consists of a bug fix.  Since there are not any
+	//    changes major enough to require upgrading, this constant is currently
+	//    commented out until needed. */
+	//private static final int VERSION_1_2_6 = 9;
+
+	///** A constant representing the integer version of Cryptnos 1.2.7, which
+    //    mostly consists of a bug fix.  Since there are not any
+	//    changes major enough to require upgrading, this constant is currently
+	//    commented out until needed. */
+	//private static final int VERSION_1_2_7 = 10;
 
 	/** A regular expression Pattern for matching the UTF-8 character
 	 *  encoding string.  This pattern is case insensitive. */

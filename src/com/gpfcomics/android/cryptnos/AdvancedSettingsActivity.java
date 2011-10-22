@@ -14,6 +14,8 @@
  * 
  * UPDATES FOR 1.2.4:  Added checkbox to manage the "copy to clipboard" setting
  * 
+ * UPDATES FOR 1.3.0:  Added controls for QR scanner preference
+ * 
  * This program is Copyright 2011, Jeffrey T. Darlington.
  * E-mail:  android_support@cryptnos.com
  * Web:     http://www.cryptnos.com/
@@ -58,7 +60,7 @@ import android.widget.AdapterView.OnItemSelectedListener;
  * This activity allows the user to tweak some of the more advanced settings within
  * Cryptnos, such as which text encoding to use.
  * @author Jeffrey T. Darlington
- * @version 1.2.4
+ * @version 1.3.0
  * @since 1.2
  */
 public class AdvancedSettingsActivity extends Activity {
@@ -85,6 +87,15 @@ public class AdvancedSettingsActivity extends Activity {
 	/** A Text View displayed if no file managers were found */
 	private TextView labelNoFileManagersAvailable = null;
 	
+	/** A spinner to show the available QR code scanner list */
+	private Spinner spinQRScanners = null;
+	
+	/** A TextView prompt for the QR code scanner spinner */
+	private TextView labelQRScannerPreference = null;
+	
+	/** A Text View displayed if no QR code scanners were found */
+	private TextView labelNoQRScannersAvailable = null;
+	
 	/** A CheckBox to manage the "copy password to clipboard" setting */
 	private CheckBox chkCopyPasswordsToClipboard = null;
 	
@@ -106,6 +117,8 @@ public class AdvancedSettingsActivity extends Activity {
 	/** The current selection in the file manager spinner.  This is used to restore
 	 *  the previous selection if the user cancels the change. */
 	private int lastFileManagerSelection = 0;
+	
+	private int lastQRScannerSelection = 0;
 	
     @Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -217,10 +230,7 @@ public class AdvancedSettingsActivity extends Activity {
             // Set the current selection and prompt:
             spinFileManagers.setSelection(lastFileManagerSelection, true);
             spinFileManagers.setPrompt(getResources().getString(R.string.settings_file_manager_prompt));
-
         } else {
-        	//spinFileManagers.setVisibility(View.INVISIBLE);
-        	//labelFileManagerPreference.setVisibility(View.INVISIBLE);
         	layout.removeView(spinFileManagers);
         	layout.removeView(labelFileManagerPreference);
         	labelNoFileManagersAvailable.setText(labelNoFileManagersAvailable.getText().toString() +
@@ -235,6 +245,57 @@ public class AdvancedSettingsActivity extends Activity {
 					int arg2, long arg3) {
 				if (spinFileManagers.getSelectedItemPosition() != lastFileManagerSelection) {
 					theApp.getFileManager().setPreferredFileManager((String)spinFileManagers.getSelectedItem());
+					lastFileManagerSelection = spinFileManagers.getSelectedItemPosition();
+				}
+			}
+			public void onNothingSelected(AdapterView<?> arg0) { }
+        });
+        
+        // Get handy references to the QR scanner UI elements:
+        spinQRScanners = (Spinner)findViewById(R.id.spinQRScanners);
+        labelQRScannerPreference = (TextView)findViewById(R.id.labelQRScannerPreference);
+        labelNoQRScannersAvailable = (TextView)findViewById(R.id.labelNoQRScannersAvailable);
+
+        // This is pretty much exactly like the file manager selection UI,
+        // only this time we'll set up the QR code scanner selection.  Make
+        // we *can* scan QR codes, then get the current selection and available
+        // scanners and set up the spinner with the current selection ready.  If
+        // no scanners are available, hide the spinner and let the user know
+        // which scanners are available.
+        QRCodeHandler qrch = theApp.getQRCodeHandler();
+        if (qrch.canHandleQRCodes()) {
+        	layout.removeView(labelNoQRScannersAvailable);
+        	String[] qrsList = qrch.getAvailableQRCodeAppNames();
+        	String selectedQR = qrch.getPreferredQRCodeAppName();
+        	lastQRScannerSelection = 0;
+        	for (int i = 0; i < qrsList.length; i++) {
+        		if (qrsList[i].compareTo(selectedQR) == 0) {
+        			lastQRScannerSelection = i;
+        			break;
+        		}
+        	}
+            ArrayAdapter<String> adapter3 = new ArrayAdapter<String>(this,
+            		android.R.layout.simple_spinner_item, qrsList);
+            adapter3.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+            spinQRScanners.setAdapter(adapter3);
+            spinQRScanners.setSelection(lastQRScannerSelection, true);
+            spinQRScanners.setPrompt(getResources().getString(R.string.settings_qrscanner_prompt));
+        } else {
+        	layout.removeView(spinQRScanners);
+        	layout.removeView(labelQRScannerPreference);
+        	labelNoQRScannersAvailable.setText(labelNoQRScannersAvailable.getText().toString() +
+        			qrch.getRecognizedQRScannerNames());
+        }
+        
+        // Set up the QR scanner spinner.  Again, like the file manager spinner,
+        // update the preference when something is selected other than the option
+        // already selected.
+        spinQRScanners.setOnItemSelectedListener(new OnItemSelectedListener() {
+			public void onItemSelected(AdapterView<?> arg0, View arg1,
+					int arg2, long arg3) {
+				if (spinQRScanners.getSelectedItemPosition() != lastQRScannerSelection) {
+					theApp.getQRCodeHandler().setPreferredQRCodeApp((String)spinFileManagers.getSelectedItem());
+					lastQRScannerSelection = spinQRScanners.getSelectedItemPosition();
 				}
 			}
 			public void onNothingSelected(AdapterView<?> arg0) { }

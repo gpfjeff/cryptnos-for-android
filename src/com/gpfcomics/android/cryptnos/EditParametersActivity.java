@@ -118,7 +118,7 @@ public class EditParametersActivity extends Activity {
 	/** Our database adapter for manipulating the database. */
 	private ParamsDbAdapter dbHelper = null;
 	/** The database row ID of the current note if we are in edit mode. */
-	private long rowID = -1L;
+	private long rowID = ParamsDbAdapter.DB_ERROR;
 	
 	/** The site token used the last time the Generate button was pressed
 	 *  in this session.  This is used to detect if the parameters have been
@@ -301,7 +301,7 @@ public class EditParametersActivity extends Activity {
 				// and we'll default to editing the same parameters.
 				if (mode == NEW_MODE && (lastSite == null ||
 					site.compareTo(lastSite) != 0))
-						rowID = -1;
+						rowID = ParamsDbAdapter.DB_ERROR;
 				// A bit of error checking.  Make sure both the site and
 				// passphrase boxes are populated.  We'll handle character
 				// type and length restrictions further below.
@@ -368,7 +368,8 @@ public class EditParametersActivity extends Activity {
 								// assume true here, and then make sure this flag
 								// is true *and* the row ID is positive.
 								boolean success = true;
-								if (rowID > 0) dbHelper.updateRecord(rowID, params);
+								if (rowID != ParamsDbAdapter.DB_ERROR)
+									dbHelper.updateRecord(rowID, params);
 								else {
 									// If we're adding a record, set the site list
 									// on the main app to dirty so it will get
@@ -376,7 +377,7 @@ public class EditParametersActivity extends Activity {
 									rowID = dbHelper.createRecord(params);
 									theApp.setSiteListDirty();
 								}
-								if (success && rowID > 0)
+								if (success && rowID != ParamsDbAdapter.DB_ERROR)
 								{
 									messages = messages.concat(" ").concat(getResources().getString(R.string.edit_save_success));
 									lastSite = site;

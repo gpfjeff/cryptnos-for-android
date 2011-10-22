@@ -23,6 +23,13 @@
 <string name="mainmenu_about2">Additional information about this application</string>
 <string name="mainmenu_dialog_advanced_settings_title">Warning</string>
 <string name="mainmenu_dialog_advanced_settings_text">Modifying the advanced settings may potentially "break" your existing passwords. Are you sure you wish to continue?</string>
+<string name="mainmenu_dialog_import_method">Import From</string>
+<string name="mainmenu_dialog_export_method">Export To</string>
+<string name="mainmenu_dialog_import_overwrite_title">Overwrite Site</string>
+<string name="mainmenu_dialog_import_overwrite_warn">The scanned site \"xxx\" already exists in the database. Are you sure you want to overwrite it?</string>
+<string name="mainmenu_dialog_import_success">The scanned parameters for site \"xxx\" have been successfully imported.</string>
+<string name="mainmenu_dialog_import_error1">Error: No valid Cryptnos parameter data was found, so nothing was imported.</string>
+<string name="mainmenu_dialog_import_error2">Error: The data from the scanned QR code could not be imported into the database.</string>
 <string name="optmenu_help">Help</string>
 <string name="new_title">Cryptnos: Generate New Password</string>
 <string name="edit_title">Cryptnos: Edit Parameters</string>
@@ -69,6 +76,7 @@
 <string name="menu_delete">Delete</string>
 <string name="menu_edit">Edit</string>
 <string name="menu_generate">Generate password</string>
+<string name="menu_export_qrcode">Export via QR code</string>
 <string name="export_title">Cryptnos: Export</string>
 <string name="export_file_label">Specify the name of the file to export to. The file will be created on the root of your removable storage. If a file with the same name already exists, it will be overwritten.</string>
 <string name="export_file_label_pick_path">Specify the path and name of the file to export to. Use the Selected Path button to select a path to save to, then enter the file name in the text box below it. If a file with the same name already exists in the selected path, it will be overwritten.</string>
@@ -108,12 +116,15 @@
 <string name="settings_file_manager_pref_label">Preferred file manager:</string>
 <string name="settings_file_manager_prompt">Available file managers</string>
 <string name="settings_no_file_managers_available">No recognized file managers could be found. To take advantage of a third-party file manager during import and export operations, please install one of the following applications:\n\n</string>
+<string name="settings_qrscanner_pref_label">Preferred QR code scanner:</string>
+<string name="settings_qrscanner_prompt">Available QR code scanners</string>
+<string name="settings_no_qrscanner_available">No recognized QR code scanners could be found. To import or export parameters via QR code, please install one of the following applications:\n\n</string>
 <string name="settings_copy_passwords">Copy generated passwords to clipboard</string>
 <string name="about_title">About Cryptnos</string>
 <string name="about_header">Version</string>
 <string name="about_link">http://www.cryptnos.com/</string>
 <string name="about_copyright">Copyright 2011, Jeffrey T. Darlington.</string>
-<string name="about_license">This application contains code from the Legion of the Bouncy Castle Crypto API, which has been released under the following license:\n\n--------------------------------------\n\nCopyright (c) 2000 - 2011 The Legion Of The Bouncy Castle (http://www.bouncycastle.org)\n\nPermission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the \"Software\"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.\n\n--------------------------------------\n\nThe remainder of this application has been released under the following license:\n\nThis program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.\n\nThis program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.\n\nYou should have received a copy of the GNU General Public License along with this program; if not, write to the Free Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA</string>
+<string name="about_license">\"QR code\" is a registered trademark of Denso Wave Incorporated.\n\nThis application contains code from the Legion of the Bouncy Castle Crypto API, which has been released under the following license:\n\n--------------------------------------\n\nCopyright (c) 2000 - 2011 The Legion Of The Bouncy Castle (http://www.bouncycastle.org)\n\nPermission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the \"Software\"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.\n\n--------------------------------------\n\nThe remainder of this application has been released under the following license:\n\nThis program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.\n\nThis program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.\n\nYou should have received a copy of the GNU General Public License along with this program; if not, write to the Free Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA</string>
 <string name="error_not_implemented">This option has not been implemented yet. Sorry!</string>
 <string name="error_site_empty">Error: You must specify a site name.</string>
 <string name="error_site_has_pipe">Error: The site name cannot contain the pipe character (\"|\").</string>
@@ -152,6 +163,8 @@
 <string name="error_upgrader_old_version">Error: The currently installed version of Cryptnos is older than the last version of Cryptnos to run. This could cause the app to become unstable. Please clear all your saved data and reinstall.</string>
 <string name="error_upgrader_change_encoding_warning">Your current system default for text encoding is \"xxx\". For compatibility reasons, we suggest you change this to UTF-8, but this may break your existing passwords. Would you like to change your text encoding now?</string>
 <string name="error_file_manager_not_found">Error: File manager xxx could not be found. Please check your file manager preference setting.</string>
+<string name="error_qrexport_no_app_found">Error: No QR code scanning app found. Please install one to enable this feature.</string>
+<string name="error_qrexport_fail">Error: An unknown error occurred. Your site parameters could not be exported.</string>
 <string name="error_unknown">Error: An unknown error has occurred.</string>
 <string name="help_title">Cryptnos Help</string>
 <string name="help_menu_whatis1">What is Cryptnos?</string>
@@ -195,5 +208,9 @@
 	<item>Alphanumerics only</item>
 	<item>Alphabetic characters only</item>
 	<item>Numbers only</item>
+</string-array>
+<string-array name="importExportMethods">
+	<item>File</item>
+	<item>QR Code</item>
 </string-array>
 </resources>

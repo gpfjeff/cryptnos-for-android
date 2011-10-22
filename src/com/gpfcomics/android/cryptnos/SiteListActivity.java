@@ -30,6 +30,13 @@
  * from being forced back to the main menu for small configuration changes,
  * like rotating the screen or sliding out a physical keyboard.
  * 
+ * UPDATES FOR 1.3.0:  Added code to handle new QR code export mode.  If the
+ * user selects to export a site via QR code from the main menu, they are sent
+ * here in the new mode.  Default selection sends the parameters to the user's
+ * selection of QR code scanner app, which encodes and displays the code.  The
+ * context menu has be updated as well to make exporting to QR code an option
+ * in all list modes.
+ * 
  * This program is Copyright 2011, Jeffrey T. Darlington.
  * E-mail:  android_support@cryptnos.com
  * Web:     http://www.cryptnos.com/
@@ -58,6 +65,7 @@ import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.database.Cursor;
 import android.os.Bundle;
 import android.view.ContextMenu;
 import android.view.Menu;
@@ -79,33 +87,38 @@ import android.widget.AdapterView.AdapterContextMenuInfo;
  * will also bring up a context menu that will allow any of the subsequent
  * actions to be selected.
  * @author Jeffrey T. Darlington
- * @version 1.2.2
+ * @version 1.3.0
  * @since 1.0
  */public class SiteListActivity extends ListActivity implements
  		SiteListListener {
 	
 	/** A constant indicating this activity has been called in edit mode. */
-	public static final int EDIT_MODE = 0;
+	public static final int MODE_EDIT = 0;
 	/** A constant indicating this activity has been called in delete mode. */
-	public static final int DELETE_MODE = 1;
+	public static final int MODE_DELETE = MODE_EDIT + 1;
 	/** A constant indicating this activity has been called in generate
 	 *  existing mode. */
-	public static final int EXISTING_MODE = 2;
+	public static final int MODE_EXISTING = MODE_DELETE + 1;
+	/** A constant indicating this activity has been called in "export to QR code:
+	 *  mode. */
+	public static final int MODE_EXPORT_QR = MODE_EXISTING + 1;
 	/** A constant indicating the Generate menu item. */
 	public static final int MENU_GENERATE = Menu.FIRST;
 	/** A constant indicating the Edit menu item. */
-	public static final int MENU_EDIT = Menu.FIRST + 1;
+	public static final int MENU_EDIT = MENU_GENERATE + 1;
 	/** A constant indicating the Delete menu item. */
-	public static final int MENU_DELETE = Menu.FIRST + 2;
+	public static final int MENU_DELETE = MENU_EDIT + 1;
+	/** A constant indicating the Export to QR Code menu item .*/
+	public static final int MENU_EXPORT_QR = MENU_DELETE + 1;
 	/** A constant indicating the Delete All option menu item. */
 	public static final int OPTMENU_DELETE_ALL = Menu.FIRST + 100;
 	/** A constant indicating the Help option menu item. */
-	public static final int OPTMENU_HELP = Menu.FIRST + 101;
+	public static final int OPTMENU_HELP = MENU_DELETE + 1;
 	/** A constant indicating that we should show the confirm delete dialog. */
 	static final int DIALOG_CONFIRM_DELETE = 1000;
 	/** A constant indicating that we should show the confirm delete all
 	 *  dialog. */
-	static final int DIALOG_CONFIRM_DELETE_ALL = 1001;
+	static final int DIALOG_CONFIRM_DELETE_ALL = DIALOG_CONFIRM_DELETE + 1;
 
 	/** A reference to our top-level application */
 	private CryptnosApplication theApp = null;
@@ -144,8 +157,8 @@ import android.widget.AdapterView.AdapterContextMenuInfo;
         if (extras != null)
         {
         	mode = extras.getInt("mode");
-        	if (mode < EDIT_MODE || mode > EXISTING_MODE)
-        		mode = EDIT_MODE;
+        	if (mode < MODE_EDIT || mode > MODE_EXPORT_QR)
+        		mode = MODE_EDIT;
         }
         // Request the site list from the main app.  We'll actually get the
         // list in the onSiteListReady() method below.
@@ -343,7 +356,7 @@ import android.widget.AdapterView.AdapterContextMenuInfo;
         {
         	// In edit mode, bring up the edit parameters activity, populating
         	// it with information from the database:
-	        case EDIT_MODE:
+	        case MODE_EDIT:
 	            Intent i1 = new Intent(this, EditParametersActivity.class);
 	            i1.putExtra("mode", EditParametersActivity.EDIT_MODE);
 	            i1.putExtra(ParamsDbAdapter.DBFIELD_SITE, 
@@ -352,7 +365,7 @@ import android.widget.AdapterView.AdapterContextMenuInfo;
 	        	break;
 	        // In generate existing mode: all we're doing is giving the user
 	        // a chance to pick a site token to generate a password for:
-	        case EXISTING_MODE:
+	        case MODE_EXISTING:
 	            Intent i2 = new Intent(this, GenerateExistingActivity.class);
 	            i2.putExtra(ParamsDbAdapter.DBFIELD_SITE, 
 	            	SiteParameters.generateKeyFromSite(selectedSite, theApp));
@@ -361,8 +374,16 @@ import android.widget.AdapterView.AdapterContextMenuInfo;
 	        // In delete mode, display the confirmation dialog, which will
 	        // take care of actually deleting the record if they confirm the
 	        // action:
-	        case DELETE_MODE:
+	        case MODE_DELETE:
 	        	showDialog(DIALOG_CONFIRM_DELETE);
+	        	break;
+	        // If our default is to export a QR code, get the site parameter data
+	        // and do whatever is necessary to display the code:
+	        case MODE_EXPORT_QR:
+	        	if (theApp.getQRCodeHandler().canHandleQRCodes())
+	        		exportSiteToQRCode();
+	        	else Toast.makeText(this, R.string.error_qrexport_no_app_found,
+		        		Toast.LENGTH_LONG).show();
 	        	break;
 	        // Nothing else should be implemented yet:
 	        default:
@@ -376,17 +397,19 @@ import android.widget.AdapterView.AdapterContextMenuInfo;
 			ContextMenuInfo menuInfo) {
 		super.onCreateContextMenu(menu, v, menuInfo);
 		// The context menu allows us to get around whatever we selected on
-		// the main menu.  Here, we can do all three main tasks of generating
-		// an existing password, editing a set of parameters, or deleting
-		// them.  I originally planned to change the default order depending
-		// on the calling mode, making the option selected from the main menu
-		// be at the top, but then I thought it might be confusing for the
-		// context menu to change all the time.  Thus, the order is hard-
-		// coded to what you see here.
+		// the main menu.  Here, we can do all four main tasks of generating
+		// an existing password, editing a set of parameters, deleting a
+		// parameter set, or exporting it to a QR code. I originally planned
+		// to change the default order depending on the calling mode, making
+		// the option selected from the main menu be at the top, but then I
+		// thought it might be confusing for the context menu to change all
+		// the time.  Thus, the order is hard- coded to what you see here.
 		menu.setHeaderTitle(R.string.sitelist_contextmenu_header);
         menu.add(0, MENU_GENERATE, 0, R.string.menu_generate);
         menu.add(0, MENU_EDIT, 1, R.string.menu_edit);
         menu.add(0, MENU_DELETE, 2, R.string.menu_delete);
+        if (theApp.getQRCodeHandler().canHandleQRCodes())
+        	menu.add(0, MENU_EXPORT_QR, 3, R.string.menu_export_qrcode);
 	}
     
     @Override
@@ -419,6 +442,13 @@ import android.widget.AdapterView.AdapterContextMenuInfo;
     		case MENU_DELETE:
     			showDialog(DIALOG_CONFIRM_DELETE);
     			return true;
+    		// Export to a QR code:
+    		case MENU_EXPORT_QR:
+	        	if (theApp.getQRCodeHandler().canHandleQRCodes())
+	        		exportSiteToQRCode();
+	        	else Toast.makeText(this, R.string.error_qrexport_no_app_found,
+		        		Toast.LENGTH_LONG).show();
+	        	return true;
 		}
 		// If the above didn't return anything useful, pass the buck:
 		return super.onContextItemSelected(item);
@@ -491,7 +521,63 @@ import android.widget.AdapterView.AdapterContextMenuInfo;
         	Toast.makeText(this, R.string.error_bad_listfetch,
             		Toast.LENGTH_LONG).show();
 		}
-		
 	}
-    	
+
+	/**
+	 * Assuming that a site has already been selected, either by being in QR export
+	 * mode and the site has been tapped, or the user has long-pressed an entry in
+	 * any mode and selected "Export to QR code", get the site parameters for the
+	 * selected site, generate its export QR code, and display it.
+	 */
+	private void exportSiteToQRCode() {
+		// Asbestos underpants:
+		try {
+			// Make sure a site has been selected first:
+			if (selectedSite != null) {
+				// Get the record from the database:
+				Cursor c =
+					DBHelper.fetchRecord(SiteParameters.generateKeyFromSite(selectedSite,
+							theApp));
+				// If we got something useful:
+				if (c != null & c.getCount() == 1) {
+					// Generate a new site parameters object:
+					SiteParameters params =
+    					new SiteParameters(theApp, c.getString(1), c.getString(2));
+					// Close the cursor for good measure:
+					c.close();
+					// Get the app's QR code handler and make sure we can work with
+					// QR codes:
+					QRCodeHandler qrCodeHandler = theApp.getQRCodeHandler();
+					if (qrCodeHandler.canHandleQRCodes()) {
+						// Generate our intent to encode data:
+						Intent i = qrCodeHandler.generateEncodeIntent(params);
+						// Some QR encoders will display the generated code for us
+						// while some will not.  If they won't, we'll need to get
+						// the raw image data from the encoder and display it ourselves.
+						if (qrCodeHandler.needQRViewActivity()) {
+							// TODO: This isn't implemented yet
+				        	Toast.makeText(this, R.string.error_not_implemented,
+					        		Toast.LENGTH_LONG).show();
+				        // If the encoder will display the code for us, just send
+				        // the intent to generate the code:
+						} else startActivity(i);
+					// If we can't export QR codes, complain:
+					} else Toast.makeText(this, R.string.error_qrexport_no_app_found,
+							Toast.LENGTH_LONG).show();
+				// If we didn't get anything useful from the database:
+				} else {
+					if (c != null) c.close();
+					Toast.makeText(this, R.string.error_bad_restore,
+		            		Toast.LENGTH_LONG).show();
+				}
+			}
+			// If no site was selected:
+			else Toast.makeText(this, R.string.error_export_no_sites_checked,
+            		Toast.LENGTH_LONG).show();
+		// If something blew up:
+		} catch (Exception e) {
+        	Toast.makeText(this, R.string.error_qrexport_fail,
+            		Toast.LENGTH_LONG).show();
+		}
+	}
 }

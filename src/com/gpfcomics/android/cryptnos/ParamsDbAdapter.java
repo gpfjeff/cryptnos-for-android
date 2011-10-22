@@ -20,7 +20,10 @@
  * UPDATES FOR 1.1:  Added the deleteAllRecords() method to facilitate
  * deleting all records in the database at once.
  * 
- * This program is Copyright 2010, Jeffrey T. Darlington.
+ * UPDATES FOR 1.3.0:  Minor code clean-up and tweaks.  Added DB_ERROR
+ * public constant.
+ * 
+ * This program is Copyright 2011, Jeffrey T. Darlington.
  * E-mail:  android_support@cryptnos.com
  * Web:     http://www.cryptnos.com/
  * 
@@ -50,32 +53,33 @@ import android.util.Log;
  * A database adaptor for reading and writing Cryptnos site parameter data to
  * and from the database.
  * @author Jeffrey T. Darlington
- * @version 1.1
+ * @version 1.3.0
  * @since 1.0
  */
 public class ParamsDbAdapter {
 
+	/* Public Constants *******************************************************/
+	
     /** A constant representing the row ID database field. */
     public static final String DBFIELD_ROWID = "_id";
     /** A constant representing the site "key" or unique token. */
     public static final String DBFIELD_SITE = "site";
     /** A constant representing the site parameters database field. */
     public static final String DBFIELD_PARAMS = "params";
+    /** A constant representing a failure.  Use this in comparisons when you are
+     *  looking at a row ID to see if the action failed or not. */
+    public static final long DB_ERROR = -1L;
+
+	/* Private Constants ********************************************************/
 
     /** I *think* this is used for the SQLiteOpenHelper.onUpgrade() log and
      *  nowhere else.  That said, I'm not sure what other purpose this
      *  constant may serve. */
     private static final String TAG = "ParamsDbAdapter";
-    /** An instance of our internal DatabaseHelper class*/
-    private DatabaseHelper mDbHelper;
-    /** A reference to the underlying SQLiteDatabase */
-    private SQLiteDatabase mDb;
-    
     /** Database creation SQL statement */
     private static final String DATABASE_CREATE_SQL =
             "create table parameters (_id integer primary key autoincrement, "
                     + "site text not null, params text not null);";
-
     /** A constant representing the name of the database. */
     private static final String DATABASE_NAME = "cryptnos";
     /** A constant representing the primary data table in the database. */
@@ -83,6 +87,12 @@ public class ParamsDbAdapter {
     /** The version of this database. */
     private static final int DATABASE_VERSION = 1;
 
+	/* Private Members **********************************************************/
+	
+    /** An instance of our internal DatabaseHelper class*/
+    private DatabaseHelper mDbHelper;
+    /** A reference to the underlying SQLiteDatabase */
+    private SQLiteDatabase mDb;
     /** Our calling Context. */
     private final Context mCtx;
 
@@ -114,6 +124,8 @@ public class ParamsDbAdapter {
         }
     }
 
+	/* Public methods: ***********************************************************/
+	
     /**
      * Constructor - takes the context to allow the database to be
      * opened/created
@@ -177,7 +189,7 @@ public class ParamsDbAdapter {
         		// And update the existing row with the new data.  Hurray for
         		// code reuse!
         		if (updateRecord(rowID, siteParams)) return rowID;
-        		else return -1l;
+        		else return DB_ERROR;
         	// If the site doesn't exist, create a new one:
         	} else {
         		// Close out the cursor:

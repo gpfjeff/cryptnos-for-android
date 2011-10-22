@@ -40,6 +40,18 @@
 				android:layout_height="wrap_content"
 				android:id="@+id/labelNoFileManagersAvailable"
 				android:text="@string/settings_no_file_managers_available"></TextView>
+			<TextView android:layout_width="wrap_content"
+				android:layout_height="wrap_content"
+				android:id="@+id/labelQRScannerPreference"
+				android:text="@string/settings_qrscanner_pref_label"></TextView>
+			<Spinner android:layout_width="fill_parent"
+				android:layout_height="wrap_content"
+				android:clickable="true"
+				android:id="@+id/spinQRScanners"></Spinner>
+			<TextView android:layout_width="wrap_content"
+				android:layout_height="wrap_content"
+				android:id="@+id/labelNoQRScannersAvailable"
+				android:text="@string/settings_no_qrscanner_available"></TextView>
 		</LinearLayout>
 	</ScrollView>
 </LinearLayout>

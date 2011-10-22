@@ -148,6 +148,12 @@ public class UpgradeManager {
 	//    commented out until needed. */
 	//private static final int VERSION_1_2_7 = 10;
 
+	/** A constant representing the integer version of Cryptnos 1.3, where
+	 *  we introduced import and export via QR codes and improve import flexibility
+	 *  by letting the user pick and choose which sites in an export file they'd
+	 *  like to import. */
+	private static final int VERSION_1_3_0 = 11;
+
 	/** A regular expression Pattern for matching the UTF-8 character
 	 *  encoding string.  This pattern is case insensitive. */
 	private Pattern regex_utf8 =
@@ -297,6 +303,18 @@ public class UpgradeManager {
 	        	if (oldVersion < VERSION_1_2_4) {
 	        		editor.putBoolean(CryptnosApplication.PREFS_COPY_TO_CLIPBOARD, true);
 	        		oldVersion = VERSION_1_2_4;
+	        	}
+	        	// In version 1.3.0 we introduce the ability to import and export
+	        	// sites via QR codes, which requires a third-party barcode scanning
+	        	// app.  To set this up, we'll grab the application's QR code handler
+	        	// object and let it find all available scanners that are installed.
+	        	// We'll then set the scanner preference to a default value and place
+	        	// that into the preferences until the user changes it.
+	        	if (oldVersion < VERSION_1_3_0) {
+	        		QRCodeHandler qrCodeHandler = theApp.getQRCodeHandler();
+	        		editor.putInt(CryptnosApplication.PREFS_QRCODE_SCANNER, 
+	        				qrCodeHandler.getPreferredQRCodeApp());
+	        		oldVersion = VERSION_1_3_0;
 	        	}
 	        	// Additional version checks should follow here, allowing
 	        	// them to chain from check to check:

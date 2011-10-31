@@ -14,7 +14,8 @@
  * 
  * UPDATES FOR 1.2.4:  Added checkbox to manage the "copy to clipboard" setting
  * 
- * UPDATES FOR 1.3.0:  Added controls for QR scanner preference
+ * UPDATES FOR 1.3.0:  Added controls for QR scanner preference and "show master
+ * passwords" setting
  * 
  * This program is Copyright 2011, Jeffrey T. Darlington.
  * E-mail:  android_support@cryptnos.com
@@ -68,6 +69,11 @@ public class AdvancedSettingsActivity extends Activity {
 	/** A constant identifying the confirmation dialog displayed if the user
 	 *  upgrades changes the text encoding selection */
 	private static final int DIALOG_CONFIRM_ENCODING_CHANGE = 700;
+	
+	/** A constant identifying the confirmation dialog displayed if the user
+	 *  turns on the "show master passwords" setting */
+	private static final int DIALOG_SHOW_MASTER_PASSWD_WARNING =
+		DIALOG_CONFIRM_ENCODING_CHANGE + 1;
 
 	/** A constant indicating the Help option menu item. */
 	private static final int OPTMENU_HELP = Menu.FIRST;
@@ -98,6 +104,9 @@ public class AdvancedSettingsActivity extends Activity {
 	
 	/** A CheckBox to manage the "copy password to clipboard" setting */
 	private CheckBox chkCopyPasswordsToClipboard = null;
+	
+	/** A CheckBox to manage the "show master passwords" setting */
+	private CheckBox chkShowMasterPasswords = null;
 	
 	/** A reference to the linear layout that contains our UI elements */
 	private LinearLayout layout = null;
@@ -313,6 +322,22 @@ public class AdvancedSettingsActivity extends Activity {
 			}
         });
         
+        // Get the checkbox for the "show master passwords" setting and set it to
+        // the current state of the setting.  Then give the checkbox some functionality
+        // and let it toggle the setting in the preferences.  Note that unlike the
+        // clipboard setting, this time we'll throw a warning when the user turns
+        // this setting on.
+        chkShowMasterPasswords = 
+        	(CheckBox)findViewById(R.id.chkShowMasterPasswords);
+        chkShowMasterPasswords.setChecked(theApp.showMasterPasswords());
+        chkShowMasterPasswords.setOnClickListener(new OnClickListener() {
+			public void onClick(View v) {
+				if (chkShowMasterPasswords.isChecked())
+					showDialog(DIALOG_SHOW_MASTER_PASSWD_WARNING);
+				else theApp.toggleShowMasterPasswords();
+			}
+        });
+        
     }
     
     protected Dialog onCreateDialog(int id) {
@@ -323,7 +348,7 @@ public class AdvancedSettingsActivity extends Activity {
     		// Set up the confirmation dialog for changing the encoding:
 			case DIALOG_CONFIRM_ENCODING_CHANGE:
 				AlertDialog.Builder adb = new AlertDialog.Builder(this);
-				dialog = (Dialog)adb.create();
+				adb.setTitle(getResources().getString(R.string.settings_confirm_encoding_change_title));
 				adb.setMessage(getResources().getString(R.string.settings_confirm_encoding_change));
 				adb.setCancelable(true);
 				adb.setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
@@ -359,6 +384,38 @@ public class AdvancedSettingsActivity extends Activity {
 					}
 				});
 				dialog = (Dialog)adb.create();
+				break;
+    		// Set up the confirmation dialog for displaying master passwords:
+			case DIALOG_SHOW_MASTER_PASSWD_WARNING:
+				AlertDialog.Builder adb2 = new AlertDialog.Builder(this);
+				adb2.setTitle(getResources().getString(R.string.settings_show_master_passwd_dialog_title));
+				adb2.setMessage(getResources().getString(R.string.settings_show_master_passwd_dialog_text));
+				adb2.setCancelable(true);
+				adb2.setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
+					// If they said yes, change the preference to show the master
+					// passwords and store the updated value to the preferences
+					// file.  Then dismiss this dialog.
+					public void onClick(DialogInterface dialog, int which) {
+						theApp.toggleShowMasterPasswords();
+						theActivity.dismissDialog(DIALOG_SHOW_MASTER_PASSWD_WARNING);
+					}
+	    		});
+				// If they said no, simply cancel the dialog.  Canceling does the
+				// same as saying no, so we'll handle both cases below.
+    			adb2.setNegativeButton(android.R.string.no, new DialogInterface.OnClickListener() {
+ 		           public void onClick(DialogInterface dialog, int id) {
+ 		        	   dialog.cancel();
+ 		           }
+ 		       	});
+    			// If they cancel the dialog, dismiss it and reset the checkbox back
+    			// to the the unchecked state:
+    			adb2.setOnCancelListener(new DialogInterface.OnCancelListener() {
+					public void onCancel(DialogInterface dialog) {
+						chkShowMasterPasswords.setChecked(false);
+						theActivity.dismissDialog(DIALOG_SHOW_MASTER_PASSWD_WARNING);
+					}
+				});
+				dialog = (Dialog)adb2.create();
 				break;
     	}
     	return dialog;

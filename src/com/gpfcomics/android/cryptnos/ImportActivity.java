@@ -36,6 +36,9 @@
  * Instrumentation.checkStartActivityResult()".  Added try/catch block around
  * calling third-party file manager intent.
  * 
+ * UPDATES FOR 1.3.0:  Added "show master passwords" functionality.  Add the ability
+ * for the user to selectively import site parameters from a file.
+ * 
  * This program is Copyright 2011, Jeffrey T. Darlington.
  * E-mail:  android_support@cryptnos.com
  * Web:     http://www.cryptnos.com/
@@ -58,10 +61,14 @@ import java.io.File;
 import java.util.ArrayList;
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.app.Dialog;
 import android.app.ProgressDialog;
+import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.DialogInterface.OnMultiChoiceClickListener;
 import android.os.Bundle;
+import android.text.method.PasswordTransformationMethod;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -85,13 +92,18 @@ import android.widget.Toast;
  * but this class will be responsible for gathering the inputs and creating
  * the progress dialog that the handler will update.
  * @author Jeffrey T. Darlington
- * @version 1.2.6
+ * @version 1.3.0
  * @since 1.0
  */
-public class ImportActivity extends Activity {
+public class ImportActivity extends Activity implements ImportListener, SiteListListener {
 
 	/** A constant indicating that we should show the progress dialog. */
 	static final int DIALOG_PROGRESS = 1200;
+	/** A constant indicating that we should show the imported sites dialog. */
+	static final int DIALOG_IMPORTED_SITES = DIALOG_PROGRESS + 1;
+	/** A constant indicating that we'll warn the user if they're about to overwrite
+	 *  an existing site in the database. */
+	static final int DIALOG_OVERWRITE_WARNING = DIALOG_IMPORTED_SITES + 1;
 	
 	/** A constant indicating the Help option menu item. */
 	public static final int OPTMENU_HELP = Menu.FIRST;
@@ -122,9 +134,15 @@ public class ImportActivity extends Activity {
 	private String importFile = null;
 	/** A String containing the user's password for decryption */
 	private String password = null;
+	/** An Object array containing the SiteParameters imported from a file */
+	private Object[] importedSites = null;
+	/** A boolean array indicating which sites were selected from the import list */
+	private boolean[] selectedSites = null;
 	
 	/** A reference to our top-level application */
 	private CryptnosApplication theApp = null;
+	/** A reference to our database adapter. */
+	private ParamsDbAdapter dbHelper = null;
 	/** A handy reference to the ProgressDialog used when loading encrypted
 	 *  data from the database. */
 	private ProgressDialog progressDialog = null;
@@ -139,6 +157,7 @@ public class ImportActivity extends Activity {
         // Get a reference to the top-level application, as well as the
         // DB helper:
         theApp = (CryptnosApplication)getApplication();
+        dbHelper = theApp.getDBHelper();
         
         // Check to make sure the external storage is mounted for read
         // access.  If it isn't, there's not much point in doing an import,
@@ -159,6 +178,12 @@ public class ImportActivity extends Activity {
         btnImport = (Button)findViewById(R.id.btnImport);
         layout = (LinearLayout)findViewById(R.id.layoutImport);
         
+        // Determine whether or not the user has specified to show or hide
+        // master passwords and toggle the behavior of the master passphrase
+        // box accordingly:
+        if (!theApp.showMasterPasswords())
+        	txtPassphrase.setTransformationMethod(PasswordTransformationMethod.getInstance());
+
         // Get the import root path:
         importRootPath = theApp.getImportExportRootPath();
         
@@ -284,6 +309,10 @@ public class ImportActivity extends Activity {
 				}
 			}
 		});
+
+        // Finally, since we need to know what sites we may potentially overwrite,
+        // go ahead and get the current site list now:
+        theApp.requestSiteList(this, this);
     }
     
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
@@ -330,6 +359,12 @@ public class ImportActivity extends Activity {
     	// Determine which dialog to show:
     	switch (id)
     	{
+			// The site list building progress dialog is actually handled by
+			// the application, but we need to attach it here to actually get
+			// it to display.  If we get this value, pass the buck:
+			case CryptnosApplication.DIALOG_PROGRESS:
+				dialog = theApp.onCreateDialog(id);
+				break;
 	    	// The progress dialog does the work of the actual export.  We'll
 	    	// create this dialog, create an exporter object and pass a
 	    	// reference to the dialog along with it. 
@@ -342,12 +377,106 @@ public class ImportActivity extends Activity {
 	            // Create the importer and put it to work:
 	    		importer = new ImportExportHandler(theActivity,
 	    			progressDialog, DIALOG_PROGRESS);
-	    		importer.importFromFile(importFile, password);
+	    		importer.importFromFile(importFile, password, this);
 	            dialog = progressDialog;
+	    		break;
+	    	// This dialog allows the user selectively import sites from a file by
+	    	// displaying the list of sites in the file as a scrolling list of
+	    	// checkboxes.  The user may select to import one or more sites
+	    	// individually, select all sites at once, or cancel out of the list.
+	    	case DIALOG_IMPORTED_SITES:
+	    		AlertDialog.Builder adb = new AlertDialog.Builder(this);
+    			adb.setTitle(R.string.export_select_sites_title);
+    			adb.setCancelable(false);
+    			// While we have the SiteParameter objects in memory, we don't
+    			// have a convenient list of names.  Build a string array of just
+    			// the names to use in the selection list below.
+    			String[] importedSiteNames = new String[importedSites.length];
+    			for (int i = 0; i < importedSites.length; i++) {
+    				importedSiteNames[i] = ((SiteParameters)importedSites[i]).getSite();
+    			}
+    			// This is where it gets a bit funky.  This lets us create the
+    			// actual checkbox list.  Pass in the array of site names built
+    			// above, as well as the boolean array of which sites have been
+    			// checked.  Then we create a listener that flips the bits in the
+    			// selection array each time a checkbox is toggled.
+    			adb.setMultiChoiceItems(importedSiteNames, selectedSites,
+    				new OnMultiChoiceClickListener() {
+    				public void onClick(DialogInterface dialog, int which, boolean isChecked) {
+    					selectedSites[which] = isChecked;
+    				}
+    			});
+    			// What to do when the OK button is clicked:
+    			adb.setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
+  		           public void onClick(DialogInterface dialog, int id) {
+  		        	   // Just clear the dialog and move on to the next step:
+ 		        	   theActivity.removeDialog(DIALOG_IMPORTED_SITES);
+ 		        	  importedSitesSelected();
+  		           }
+    			});
+    			// What to do when the Check All button is clicked
+    			adb.setNeutralButton(R.string.dialog_select_all, new DialogInterface.OnClickListener() {
+ 		           public void onClick(DialogInterface dialog, int id) {
+ 		        	   // We're using the neutral button as our "select all" button
+ 		        	   // this time.  So flip all the selection bits in the array
+ 		        	   // to true:
+ 		        	   for (int i = 0; i < selectedSites.length; i++)
+ 		        		   selectedSites[i] = true;
+ 		        	   // Now remove the dialog and move on to the next step:
+ 		        	   theActivity.removeDialog(DIALOG_IMPORTED_SITES);
+ 		        	  importedSitesSelected();
+ 		           }
+ 		       });
+    			// What to do when the Cancel button is clicked
+    			adb.setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
+ 		           public void onClick(DialogInterface dialog, int id) {
+ 		        	   // If the user clicks Cancel, clear the dialog and close
+ 		        	   // the activity so we can return to the main menu:
+						Toast.makeText(theActivity, R.string.error_import_aborted,
+										Toast.LENGTH_LONG).show();
+						theActivity.removeDialog(DIALOG_IMPORTED_SITES);
+						theActivity.finish();
+ 		           }
+ 		       });
+    			dialog = (Dialog)adb.create();
+				break;
+			// This dialog is displayed if we've discovered that at least one site from
+			// the import file will overwrite something that already exists:
+	    	case DIALOG_OVERWRITE_WARNING:
+	    		AlertDialog.Builder adb2 = new AlertDialog.Builder(this);
+    			adb2.setTitle(R.string.import_overwrite_warning_dialog_title);
+    			adb2.setMessage(R.string.import_overwrite_warning_dialog_text);
+    			adb2.setCancelable(true);
+    			// What to do when the OK button is clicked:
+    			adb2.setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
+  		           public void onClick(DialogInterface dialog, int id) {
+  		        	   // Remove this dialog and proceed to the final import:
+  		        	 theActivity.removeDialog(DIALOG_OVERWRITE_WARNING);
+  		        	   doFinalImport();
+  		           }
+    			});
+    			adb2.setNegativeButton(android.R.string.no, new DialogInterface.OnClickListener() {
+  		           public void onClick(DialogInterface dialog, int id) {
+  		        	   // Saying no is the same as cancelling:
+  		        	   dialog.cancel();
+  		           }
+    			});
+    			adb2.setOnCancelListener(new DialogInterface.OnCancelListener() {
+					public void onCancel(DialogInterface dialog) {
+						// Clear the dialog, close the activity, and let the user know
+						// we're giving up:
+	  		        	   theActivity.removeDialog(DIALOG_OVERWRITE_WARNING);
+	  		        	 Toast.makeText(theActivity, R.string.error_import_aborted,
+	  		    				Toast.LENGTH_LONG).show();
+	  		        	   theActivity.finish();
+					}
+				});
+    			dialog = (Dialog)adb2.create();
 	    		break;
     	}
     	return dialog;
     }
+    
     
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
@@ -385,5 +514,111 @@ public class ImportActivity extends Activity {
     	btnImport.setVisibility(Button.INVISIBLE);
     	labelInstructions.setText(R.string.import_file_label_nofile);
     }
+
+    /**
+     * Once the user has made their selection of sites to import, look at the
+     * selection and see if anything actually needs to be done.  If so, check
+     * to see if any of the imported sites will overwrite an existing site and
+     * display a warning if necessary.  Otherwise, proceed with the import.
+     */
+    private void importedSitesSelected() {
+    	// Get the count of sites selected in the dialog:
+    	int selectedCount = 0;
+    	for (int i = 0; i < selectedSites.length; i++)
+    		if (selectedSites[i]) selectedCount++;
+    	// Were any sites selected?
+    	if (selectedCount > 0) {
+    		// Check to see if any of the imported sites will overwrite an
+    		// existing site.  We'll do this by looping through the imported
+    		// site list, check to see if that site is currently selected.  If
+    		// it is, we'll check the master list to see if the site token is
+    		// already in there.  Note that if we encounter something that will
+    		// be overwritten, we'll bail out early since there's no point in
+    		// continuing the loop.
+    		boolean willOverwrite = false;
+    		for (int j = 0; j < importedSites.length; j++) {
+    			if (selectedSites[j]) {
+    				SiteParameters site = (SiteParameters)importedSites[j];
+    				if (theApp.siteListContainsSite(site.getSite())) {
+    					willOverwrite = true;
+    					break;
+    				}
+    			}
+    		}
+    		// If we'll overwrite something, show the warning dialog.  Otherwise,
+    		// move on to the import.
+    		if (willOverwrite) showDialog(DIALOG_OVERWRITE_WARNING);
+    		else doFinalImport();
+    	// If no sites were selected, complain and exit:
+    	} else {
+    		Toast.makeText(this, R.string.error_import_no_sites_selected,
+    				Toast.LENGTH_LONG).show();
+    		finish();
+    	}
+    }
+    
+    /**
+     * Perform the final step of actually importing the selected sites from the file
+     * into the database.  Note that this method assumes the site list is populated
+     * and the user has selected one or more sites to import.
+     */
+    private void doFinalImport() {
+    	// Asbestos underpants:
+    	try {
+    		// Whatever happens here, we should probably force the site list to be
+    		// rebuilt the next time it is needed:
+    		theApp.setSiteListDirty();
+    		// Keep track of how many sites we'll import:
+    		int count = 0;
+    		// Loop through the list of imported sites.  If the site was selected,
+    		// try to add it to the database and count it:
+    		for (int i = 0; i < importedSites.length; i++) {
+    			if (selectedSites[i]) {
+    				dbHelper.createRecord((SiteParameters)importedSites[i]);
+    				count++;
+    			}
+    		}
+    		// Build our success message:
+    		String message = getResources().getString(R.string.import_complete_message);
+    		message = message.replace(getResources().getString(R.string.meta_replace_token),
+    				String.valueOf(count));
+    		Toast.makeText(this, message, Toast.LENGTH_LONG).show();
+    	// Something blew up:
+    	} catch (Exception e) {
+    		Toast.makeText(this, R.string.error_import_unknown_error,
+    				Toast.LENGTH_LONG).show();
+    	}
+    	// Regardless of what happens above, exist out of this activity and return
+    	// to the main menu:
+    	finish();
+    }
+    
+	public void onSitesImported(Object[] importedSites) {
+		// Check the list of sites returned by the importer.  If the list is non-
+		// empty, take note of the list.
+		if (importedSites != null && importedSites.length > 0) {
+			this.importedSites = importedSites;
+			// We'll need to keep track of which sites get selected in the dialog
+			// for the next step.  Create a boolean array of the same size and
+			// default all items in it to false.
+			selectedSites = new boolean[importedSites.length];
+			for (int i = 0; i < importedSites.length; i++)
+				selectedSites[i] = false;
+			// Show the dialog to let the user select which sites to import:
+			showDialog(DIALOG_IMPORTED_SITES);
+		// If the list that was returned was empty, complain:
+		} else {
+			Toast.makeText(this, R.string.error_bad_import_file_or_password,
+					Toast.LENGTH_LONG).show();
+		}
+	}
+
+	public void onSiteListReady(String[] siteList) {
+		// This has to be the simplest site list request handling in the entire
+		// app.  We don't really care about the result of the site list as we
+		// aren't going to do anything with it.  However, we want to make sure
+		// it gets built so we can search the list (through the main app class)
+		// and see if we're going to overwrite something.
+	}
     
 }

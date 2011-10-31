@@ -35,6 +35,8 @@
  * Instrumentation.checkStartActivityResult()".  Added try/catch block around
  * calling third-party file manager intent.
  * 
+ * UPDATES FOR 1.3.0: Added "show master passwords" functionality
+ * 
  * This program is Copyright 2011, Jeffrey T. Darlington.
  * E-mail:  android_support@cryptnos.com
  * Web:     http://www.cryptnos.com/
@@ -65,6 +67,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.DialogInterface.OnMultiChoiceClickListener;
 import android.os.Bundle;
+import android.text.method.PasswordTransformationMethod;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -177,6 +180,14 @@ public class ExportActivity extends Activity implements
         btnExport = (Button)findViewById(R.id.btnExport);
         layout = (LinearLayout)findViewById(R.id.layoutExport);
         
+        // Determine whether or not the user has specified to show or hide
+        // master passwords and toggle the behavior of the master passphrase
+        // boxes accordingly:
+        if (!theApp.showMasterPasswords()) {
+        	txtPassphrase1.setTransformationMethod(PasswordTransformationMethod.getInstance());
+        	txtPassphrase2.setTransformationMethod(PasswordTransformationMethod.getInstance());
+        }
+
         // Get the export root path:
         exportRootPath = theApp.getImportExportRootPath();
         

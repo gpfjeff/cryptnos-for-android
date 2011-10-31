@@ -2,7 +2,8 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:orientation="vertical"
     android:layout_width="fill_parent"
-    android:layout_height="fill_parent">
+    android:layout_height="fill_parent"
+    android:padding="10sp">
 	<ScrollView android:id="@+id/ScrollViewSettings"
 		android:layout_width="fill_parent"
 		android:layout_height="fill_parent">
@@ -53,11 +54,36 @@
 				android:textSize="20sp"
 				android:id="@+id/labelNoQRScannersAvailable"
 				android:text="@string/settings_no_qrscanner_available"></TextView>
-			<CheckBox android:id="@+id/chkCopyPasswordsToClipboard"
-				android:text="@string/settings_copy_passwords"
-				android:layout_width="wrap_content"
-				android:layout_height="wrap_content"
-				android:layout_gravity="center_horizontal"></CheckBox>
+
+			<TableLayout
+			    android:id="@+id/tableLayout1"
+			    android:layout_width="match_parent"
+			    android:layout_height="wrap_content"
+			    android:paddingTop="10sp"
+			    android:stretchColumns="0,1">
+
+			    <TableRow
+			        android:id="@+id/tableRow1"
+			        android:layout_width="wrap_content"
+			        android:layout_height="wrap_content" >
+
+			        <CheckBox
+			            android:id="@+id/chkCopyPasswordsToClipboard"
+			            android:layout_width="wrap_content"
+			            android:layout_height="wrap_content"
+			            android:layout_gravity="center_horizontal"
+			            android:text="@string/settings_copy_passwords" />
+
+			        <CheckBox
+			            android:id="@+id/chkShowMasterPasswords"
+			            android:layout_width="wrap_content"
+			            android:layout_height="wrap_content"
+			            android:layout_gravity="center_horizontal"
+			            android:text="@string/settings_show_master_passwd" />
+			    </TableRow>
+
+			</TableLayout>
+
 		</LinearLayout>
 	</ScrollView>
 </LinearLayout>

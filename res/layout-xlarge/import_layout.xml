@@ -2,7 +2,8 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:orientation="vertical"
     android:layout_width="fill_parent"
-    android:layout_height="fill_parent">
+    android:layout_height="fill_parent"
+    android:padding="10sp">
 <ScrollView android:id="@+id/ScrollView01"
 	android:layout_width="fill_parent"
 	android:layout_height="fill_parent">
@@ -35,16 +36,16 @@
 				android:id="@+id/txtPassphraseImport"
 				android:ellipsize="none"
 				android:saveEnabled="false"
-				android:hint="@string/export_password1_hint"
-				android:password="true"></EditText>
+				android:hint="@string/export_password1_hint"></EditText>
 			<TextView android:layout_width="wrap_content"
 				android:layout_height="wrap_content"
 				android:textSize="20sp"
 				android:paddingTop="10dp"
 				android:id="@+id/labelImportWarning"
 				android:text="@string/import_warning_label"></TextView>
-			<Button android:layout_width="fill_parent"
+			<Button android:layout_width="wrap_content"
 				android:layout_height="wrap_content"
+				android:layout_gravity="center_horizontal"
 				android:id="@+id/btnImport"
 				android:text="@string/import_button_label"></Button>
 	</LinearLayout>

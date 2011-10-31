@@ -81,9 +81,9 @@ package com.gpfcomics.android.cryptnos;
 import java.io.File;
 import java.io.UnsupportedEncodingException;
 import java.security.MessageDigest;
-import java.util.ArrayList;
 import java.util.Hashtable;
 import java.util.List;
+import java.util.Set;
 
 import org.bouncycastle.crypto.Digest;
 import org.bouncycastle.crypto.digests.RIPEMD160Digest;
@@ -154,7 +154,7 @@ public class CryptnosApplication extends Application {
 	 *  no science behind this number aside from casual testing, both in the
 	 *  SDK emulator and on my personal Motorola Droid.  If there was a
 	 *  significant pause observed, that's were I set the limit. */
-	public final int HASH_ITERATION_WARNING_LIMIT = 500;
+	public static final int HASH_ITERATION_WARNING_LIMIT = 500;
 	/** The cryptographic key factory definition.  This will be used by most
 	 *  cryptography functions throughout the application (with the exception
 	 *  being the new cross-platform import/export format).  Note that this
@@ -201,6 +201,9 @@ public class CryptnosApplication extends Application {
 	/** The ID string for our preferred QR code scanner within the shared
 	 *  preferences file. */
 	public static final String PREFS_QRCODE_SCANNER = "QRCODE_SCANNER";
+	/** The ID string for the show master passwords setting within the shared
+	 *  preferences file. */
+	public static final String PREFS_SHOW_MASTER_PASSWD = "SHOW_MASTER_PASSWD";
 	
 	/* Private Constants ********************************************************/
 
@@ -214,6 +217,12 @@ public class CryptnosApplication extends Application {
 	 *  itself, PARAMETER_SALT will *NOT* be unique per device, but that's the
 	 *  best we can do.*/
 	private static final String SALTIER_SALT = "KnVcUpHHAB5K9HW2Vbq8D9CAk2P7sGiwhQLPeF6wI3UVSCTpJioStD4NFcrR1";
+	/** Hashtables cannot have null keys or values.  While siteListHash uses
+	 *  its keys to represent the site list for searching, we need some token
+	 *  value to put in as the value for each key in order for the insert to
+	 *  work.  This string will be inserted for each site key as the value.
+	 *  since this value is never used, its actual value is irrelevant. */
+	private static final String HASH_NULL = "NULL";
 
 	/* Private Members **********************************************************/
 	
@@ -221,6 +230,9 @@ public class CryptnosApplication extends Application {
 	 *  to be fetched from the database.  If populated, the list is "clean" and can
 	 *  be used directly, eliminating the expensive query operation. */
 	private static String[] siteList = null;
+	/** This hash table allows us to quickly search the site list for a specific
+	 *  site.  Sites will be stored as hash keys; hash values are ignored. */
+	private static Hashtable<String, String> siteListHash = null;
 	/** A File representing the root of all import/export activities.  Files
 	 *  will only be written or read from this path. */
 	private static File importExportRoot = null;
@@ -247,6 +259,9 @@ public class CryptnosApplication extends Application {
 	/** A boolean flag indicating whether or not we should copy generated passwords
 	 *  to the system clipboard. */
 	private static boolean copyPasswordsToClipboard = true;
+	/** A boolean flag indicating whether or not the user has selected to display
+	 *  the master password while generating passwords. */
+	private static boolean showMasterPassword = false;
 
 	/** The calling activity, so we can refer back to it.  This is usually the
 	 *  same as the site list listener, but doesn't necessarily have to be. */
@@ -312,8 +327,9 @@ public class CryptnosApplication extends Application {
 		editor.commit();
 		// Generate the parameter salt:
 		refreshParameterSalt();
-		// Get our copy-to-clipboard preference:
+		// Get our copy-to-clipboard and show-master-password preferences:
 		copyPasswordsToClipboard = prefs.getBoolean(PREFS_COPY_TO_CLIPBOARD, true);
+		showMasterPassword = prefs.getBoolean(PREFS_SHOW_MASTER_PASSWD, false);
 		// Now build our hash table of hash algorithms to lengths:
 		try {
 			// Get the list of hashes from the string resources:
@@ -492,6 +508,21 @@ public class CryptnosApplication extends Application {
 		// consequence, we no longer need the dirty flag; we can just null out
 		// the site list when we want to mark it dirty.
 		siteList = null;
+		siteListHash = null;
+	}
+	
+	/**
+	 * Check to see if a specific site token is currently in the site list.  Note
+	 * that if the site list has not been built by calling requestSiteList(), this
+	 * method will artificially return false.
+	 * @param siteName The site token to search for
+	 * @return True if the site is in the list, false if it isn't or if the site
+	 * list has not been built yet.
+	 */
+	public boolean siteListContainsSite(String siteName) {
+		if (siteList != null && siteListHash != null &&
+				siteListHash.containsKey(siteName)) return true;
+		else return false;
 	}
 	
 	/**
@@ -666,6 +697,26 @@ public class CryptnosApplication extends Application {
 	}
 	
 	/**
+	 * Determine whether or not to show master passwords while generating
+	 * passwords.
+	 * @return True if we should show the master password, false otherwise
+	 */
+	public boolean showMasterPasswords() {
+		return showMasterPassword;
+	}
+	
+	/**
+	 * Toggle the "show master passwords" setting and save the new value
+	 * to the application preferences.
+	 */
+	public void toggleShowMasterPasswords() {
+		showMasterPassword = !showMasterPassword;
+		SharedPreferences.Editor editor = prefs.edit();
+		editor.putBoolean(PREFS_SHOW_MASTER_PASSWD, showMasterPassword);
+		editor.commit();
+	}
+	
+	/**
 	 * Create and return a dialog box.  Note that Android Application classes
 	 * do not ordinarily control or own individual dialogs; any dialog created
 	 * by this method actually becomes the property of the Activity set by
@@ -783,6 +834,7 @@ public class CryptnosApplication extends Application {
             } else if (total < 0) {
                 listBuilderThread.setState(ListBuilderThread.STATE_DONE);
                 siteList = null;
+                siteListHash = null;
             	Toast.makeText(caller, R.string.error_bad_listfetch,
                 		Toast.LENGTH_LONG).show();
             }
@@ -829,9 +881,10 @@ public class CryptnosApplication extends Application {
     	        mSiteCount = cursor.getCount();
     	        // Unfortunately, since we're encrypting all our data, we can't
     	        // take advantage of Android's build in list adapter stuff.  We'll
-    	        // have to do this ourselves.  Start by creating an ArrayList,
-    	        // which we'll populate with the decrypted site name tokens.
-    	        ArrayList<String> sites = new ArrayList<String>();
+    	        // have to do this ourselves.  Start by creating the site list hash
+    	        // table, which we'll use the keys of to store our sites.  (We'll
+    	        // convert this to an array for the caller to use later.) 
+    	        siteListHash = new Hashtable<String, String>();
     	        // Step through the data:
     	        while (!cursor.isAfterLast() && mState == STATE_RUNNING)
     	        {
@@ -846,8 +899,8 @@ public class CryptnosApplication extends Application {
     		        			cursor.getString(1),
     		        			cursor.getString(2));
     		        	// Get the site name from the parameters and add it to
-    		        	// the site array.
-    		        	sites.add(params.getSite());
+    		        	// the site hash:
+    		        	siteListHash.put(params.getSite(), HASH_NULL);
     	        	}
     	        	// If anything blows up, ignore it:
     	        	catch (Exception e) {}
@@ -869,18 +922,14 @@ public class CryptnosApplication extends Application {
     	        // close the cursor:
     	        cursor.close();
     	        // Now we want to sort the list to be more presentable to the
-    	        // user.  To do that, we need to move the ArrayList into an
+    	        // user.  To do that, we need to move the site hash keys into an
     	        // ordinary String array and take advantage of the built-in
     	        // array sorting routines.
-    	        String[] sortedSites = new String[sites.size()];
-    	        sites.toArray(sortedSites);
-    	        java.util.Arrays.sort(sortedSites, String.CASE_INSENSITIVE_ORDER);
-    	        sites = null;
-    	        // At this point, we're essentially ready to go.  Set the
-    	        // official list to our newly sorted one.  This declares the
-    	        // site list clean (i.e. not dirty) so we won't have to rebuild
-    	        // it the next time it's needed.
-                siteList = sortedSites;
+    	        Set<String> siteSet = siteListHash.keySet();
+    	        siteList = new String[siteSet.size()];
+    	        siteSet.toArray(siteList);
+    	        java.util.Arrays.sort(siteList, String.CASE_INSENSITIVE_ORDER);
+    	        siteSet = null;
                 // Now that we're done, send a message to the handler so it
                 // can pass the list back to the listener:
 	        	msg = mHandler.obtainMessage();

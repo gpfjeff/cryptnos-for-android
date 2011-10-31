@@ -78,7 +78,7 @@ import android.widget.Toast;
  * changed or "upgraded" if the currently running version of Cryptnos is different
  * than the last run version.
  * @author Jeffrey T. Darlington
- * @version 1.2.7
+ * @version 1.3.0
  * @since 1.2
  */
 public class UpgradeManager {
@@ -314,6 +314,8 @@ public class UpgradeManager {
 	        		QRCodeHandler qrCodeHandler = theApp.getQRCodeHandler();
 	        		editor.putInt(CryptnosApplication.PREFS_QRCODE_SCANNER, 
 	        				qrCodeHandler.getPreferredQRCodeApp());
+	        		// Also default the "show master passwords" setting to false:
+	        		editor.putBoolean(CryptnosApplication.PREFS_SHOW_MASTER_PASSWD, false);
 	        		oldVersion = VERSION_1_3_0;
 	        	}
 	        	// Additional version checks should follow here, allowing

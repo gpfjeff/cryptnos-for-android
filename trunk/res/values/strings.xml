@@ -108,10 +108,13 @@
 <string name="import_button_label">Import</string>
 <string name="import_progress_message">Importing, please wait...</string>
 <string name="import_complete_message">Import complete. xxx site(s) imported.</string>
+<string name="import_overwrite_warning_dialog_title">Overwrite Warning</string>
+<string name="import_overwrite_warning_dialog_text">At least one of the selected sites from the import file will overwrite an existing site in the database. Do you  wish to proceed with the import?</string>
 <string name="settings_title">Cryptnos: Advanced Settings</string>
 <string name="settings_encoding_label">Text encoding (We strongly recommend this be set to UTF-8 unless you have explicit need for something different, like backward compatibility):</string>
 <string name="settings_encoding_prompt">Available encodings</string>
 <string name="settings_default_encoding_label">System default encoding: xxx</string>
+<string name="settings_confirm_encoding_change_title">Change Text Encoding</string>
 <string name="settings_confirm_encoding_change">Are you sure you wish to change the text encoding used by Cryptnos? This may \"break\" your current passwords and make them incompatible with versions of Cryptnos on other platforms!</string>
 <string name="settings_file_manager_pref_label">Preferred file manager:</string>
 <string name="settings_file_manager_prompt">Available file managers</string>
@@ -120,6 +123,9 @@
 <string name="settings_qrscanner_prompt">Available QR code scanners</string>
 <string name="settings_no_qrscanner_available">No recognized QR code scanners could be found. To import or export parameters via QR code, please install one of the following applications:\n\n</string>
 <string name="settings_copy_passwords">Copy generated passwords to clipboard</string>
+<string name="settings_show_master_passwd">Show master passwords</string>
+<string name="settings_show_master_passwd_dialog_title">Show Master Passwords</string>
+<string name="settings_show_master_passwd_dialog_text">Showing master passwords may pose a greater security risk should someone view your screen as you type. Are you sure you wish to turn this feature on?</string>
 <string name="about_title">About Cryptnos</string>
 <string name="about_header">Version</string>
 <string name="about_link">http://www.cryptnos.com/</string>
@@ -157,6 +163,9 @@
 <string name="error_import_nopassword">Error: You must specify a password.</string>
 <string name="error_import_card_not_mounted">Error: Your external storage is not mounted for read access, so you can\'t import anything.</string>
 <string name="error_import_no_file_selected">Error: Please select an import file.</string>
+<string name="error_import_no_sites_selected">Error: No sites were selected, so nothing was imported.</string>
+<string name="error_import_unknown_error">Error: One or more selected sites from the import file could not be inserted into the database.</string>
+<string name="error_import_aborted">Import aborted.</string>
 <string name="error_excessive_hashing">Error: For performance reasons, hash iterations are capped at 500.</string>
 <string name="error_no_external_file_manager">Error: No external file manager app could be found.</string>
 <string name="error_upgrader_exception">Error: An error has occurred while checking to see if your Cryptnos data requires updating. If this problem persists, please notify the developers as soon as possible.</string>

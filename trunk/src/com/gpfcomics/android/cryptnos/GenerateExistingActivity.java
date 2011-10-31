@@ -27,6 +27,8 @@
  * UPDATES FOR 1.2.4:  Enabled "copy to clipboard" setting added.  The user can
  * no enable and disable copying the generated password to the clipboard.
  *
+ * UPDATES FOR 1.3.0:  Enabled "show master passwords" setting.
+ *
  * This program is Copyright 2011, Jeffrey T. Darlington.
  * E-mail:  android_support@cryptnos.com
  * Web:     http://www.cryptnos.com/
@@ -49,6 +51,7 @@ import android.app.Activity;
 import android.content.Intent;
 import android.database.Cursor;
 import android.os.Bundle;
+import android.text.method.PasswordTransformationMethod;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -65,7 +68,7 @@ import android.widget.Toast;
  * view, allowing the user to generate the password for a given site without
  * worrying about fat-fingering something and screwing up the site's settings. 
  * @author Jeffrey T. Darlington
- * @version 1.2.4
+ * @version 1.3.0
  * @since 1.0
  */
 public class GenerateExistingActivity extends Activity {
@@ -111,7 +114,13 @@ public class GenerateExistingActivity extends Activity {
         lblOtherParams = (TextView)findViewById(R.id.labelOtherParams);
         txtOutput = (EditText)findViewById(R.id.txtOutput);
         btnGenerate = (Button)findViewById(R.id.btnGenerate);
-        
+
+        // Determine whether or not the user has specified to show or hide
+        // master passwords and toggle the behavior of the master passphrase
+        // box accordingly:
+        if (!theApp.showMasterPasswords())
+        	txtPassphrase.setTransformationMethod(PasswordTransformationMethod.getInstance());
+
         // Asbestos underpants:
         try {
         	// Check to see if we currently have a saved state for this activity,

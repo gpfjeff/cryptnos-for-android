@@ -38,6 +38,9 @@
  * to work with.  Added a check to see if there's enough RAM available to hold
  * both the encrypted and decrypted data, and throw an error if there isn't.
  * 
+ * UPDATES FOR 1.3.0  Changes to support new import functionality to let the
+ * user pick and choose which sites from a file to import.
+ * 
  * This program is Copyright 2011, Jeffrey T. Darlington.
  * E-mail:  android_support@cryptnos.com
  * Web:     http://www.cryptnos.com/
@@ -109,7 +112,7 @@ import android.widget.Toast;
  * work.  Note that it updates UI elements and requires references back to the
  * calling activity and a ProgressDialog it controls.
  * @author Jeffrey T. Darlington
- * @version 1.2.3
+ * @version 1.3.0
  * @since 1.0
  */
 public class ImportExportHandler {
@@ -138,6 +141,8 @@ public class ImportExportHandler {
 	private CryptnosApplication theApp = null;
 	/** The calling activity, so we can refer back to it. */
 	private Activity caller = null;
+	/** The listener waiting to hear about sites we may have imported. */
+	private ImportListener importListener = null;
 	/** The parameter DB adapter from the caller. */
 	private ParamsDbAdapter DBHelper = null;
 	/** The caller's ProgressDialog, which we'll help control.*/
@@ -153,8 +158,14 @@ public class ImportExportHandler {
 	/** The private XMLFormat1Importer class that does the grunt work of
 	 *  importing data from the new XML-based, cross-platform format. */
 	private XMLFormat1Importer xmlFormatImporter = null;
+	/** The full path to the file to import from */
 	private String importFilename = null;
+	/** The import password in plain text */
 	private String importPassword = null;
+	/** An Object array containing the list of site parameters imported
+	 *  from a file.  Note that this is an Object array and not an array
+	 *  of SiteParameter objects. */
+	private Object[] importedSites = null;
 	
 	// Constructor **************************************************
 
@@ -219,13 +230,18 @@ public class ImportExportHandler {
 	 * handle which export format the file was saved in.
 	 * @param filename The full path to the import file.
 	 * @param password The password used to decrypt the file:
+	 * @param importListener An ImportListener to notify once the import
+	 * is complete
 	 */
-	public void importFromFile(String filename, String password)
+	public void importFromFile(String filename, String password,
+			ImportListener importListener)
 	{
 		// As long as we've got inputs, we'll assume for now they've been
 		// vetted by the caller and start the importer thread:
 		if (filename != null && password != null)
 		{
+			// Take note of our import listener:
+			this.importListener = importListener;
 			// This is probably horribly inefficient, but we'll try and open
 			// the file as an XML-based, cross-platform file first.  If that
 			// doesn't work, then we'll fall back to the old format.
@@ -520,20 +536,18 @@ public class ImportExportHandler {
                 // Check to see if one of the importers was being used.  If
                 // so, we'll want to show the import complete message:
                 if (oldFormatImporter != null || xmlFormatImporter != null) {
-                    message = caller.getResources().getString(R.string.import_complete_message);
-                    // As an additional step, when we import files, we'll want
-                    // the application to set the site list as "dirty" so it
-                    // will be rebuilt:
-                    theApp.setSiteListDirty();
+                	// Send the list of imported sites back to the listener waiting
+                	// to receive them:
+                	importListener.onSitesImported(importedSites);
                 // If we didn't use one of the importers, we must have used
                 // the exporter.  Show the export complete message:
                 } else {
                     message = caller.getResources().getString(R.string.export_complete_message);
+                    message = message.replace(caller.getResources().getString(R.string.meta_replace_token), String.valueOf(count));
+                    Toast.makeText(caller, message, Toast.LENGTH_LONG).show();
+                    // Close the calling activity:
+                    caller.finish();
                 }
-                message = message.replace(caller.getResources().getString(R.string.meta_replace_token), String.valueOf(count));
-                Toast.makeText(caller, message, Toast.LENGTH_LONG).show();
-                // Close the calling activity:
-                caller.finish();
 	        // If we got a "percentage" of -1, that indicates a bad import file
 	        // or bad import password.  Warn the user as such and kill the
 	        // dialog:
@@ -952,6 +966,8 @@ public class ImportExportHandler {
 			                b.putInt("site_count", siteCount);
 			                msg.setData(b);
 			                mHandler.sendMessage(msg);
+			                // Declare our array to hold the imported sites:
+			                importedSites = new Object[siteCount];
 			                // Loop through the sites:
 			    			for (int i = 0; i < siteCount; i++)
 			    			{
@@ -960,8 +976,8 @@ public class ImportExportHandler {
 			    				// invalid.
 			    				SiteParameters params =
 			    					new SiteParameters(theApp, sites[i]);
-			    				// Write the data to the database:
-			    				DBHelper.createRecord(params);
+			    				// Stuff the new set of parameters into the array:
+			    				importedSites[i] = (Object)params;
 			    				// Update the progress dialog.  Note that we're at the tail
 			    				// end of the process here, so we're saying that reading the
 			    				// file and decrypting the data amounts to half of the work.
@@ -1436,7 +1452,7 @@ public class ImportExportHandler {
 		                parser.parse(in, xmlHandler);
 		                // Now try to get the site parameters from the handler
 		                // and close the streams:
-		                Object[] sites = xmlHandler.getSites();
+		                importedSites = xmlHandler.getSites();
 		                in.close();
 		                // At this point, we shouldn't need the plaintext array
 		                // anymore either, nor the XML handler:
@@ -1444,24 +1460,7 @@ public class ImportExportHandler {
 		                xmlHandler = null;
 		                in = null;
 		                // If we got any useful data, we'll proceed from here:
-		                if (sites != null && sites.length > 0) {
-			    			for (int i = 0; i < sites.length; i++)
-			    			{
-			    				// Write the data to the database:
-			    				DBHelper.createRecord((SiteParameters)sites[i]);
-			    				// Update the progress dialog.  Note that we're at the tail
-			    				// end of the process here, so we're saying that reading the
-			    				// file and decrypting the data amounts to 66% of the work.
-			    				// We're doing the remaining 33%, so scale what we've done
-			    				// to 1-33 and add the remaining 66% on top.
-			        	        msg = mHandler.obtainMessage();
-				                b = new Bundle();
-				                b.putInt("percent_done",
-				                	(int)(Math.floor(((double)i / (double)sites.length * 33.0d))) + 66);
-				                b.putInt("site_count", sites.length);
-				                msg.setData(b);
-				                mHandler.sendMessage(msg);
-			    			}
+		                if (importedSites != null && importedSites.length > 0) {
 			    			// If we get to here, everything must have gone A-OK.
 			    			// Explicitly send a 100% complete here to close out
 			    			// the progress dialog.  (I originally left this out,
@@ -1470,7 +1469,8 @@ public class ImportExportHandler {
 		        	        msg = mHandler.obtainMessage();
 			                b = new Bundle();
 			                b.putInt("percent_done", 100);
-			                b.putInt("site_count", sites.length);
+			                //b.putInt("site_count", sites.length);
+			                b.putInt("site_count", importedSites.length);
 			                msg.setData(b);
 			                mHandler.sendMessage(msg);
 			    		// If we couldn't get any useful sites from the file,

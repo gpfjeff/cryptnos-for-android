@@ -111,11 +111,11 @@ public class CryptnosMainMenu extends ListActivity implements SiteListListener {
     /** Called when the activity is first created. */
     @Override
     public void onCreate(Bundle savedInstanceState) {
-        // The usual GUI setup stuff:
-    	super.onCreate(savedInstanceState);
-        setContentView(R.layout.main);
         try
         {
+	        // The usual GUI setup stuff:
+	    	super.onCreate(savedInstanceState);
+	        setContentView(R.layout.main);
             // Get a reference to the top-level application, as well as the
             // DB helper:
             theApp = (CryptnosApplication)getApplication();
@@ -134,20 +134,25 @@ public class CryptnosMainMenu extends ListActivity implements SiteListListener {
     
     /** Called just before input is handed to the user. */
     @Override public void onResume() {
-    	// Originally, I had the method to build the menu in the onCreate()
-    	// event, which made sense to start with.  The first time we create
-    	// the activity, we need to build the form.  The problem was, whenever
-    	// we came back to the main menu from another internal activity, the
-    	// menu was never rebuilt.  This was readily apparent if you started
-    	// with no site parameters in the database, then added or imported
-    	// some.  When you returned to the main menu, it would still be the
-    	// same as the initial creation and wouldn't show things like generate
-    	// existing, edit, or export, all options that require data to be
-    	// in the database.  Moving this step to onResume(), however makes the
-    	// menu be rebuilt whenever we return to it, meaning it will be updated
-    	// to reflect changes that occur based on adding or removing sites.
-    	buildMenu();
-    	super.onResume();
+    	try {
+	    	// Originally, I had the method to build the menu in the onCreate()
+	    	// event, which made sense to start with.  The first time we create
+	    	// the activity, we need to build the form.  The problem was, whenever
+	    	// we came back to the main menu from another internal activity, the
+	    	// menu was never rebuilt.  This was readily apparent if you started
+	    	// with no site parameters in the database, then added or imported
+	    	// some.  When you returned to the main menu, it would still be the
+	    	// same as the initial creation and wouldn't show things like generate
+	    	// existing, edit, or export, all options that require data to be
+	    	// in the database.  Moving this step to onResume(), however makes the
+	    	// menu be rebuilt whenever we return to it, meaning it will be updated
+	    	// to reflect changes that occur based on adding or removing sites.
+	    	buildMenu();
+	    	super.onResume();
+    	} catch (Exception e)
+        {
+        	Toast.makeText(this, e.getMessage(), Toast.LENGTH_LONG).show();
+        }
     }
     
     @SuppressWarnings("unchecked")
@@ -514,102 +519,106 @@ public class CryptnosMainMenu extends ListActivity implements SiteListListener {
      */
     private void buildMenu()
     {
-    	// This is a bit wonky, but so far this is the only way I've been
-    	// able to find to get this to work.  First, we need to know how
-    	// many records we have saved in the database.  It won't make much
-    	// sense to show certain menu items if there are no saved parameters.
-        int siteCount = mDBHelper.recordCount();
-        // Here's where we get funky.  To make a list activity, we need a
-        // list to work from.  Most examples do this by mapping to a database
-        // but we haven't gotten to that point yet.  Instead, we're building
-        // a list on the fly.  So we'll start with an ArrayList.  But it can't
-        // be any old ArrayList; it has to have a Map of some sort.  So we'll
-        // use a HashMap to map strings to strings.  The first string will
-        // be the main menu text, while the second will be additional help
-        // text below it.
-        //
-        // Start by making the list itself, then declaring the hash map but
-        // not instantiating it.
-        ArrayList<HashMap<String,String>> menuItems =
-        	new ArrayList<HashMap<String,String>>();
-        HashMap<String,String> item = null;
-        // Get a handier reference to our resources so we can get access to
-        // the strings more quickly:
-        Resources res = getResources();
-        // The most commonly used item will be generating existing passphrases,
-        // so that should be at the top.  But this only makes sense if there
-        // are already parameters saved.
-        if (siteCount > 0)
-        {
-        	item = new HashMap<String,String>();
-        	item.put("line1", res.getString(R.string.mainmenu_existing1));
-        	item.put("line2", res.getString(R.string.mainmenu_existing2));
-        	menuItems.add(item);
-        }
-        // Add an item for generating new passphrases by entering new sets of
-        // parameters:
-    	item = new HashMap<String,String>();
-    	item.put("line1", res.getString(R.string.mainmenu_generate1));
-    	item.put("line2", res.getString(R.string.mainmenu_generate2));
-    	menuItems.add(item);
-    	// These three require items in the database:
-        if (siteCount > 0)
-        {
-        	// Edit an existing set of parameters:
-        	item = new HashMap<String,String>();
-        	item.put("line1", res.getString(R.string.mainmenu_edit1));
-        	item.put("line2", res.getString(R.string.mainmenu_edit2));
-        	menuItems.add(item);
-        	// Delete a set of parameters:
-        	item = new HashMap<String,String>();
-        	item.put("line1", res.getString(R.string.mainmenu_delete1));
-        	item.put("line2", res.getString(R.string.mainmenu_delete2));
-        	menuItems.add(item);
-        	// Exporting a set of parameters only makes sense if we have sites
-        	// to export and we can write to the SD card:
-        	if (theApp.canWriteToExternalStorage()) {
+    	try {
+	    	// This is a bit wonky, but so far this is the only way I've been
+	    	// able to find to get this to work.  First, we need to know how
+	    	// many records we have saved in the database.  It won't make much
+	    	// sense to show certain menu items if there are no saved parameters.
+	        int siteCount = mDBHelper.recordCount();
+	        // Here's where we get funky.  To make a list activity, we need a
+	        // list to work from.  Most examples do this by mapping to a database
+	        // but we haven't gotten to that point yet.  Instead, we're building
+	        // a list on the fly.  So we'll start with an ArrayList.  But it can't
+	        // be any old ArrayList; it has to have a Map of some sort.  So we'll
+	        // use a HashMap to map strings to strings.  The first string will
+	        // be the main menu text, while the second will be additional help
+	        // text below it.
+	        //
+	        // Start by making the list itself, then declaring the hash map but
+	        // not instantiating it.
+	        ArrayList<HashMap<String,String>> menuItems =
+	        	new ArrayList<HashMap<String,String>>();
+	        HashMap<String,String> item = null;
+	        // Get a handier reference to our resources so we can get access to
+	        // the strings more quickly:
+	        Resources res = getResources();
+	        // The most commonly used item will be generating existing passphrases,
+	        // so that should be at the top.  But this only makes sense if there
+	        // are already parameters saved.
+	        if (siteCount > 0)
+	        {
 	        	item = new HashMap<String,String>();
-	        	item.put("line1", res.getString(R.string.mainmenu_export1));
-	        	item.put("line2", res.getString(R.string.mainmenu_export2));
+	        	item.put("line1", res.getString(R.string.mainmenu_existing1));
+	        	item.put("line2", res.getString(R.string.mainmenu_existing2));
 	        	menuItems.add(item);
-        	}
-        }
-        // Importing a set of parameters only makes sense if we can read
-        // from the SD card:
-        if (theApp.canReadFromExternalStorage()) {
+	        }
+	        // Add an item for generating new passphrases by entering new sets of
+	        // parameters:
 	    	item = new HashMap<String,String>();
-	    	item.put("line1", res.getString(R.string.mainmenu_import1));
-	    	item.put("line2", res.getString(R.string.mainmenu_import2));
+	    	item.put("line1", res.getString(R.string.mainmenu_generate1));
+	    	item.put("line2", res.getString(R.string.mainmenu_generate2));
 	    	menuItems.add(item);
+	    	// These three require items in the database:
+	        if (siteCount > 0)
+	        {
+	        	// Edit an existing set of parameters:
+	        	item = new HashMap<String,String>();
+	        	item.put("line1", res.getString(R.string.mainmenu_edit1));
+	        	item.put("line2", res.getString(R.string.mainmenu_edit2));
+	        	menuItems.add(item);
+	        	// Delete a set of parameters:
+	        	item = new HashMap<String,String>();
+	        	item.put("line1", res.getString(R.string.mainmenu_delete1));
+	        	item.put("line2", res.getString(R.string.mainmenu_delete2));
+	        	menuItems.add(item);
+	        	// Exporting a set of parameters only makes sense if we have sites
+	        	// to export and we can write to the SD card:
+	        	if (theApp.canWriteToExternalStorage()) {
+		        	item = new HashMap<String,String>();
+		        	item.put("line1", res.getString(R.string.mainmenu_export1));
+		        	item.put("line2", res.getString(R.string.mainmenu_export2));
+		        	menuItems.add(item);
+	        	}
+	        }
+	        // Importing a set of parameters only makes sense if we can read
+	        // from the SD card:
+	        if (theApp.canReadFromExternalStorage()) {
+		    	item = new HashMap<String,String>();
+		    	item.put("line1", res.getString(R.string.mainmenu_import1));
+		    	item.put("line2", res.getString(R.string.mainmenu_import2));
+		    	menuItems.add(item);
+	        }
+	        // Add the advanced settings item:
+	    	item = new HashMap<String,String>();
+	    	item.put("line1", res.getString(R.string.mainmenu_advanced1));
+	    	item.put("line2", res.getString(R.string.mainmenu_advanced2));
+	    	menuItems.add(item);
+	        // Add the help/tutorials item:
+	    	item = new HashMap<String,String>();
+	    	item.put("line1", res.getString(R.string.mainmenu_help1));
+	    	item.put("line2", res.getString(R.string.mainmenu_help2));
+	    	menuItems.add(item);
+	        // Finally, show a simple about box:
+	    	item = new HashMap<String,String>();
+	    	item.put("line1", res.getString(R.string.mainmenu_about1));
+	    	item.put("line2", res.getString(R.string.mainmenu_about2));
+	    	menuItems.add(item);
+	    	// Now that we've got our list, create a SimpleAdapter to map each
+	    	// hash map item to certain text fields in a row view.  This is a bit
+	    	// weird, but that's the way Android seems to do it.
+	    	SimpleAdapter menuAdapter = new SimpleAdapter(
+	    			this,
+	    			menuItems,
+	    			R.layout.mainmenu_row,
+	    			new String[] { "line1", "line2" },
+	    			new int[] { R.id.text1, R.id.text2 }
+	    		);
+	    	// Last but not least, set the adapter for the list, making it all
+	    	// active:
+	    	setListAdapter(menuAdapter);
+    	} catch (Exception e) {
+        	Toast.makeText(this, e.getMessage(), Toast.LENGTH_LONG).show();
         }
-        // Add the advanced settings item:
-    	item = new HashMap<String,String>();
-    	item.put("line1", res.getString(R.string.mainmenu_advanced1));
-    	item.put("line2", res.getString(R.string.mainmenu_advanced2));
-    	menuItems.add(item);
-        // Add the help/tutorials item:
-    	item = new HashMap<String,String>();
-    	item.put("line1", res.getString(R.string.mainmenu_help1));
-    	item.put("line2", res.getString(R.string.mainmenu_help2));
-    	menuItems.add(item);
-        // Finally, show a simple about box:
-    	item = new HashMap<String,String>();
-    	item.put("line1", res.getString(R.string.mainmenu_about1));
-    	item.put("line2", res.getString(R.string.mainmenu_about2));
-    	menuItems.add(item);
-    	// Now that we've got our list, create a SimpleAdapter to map each
-    	// hash map item to certain text fields in a row view.  This is a bit
-    	// weird, but that's the way Android seems to do it.
-    	SimpleAdapter menuAdapter = new SimpleAdapter(
-    			this,
-    			menuItems,
-    			R.layout.mainmenu_row,
-    			new String[] { "line1", "line2" },
-    			new int[] { R.id.text1, R.id.text2 }
-    		);
-    	// Last but not least, set the adapter for the list, making it all
-    	// active:
-    	setListAdapter(menuAdapter);
     }
 
 	public void onSiteListReady(String[] siteList) {
@@ -624,21 +633,9 @@ public class CryptnosMainMenu extends ListActivity implements SiteListListener {
 //					Toast.makeText(getBaseContext(), 
 //							"DEBUG: Got site list, checking for existing site...",
 //							Toast.LENGTH_LONG).show();
-					// We need to search the site list and see if we're going to overwrite
-					// an existing set of parameters.  This is inelegant, but loop through
-					// the site list and see if anything matches the site token from the
-					// scanned code.  If so, break the loop and flag that we'll overwrite it.
-					boolean inThere = false;
-					String siteToken = siteParamsFromQRCode.getSite();
-					for (int i = 0; i < siteList.length; i++) {
-						if (siteList[i].compareTo(siteToken) == 0) {
-							inThere = true;
-							break;
-						}
-					}
-					// If we found the site already there, show a dialog warning the user
+					// If the site token is in the list, show a dialog warning the user
 					// that we're about to overwrite an existing site:
-					if (inThere) {
+					if (theApp.siteListContainsSite(siteParamsFromQRCode.getSite())) {
 //						Toast.makeText(getBaseContext(), 
 //	    						"DEBUG: Existing site found, show overwrite warning...",
 //	    						Toast.LENGTH_LONG).show();

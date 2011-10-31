@@ -29,6 +29,8 @@
  * 
  * UPDATES FOR 1.2.4:  Enabled "copy to clipboard" setting added.  The user can
  * no enable and disable copying the generated password to the clipboard.
+ * 
+ * UPDATES FOR 1.3.0:  Enabled "show master passwords" setting.
  *
  * This program is Copyright 2011, Jeffrey T. Darlington.
  * E-mail:  android_support@cryptnos.com
@@ -52,6 +54,7 @@ import android.app.Activity;
 import android.content.Intent;
 import android.database.Cursor;
 import android.os.Bundle;
+import android.text.method.PasswordTransformationMethod;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -75,7 +78,7 @@ import android.widget.Toast;
  * parameters are saved to the database and the generated password is
  * displayed to the user.
  * @author Jeffrey T. Darlington
- * @version 1.2.4
+ * @version 1.3.0
  * @since 1.0
  */
 public class EditParametersActivity extends Activity {
@@ -147,6 +150,12 @@ public class EditParametersActivity extends Activity {
         spinCharLimit = (Spinner)findViewById(R.id.spinCharLimit);
         txtOutput = (EditText)findViewById(R.id.txtOutput);
         btnGenerate = (Button)findViewById(R.id.btnGenerate);
+        
+        // Determine whether or not the user has specified to show or hide
+        // master passwords and toggle the behavior of the master passphrase
+        // box accordingly:
+        if (!theApp.showMasterPasswords())
+        	txtPassphrase.setTransformationMethod(PasswordTransformationMethod.getInstance());
         
         // Set the prompt for the top of the drop-downs when they display.
         // There's probably a way to set this in the layout XML, but I didn't
@@ -331,7 +340,7 @@ public class EditParametersActivity extends Activity {
 							Integer.parseInt(txtIterations.getText().toString());
 						// Proceed only if the two values are legal:
 						if (charLimit >= 0 && iterations > 0 &&
-								iterations <= theApp.HASH_ITERATION_WARNING_LIMIT)
+								iterations <= CryptnosApplication.HASH_ITERATION_WARNING_LIMIT)
 						{
 							// For code reuse and modularization, the
 							// SiteParameters class will actually do the heavy
@@ -404,7 +413,7 @@ public class EditParametersActivity extends Activity {
 								Toast.makeText(v.getContext(),
 									R.string.error_bad_iterations,
 									Toast.LENGTH_LONG).show();
-							else if (iterations > theApp.HASH_ITERATION_WARNING_LIMIT)
+							else if (iterations > CryptnosApplication.HASH_ITERATION_WARNING_LIMIT)
 								Toast.makeText(v.getContext(),
 									R.string.error_excessive_hashing,
 									Toast.LENGTH_LONG).show();
@@ -460,11 +469,11 @@ public class EditParametersActivity extends Activity {
 							// keep the user from going this high, but we
 							// should at least warn them if it's going to take
 							// a long time to do.
-							} else if (iterations >= theApp.HASH_ITERATION_WARNING_LIMIT) {
+							} else if (iterations >= CryptnosApplication.HASH_ITERATION_WARNING_LIMIT) {
 								Toast.makeText(v.getContext(),
 										R.string.error_excessive_hashing,
 										Toast.LENGTH_LONG).show();
-								txtIterations.setText(String.valueOf(theApp.HASH_ITERATION_WARNING_LIMIT));
+								txtIterations.setText(String.valueOf(CryptnosApplication.HASH_ITERATION_WARNING_LIMIT));
 							}
 						// If the string was empty, that's invalid:
 						} else {

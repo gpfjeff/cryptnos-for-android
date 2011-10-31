@@ -2,7 +2,8 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:orientation="vertical"
     android:layout_width="fill_parent"
-    android:layout_height="fill_parent">
+    android:layout_height="fill_parent"
+    android:padding="5sp">
 	<ScrollView android:id="@+id/ScrollViewSettings"
 		android:layout_width="fill_parent"
 		android:layout_height="fill_parent">
@@ -12,7 +13,12 @@
     		android:layout_height="fill_parent">
 			<CheckBox android:id="@+id/chkCopyPasswordsToClipboard"
 				android:text="@string/settings_copy_passwords"
-				android:layout_width="wrap_content"
+				android:layout_width="fill_parent"
+				android:layout_height="wrap_content"
+				android:layout_gravity="center_horizontal"></CheckBox>
+			<CheckBox android:id="@+id/chkShowMasterPasswords"
+				android:text="@string/settings_show_master_passwd"
+				android:layout_width="fill_parent"
 				android:layout_height="wrap_content"
 				android:layout_gravity="center_horizontal"></CheckBox>
 			<TextView android:layout_width="wrap_content"
@@ -35,9 +41,11 @@
 			<Spinner android:layout_width="fill_parent"
 				android:layout_height="wrap_content"
 				android:clickable="true"
+				android:paddingBottom="5dp"
 				android:id="@+id/spinFileManagers"></Spinner>
 			<TextView android:layout_width="wrap_content"
 				android:layout_height="wrap_content"
+				android:paddingBottom="5dp"
 				android:id="@+id/labelNoFileManagersAvailable"
 				android:text="@string/settings_no_file_managers_available"></TextView>
 			<TextView android:layout_width="wrap_content"

@@ -1,8 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:orientation="vertical"
     android:layout_width="fill_parent"
-    android:layout_height="fill_parent">
+    android:layout_height="fill_parent"
+    android:orientation="vertical"
+    android:padding="5sp" >
+
 	<ScrollView android:id="@+id/ScrollView01"
 		android:layout_width="fill_parent"
 		android:layout_height="fill_parent">
@@ -31,8 +33,7 @@
 				android:id="@+id/txtPassphrase"
 				android:ellipsize="none"
 				android:saveEnabled="false"
-				android:hint="@string/edit_password_hint"
-				android:password="true"></EditText>
+				android:hint="@string/edit_password_hint"></EditText>
 			<TableLayout android:layout_height="wrap_content"
 		    	android:layout_width="fill_parent"
 		    	android:shrinkColumns="1"

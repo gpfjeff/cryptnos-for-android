@@ -2,7 +2,8 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:orientation="vertical"
     android:layout_width="fill_parent"
-    android:layout_height="fill_parent">
+    android:layout_height="fill_parent"
+    android:padding="10sp">
 <ScrollView android:id="@+id/ScrollView01"
 	android:layout_width="fill_parent"
 	android:layout_height="wrap_content">
@@ -38,8 +39,7 @@
 				android:id="@+id/txtPassphrase1"
 				android:ellipsize="none"
 				android:saveEnabled="false"
-				android:hint="@string/export_password1_hint"
-				android:password="true"></EditText>
+				android:hint="@string/export_password1_hint"></EditText>
 			<TextView android:layout_width="wrap_content"
 				android:layout_height="wrap_content"
 				android:textSize="20sp"
@@ -51,17 +51,35 @@
 				android:id="@+id/txtPassphrase2"
 				android:ellipsize="none"
 				android:saveEnabled="false"
-				android:hint="@string/export_password2_hint"
-				android:password="true"></EditText>
-			<Button android:layout_width="fill_parent"
-				android:layout_height="wrap_content"
-				android:paddingTop="10dp"
-				android:id="@+id/btnPickSites"
-				android:text="@string/export_pick_sites_button_label"></Button>
-			<Button android:layout_width="fill_parent"
-				android:layout_height="wrap_content"
-				android:id="@+id/btnExport"
-				android:text="@string/export_export_button_label"></Button>
+				android:hint="@string/export_password2_hint"></EditText>
+
+			<TableLayout
+			    android:id="@+id/tableLayout1"
+			    android:layout_width="match_parent"
+			    android:layout_height="wrap_content"
+	            android:paddingTop="10dp"
+			    android:stretchColumns="0,1" >
+
+			    <TableRow
+			        android:id="@+id/tableRow1"
+			        android:layout_width="wrap_content"
+			        android:layout_height="wrap_content" >
+
+			        <Button
+			            android:id="@+id/btnPickSites"
+			            android:layout_width="fill_parent"
+			            android:layout_height="wrap_content"
+			            android:text="@string/export_pick_sites_button_label" />
+
+			        <Button
+			            android:id="@+id/btnExport"
+			            android:layout_width="fill_parent"
+			            android:layout_height="wrap_content"
+			            android:text="@string/export_export_button_label" />
+			    </TableRow>
+
+			</TableLayout>
+
 	</LinearLayout>
 </ScrollView>
 </LinearLayout>

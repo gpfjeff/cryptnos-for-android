@@ -68,8 +68,11 @@ public class QRCodeHandler {
 	/** This constant identifies ZXing's Barcode Scanner */
 	public static final int APP_ZXING = 1;
 	
-	/** This constant identifies QRDroid */
+	/** This constant identifies QR Droid */
 	public static final int APP_QRDROID = 2;
+	
+	/** This constant identifies QR Droid Private */
+	public static final int APP_QRDROID_PRIVATE = 3;
 	
 	/** This constant represents the activity request code used by startActivityForResult()
 	 *  and onActivityResult() for scanning QR codes to import a set of site parameters. */
@@ -77,15 +80,18 @@ public class QRCodeHandler {
 	
 	/** This constant represents the activity request code used by startActivityForResult()
 	 *  and onActivityResult() for encoding a set of site parameters into a QR code. */
-	public static final int INTENT_ENCODE_QRCODE = 6790;
+	public static final int INTENT_ENCODE_QRCODE = INTENT_SCAN_QRCODE + 1;
 	
 	/* Private Constants ********************************************************/
 	
 	/** The ZXing Barcode Scanner package */
 	private static final String PACKAGE_ZXING = "com.google.zxing.client.android";
 	
-	/** The QRDroid package */
+	/** The QR Droid package */
 	private static final String PACKAGE_QRDROID = "la.droid.qr";
+
+	/** The QR Droid Private package */
+	private static final String PACKAGE_QRDROID_PRIVATE = "la.droid.qr.priva";
 
 	/** The intent name for scanning codes in ZXing Barcode Scanner */
 	private static final String INTENT_SCAN_ZXING = PACKAGE_ZXING + ".SCAN";
@@ -93,10 +99,10 @@ public class QRCodeHandler {
 	/** The intent name for encoding data in ZXing Barcode Scanner */
 	private static final String INTENT_ENCODE_ZXING = PACKAGE_ZXING + ".ENCODE";
 	
-	/** The intent name for scanning codes in QRDroid */
+	/** The intent name for scanning codes in QR Droid */
 	private static final String INTENT_SCAN_QRDROID = PACKAGE_QRDROID + ".scan";
 	
-	/** The intent name for encoding data in QRDroid */
+	/** The intent name for encoding data in QR Droid */
 	private static final String INTENT_ENCODE_QRDROID = PACKAGE_QRDROID + ".encode";
 	
 	/** This constant represents the delimiter used to separate parameters from each
@@ -128,7 +134,7 @@ public class QRCodeHandler {
 	
 	/** Enable or disable debug Toasts.  This should always be set to false for
 	 *  official releases. */
-	private static final boolean DEBUG = false;
+	private static final boolean DEBUG = true;
 
 	/* Private Members **********************************************************/
 	
@@ -190,12 +196,18 @@ public class QRCodeHandler {
 			qrcappList.add(new Integer(APP_ZXING));
 		}
 		catch (PackageManager.NameNotFoundException ex1) {}
-		// QRDroid:
+		// QR Droid:
 		try {
 			pm.getPackageInfo(PACKAGE_QRDROID, 0);
 			qrcappList.add(new Integer(APP_QRDROID));
 		}
 		catch (PackageManager.NameNotFoundException ex2) {}
+		// QR Droid Private:
+		try {
+			pm.getPackageInfo(PACKAGE_QRDROID_PRIVATE, 0);
+			qrcappList.add(new Integer(APP_QRDROID_PRIVATE));
+		}
+		catch (PackageManager.NameNotFoundException ex3) {}
 		// Now check the ArrayList's size.  If we got anything at all, we found
 		// at least one of them.  Convert the ArrayList to a simple integer array:
 		if (qrcappList.size() > 0) {
@@ -300,8 +312,8 @@ public class QRCodeHandler {
 		// if the code is anything else, make sure it's in the list of available
 		// barcode scanners before adding it.
 		if (code == APP_NONE_SELECTED ||
-				((code == APP_ZXING || code == APP_QRDROID)) &&
-				codeInAvailableList(code)) {
+				((code == APP_ZXING || code == APP_QRDROID || code == APP_QRDROID_PRIVATE) &&
+				codeInAvailableList(code))) {
 			// Store the preference, first locally then in the shared preferences:
 			preferredQRCodeApp = code;
 			SharedPreferences.Editor editor = theApp.getPrefs().edit();
@@ -328,7 +340,7 @@ public class QRCodeHandler {
 	 */
 	public Intent generateScanIntent() {
 		// This is pointless if we can't handle QR codes:
-		if (canHandleQRCodes()) {
+		if (canScanQRCodes()) {
 			// Create a null intent:
 			Intent intent = null;
 			// Switch on the default barcode scanner:
@@ -342,8 +354,9 @@ public class QRCodeHandler {
 					// this in its scan history:
 					intent.putExtra("SAVE_HISTORY", false);
 					break;
-				// QRDroid:
+				// QR Droid:
 				case APP_QRDROID:
+				case APP_QRDROID_PRIVATE:
 					intent = new Intent(INTENT_SCAN_QRDROID);
 					intent.putExtra(PACKAGE_QRDROID + ".complete", true);
 					break;
@@ -371,7 +384,7 @@ public class QRCodeHandler {
 			// If we didn't get any site parameters, there's no point continuing:
 			if (siteParams == null) return null;
 			// Make sure we can encode QR codes:
-			if (canHandleQRCodes()) {
+			if (canGenerateQRCodes()) {
 				// Convert the site parameters to a string which we'll send to
 				// the encoder.  This is a very specific format.
 				String encodedParams = HEADER_OVERALL_V1 + DELIMITER_PARAMS +
@@ -390,16 +403,17 @@ public class QRCodeHandler {
 						intent.setPackage(PACKAGE_ZXING);
 						intent.putExtra("ENCODE_DATA", encodedParams);
 						intent.putExtra("ENCODE_TYPE", "TEXT_TYPE");
+						// Don't echo back the text of the code beneath it:
+						intent.putExtra("ENCODE_SHOW_CONTENTS", false);
 						// ZXing defaults to QR codes.  I'd prefer to explicitly declare
-						// this, but I can't find the right format text to put here:
-						//intent.putExtra("ENCODE_FORMAT", "");
-						// ZXing also echos back the text that is encoded beneath the
-						// generated code.  Ideally, we don't want this, but so far there
-						// isn't a way to prevent it.  If such an option becomes available,
-						// we'll make sure to put that here.
+						// this, but I can't find the right format text to put here.  The
+						// comments say to use com.google.zxing.BarcodeFormat which is an
+						// enum, but that doesn't help us when we're doing this by intent.
+						//intent.putExtra("ENCODE_FORMAT", "QR_CODE");
 						break;
-					// QRDroid:
+					// QR Droid:
 					case APP_QRDROID:
+					case APP_QRDROID_PRIVATE:
 						// Note that this is how we generate the intent, but I'm a bit
 						// concerned on what to do next.  The intent generates the code
 						// and returns a URL (to Google or to a local file) to the file
@@ -408,6 +422,10 @@ public class QRCodeHandler {
 						// but this at least gets us started.
 						intent = new Intent(INTENT_ENCODE_QRDROID);
 						intent.putExtra(PACKAGE_QRDROID + ".code", encodedParams);
+						// This tells QR Droid to store the file on external storage and
+						// give us the file name rather than giving us the URL to the
+						// Google Chart API that generated it:
+						intent.putExtra(PACKAGE_QRDROID + ".image", true);
 						break;
 					// If we don't recognize the preference, this wil force us to
 					// return null:
@@ -437,15 +455,35 @@ public class QRCodeHandler {
 			// ZXing Barcode Scanner:
 			case APP_ZXING:
 				return resultCode == Activity.RESULT_OK && data != null;
-				// QRDroid:
+				// QR Droid:
 			case APP_QRDROID:
+			case APP_QRDROID_PRIVATE:
 				return data != null && data.getExtras() != null;
 		}
 		return false;
 	}
 	
 	/**
-	 * Given an Intent return from a barcode scanning app, try to extract the ecoded
+	 * Determine whether or not the QR code generation was successful so we can proceed
+	 * to the next step.  Since different QR code scanners require different tests
+	 * for success, this method encapsulates that logic in one place.
+	 * @param resultCode One of the Activity result codes are passed into
+	 * Activity.onActivityResult()
+	 * @param data An Intent containing the data returned from the app.
+	 * @return True if the generate was successful, false otherwise.
+	 */
+	public boolean wasGenerateSuccessful(int resultCode, Intent data) {
+		// Right now, only QR Droid needs to be tested:
+		switch (preferredQRCodeApp) {
+			case APP_QRDROID:
+			case APP_QRDROID_PRIVATE:
+				return data != null && data.getExtras() != null;
+		}
+		return false;
+	}
+	
+	/**
+	 * Given an Intent returned from a barcode scanning app, try to extract the encoded
 	 * site parameters and return a SiteParameters object
 	 * @param data The Intent containing the decoded data
 	 * @return The decoded site parameters.  This returns null if no valid data
@@ -465,8 +503,9 @@ public class QRCodeHandler {
 				case APP_ZXING:
 					decodedData = data.getStringExtra("SCAN_RESULT");
 					break;
-				// QRDroid:
+				// QR Droid:
 				case APP_QRDROID:
+				case APP_QRDROID_PRIVATE:
 					decodedData = data.getExtras().getString(PACKAGE_QRDROID + ".result");
 					break;
 				// If no scanner app is selected, don't do anything.  The string
@@ -617,6 +656,74 @@ public class QRCodeHandler {
 	}
 	
 	/**
+	 * Given an Intent returned from a barcode scanning app, try to extract the path
+	 * to the file on the external storage generated by the app so we can display it
+	 * in the QRViewActivity
+	 * @param data The Intent containing the path to the file
+	 * @return The decoded file path.  This returns null if no valid data
+	 * could be found.
+	 */
+	public String getPathToGeneratedQRCodeFile(Intent data) {
+		// Asbestos underpants:
+		try {
+			// If the intent is empty, return null:
+			if (data == null) return null;
+			// Which app were we using again?
+			switch (preferredQRCodeApp) {
+				// QR Droid:
+				case APP_QRDROID:
+				case APP_QRDROID_PRIVATE:
+					return data.getExtras().getString(PACKAGE_QRDROID + ".result");
+				// Everything else, return a null;
+				default:
+					return null;
+			}
+		// If anything blew up, return a null:
+		} catch (Exception e) { return null; }
+	}
+	
+	/**
+	 * Check to see if we can scan QR codes.
+	 * @return True if a barcode scanner app is available for scanning QR codes, false
+	 * otherwise
+	 */
+	public boolean canScanQRCodes() {
+		// See getAvailableQRCodeApps()() for why we refresh the list every time.
+		findAvailableQRCodeApps();
+		// At the moment, all apps can scan codes if the app is availabe, so return
+		// true if any apps were found:
+		return availableQRCApps != null;
+	}
+	
+	/**
+	 * Check to see if we can generate QR codes.
+	 * @return True if a barcode scanner app is available to generate QR codes,
+	 * false otherwise.
+	 */
+	public boolean canGenerateQRCodes() {
+		// See getAvailableQRCodeApps()() for why we refresh the list every time.
+		findAvailableQRCodeApps();
+		// If we have apps available:
+		if (availableQRCApps != null) {
+			// The answer here is, unfortunately, app dependent:
+			switch (preferredQRCodeApp) {
+				// ZXing displays QR codes for us, so this is always true:
+				case APP_ZXING:
+					return true;
+				// QR Droid must write to external storage, so if that's not
+				// available, we can't generate QR codes:
+				case APP_QRDROID:
+				case APP_QRDROID_PRIVATE:
+					return theApp.canWriteToExternalStorage();
+				// For anything else, return false:
+				default:
+					return false;
+			}
+		// If no apps are available, obviously we can't generate QR codes:
+		} else return false;
+	}
+	
+	/**
 	 * Check to see if we can scan or encode QR codes.  This is a convenience method
 	 * that reduces a number of steps to a single boolean check suitable for use
 	 * elsewhere.
@@ -624,12 +731,12 @@ public class QRCodeHandler {
 	 * otherwise.
 	 */
 	public boolean canHandleQRCodes() {
-		// See getAvailableQRCodeApps()() for why we refresh the list every time.
-		findAvailableQRCodeApps();
-		// This should be simple enough:  If the list of available apps is populated
-		// at all, we can handle QR codes so we'll return true.  Otherwise, we'll
-		// return false.
-		return availableQRCApps != null;
+		// For now, this is just an alias to canScanQRCodes(), which does essentially
+		// the same thing.  However, we want something generic that says "if we can
+		// scan OR generate QR codes" rather than "AND".  If the scan check ever
+		// becomes dependent on functionality like the generate test, we may need to
+		// tweak this.
+		return canScanQRCodes(); // || canGenerateQRCodes();
 	}
 	
 	/**
@@ -639,8 +746,9 @@ public class QRCodeHandler {
 	 * app will display the generated QR code itself
 	 */
 	public boolean needQRViewActivity() {
-		// For now, only QRDroid requires us to display the code ourselves:
-		if (preferredQRCodeApp == APP_QRDROID) return true;
+		// For now, only QR Droid requires us to display the code ourselves:
+		if (preferredQRCodeApp == APP_QRDROID || preferredQRCodeApp == APP_QRDROID_PRIVATE)
+			return true;
 		else return false;
 	}
 	
@@ -678,7 +786,7 @@ public class QRCodeHandler {
 	 * @return A String containing the recognized scanner names
 	 */
 	public String getRecognizedQRScannerNames() {
-		return "\tZXing Barcode Scanner\n\tQRDroid";
+		return "\tZXing Barcode Scanner\n\tQR Droid\n\tQR Droid Private";
 	}
 
 
@@ -699,7 +807,9 @@ public class QRCodeHandler {
 			case APP_ZXING:
 				return "ZXing Barcode Scanner";
 			case APP_QRDROID:
-				return "QRDroid";
+				return "QR Droid";
+			case APP_QRDROID_PRIVATE:
+				return "QR Droid Private";
 			default:
 				throw new IllegalArgumentException("Invalid barcode scanner code");
 		}
@@ -721,8 +831,10 @@ public class QRCodeHandler {
 			return APP_NONE_SELECTED;
 		if (name.compareTo("ZXing Barcode Scanner") == 0)
 			return APP_ZXING;
-		if (name.compareTo("QRDroid") == 0)
+		if (name.compareTo("QR Droid") == 0)
 			return APP_QRDROID;
+		if (name.compareTo("QR Droid Private") == 0)
+			return APP_QRDROID_PRIVATE;
 		return APP_NONE_SELECTED;
 	}
 	

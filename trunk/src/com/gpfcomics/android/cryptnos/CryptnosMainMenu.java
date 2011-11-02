@@ -78,11 +78,8 @@ public class CryptnosMainMenu extends ListActivity implements SiteListListener {
 	
 	/* Private Constants ********************************************************/
 
-	/** A constant representing a warning dialog for the Advanced Settings activity */
-	private static final int DIALOG_ADVANCED_SETTINGS_WARNING = 600;
 	/** A constant representing the import method dialog */
-	private static final int DIALOG_CHOOSE_IMPORT_METHOD = 
-		DIALOG_ADVANCED_SETTINGS_WARNING + 1;
+	private static final int DIALOG_CHOOSE_IMPORT_METHOD = 600;
 	/** A constant representing the export method dialog */
 	private static final int DIALOG_CHOOSE_EXPORT_METHOD = 
 		DIALOG_CHOOSE_IMPORT_METHOD + 1;
@@ -95,7 +92,8 @@ public class CryptnosMainMenu extends ListActivity implements SiteListListener {
 	private static final int IMPORT_EXPORT_METHOD_FILE = 0;
 	/** A constant representing the QR code method option index in the import and
 	 *  export method dialogs */
-	private static final int IMPORT_EXPORT_METHOD_QRCODE = 1;
+	private static final int IMPORT_EXPORT_METHOD_QRCODE =
+		IMPORT_EXPORT_METHOD_FILE + 1;
 
 	/* Private Members **********************************************************/
 	
@@ -169,9 +167,19 @@ public class CryptnosMainMenu extends ListActivity implements SiteListListener {
         HashMap<String,String> menuItemHash = 
         	(HashMap<String,String>)getListView().getItemAtPosition(position);
         String menuItem = (String)menuItemHash.get("line1");
+        // Go ahead and get a copy of our resources, as we'll need that when we
+        // compare menu text strings below:
         Resources res = this.getResources();
-        QRCodeHandler qrCodeHandler = null;
-        // Launch the about activity:
+        // We may not always need this, but grab the QR code handler as well:
+        QRCodeHandler qrCodeHandler = theApp.getQRCodeHandler();
+        // For imports and exports, it will help if we know what the app is
+        // capable of.  Find out whether or not we can read and/or write external
+        // storage and scan/generate QR codes and take note of our capabilities.
+    	boolean canScanQRs = qrCodeHandler.canScanQRCodes();
+    	boolean canGenQRs = qrCodeHandler.canGenerateQRCodes();
+    	boolean canWriteToSD = theApp.canWriteToExternalStorage();
+    	boolean canReadFromSD = theApp.canReadFromExternalStorage();
+        // Now test which option the user selected.  Launch the about activity:
         if (menuItem.compareTo(res.getString(R.string.mainmenu_about1)) == 0)
         {
         	Intent i = new Intent(this, AboutActivity.class);
@@ -216,15 +224,19 @@ public class CryptnosMainMenu extends ListActivity implements SiteListListener {
         // Choose an export method:
         else if (menuItem.compareTo(res.getString(R.string.mainmenu_export1)) == 0)
         {
-        	// If we can handle QR codes, we want to give the user a chance to pick
-        	// which method they want to use for exports.  Launch the export method
-        	// dialog:
-        	qrCodeHandler = theApp.getQRCodeHandler();
-        	if (qrCodeHandler.canHandleQRCodes()) {
-        		// Launch dialog to let the user choose between exporting to
-        		// a file or to a QR code
+        	// If we can both generate QR codes and write to external storage, ask the
+        	// user which export method they'd like to use:
+        	if (canGenQRs && canWriteToSD) {
         		showDialog(DIALOG_CHOOSE_EXPORT_METHOD);
-        	} else {
+        	// If they can generate QR codes but can't write to external storage, go
+        	// ahead and launch site list activity in QR export mode:
+        	} else if (canGenQRs && !canWriteToSD) {
+	        	Intent eqi = new Intent(this, SiteListActivity.class);
+	        	eqi.putExtra("mode", SiteListActivity.MODE_EXPORT_QR);
+	        	startActivity(eqi);
+        	// If they can't generate QR codes but can write to external storage, go
+        	// ahead and launch the classic export activity:
+        	} else if (!canGenQRs && canWriteToSD) {
 	        	Intent i = new Intent(this, ExportActivity.class);
 	        	startActivity(i);
         	}
@@ -232,14 +244,17 @@ public class CryptnosMainMenu extends ListActivity implements SiteListListener {
         // Choose an import method:
         else if (menuItem.compareTo(res.getString(R.string.mainmenu_import1)) == 0)
         {
-        	// If we can handle QR codes, we want to give the user a chance to pick
-        	// which method they want to use for imports.  Launch the import method
-        	// dialog:
-        	qrCodeHandler = theApp.getQRCodeHandler();
-        	if (qrCodeHandler.canHandleQRCodes()) {
+        	// If we can both scan QR codes and read from external storage, let the
+        	// user pick which import method they'd like to use:
+        	if (canScanQRs && canReadFromSD) {
         		showDialog(DIALOG_CHOOSE_IMPORT_METHOD);
-        	// Otherwise, just launch the old import activity:
-        	} else {
+        	// If they can only scan QR codes, launch the QR code scanner:
+        	} else if (canScanQRs && !canReadFromSD) {
+				Intent iqri = qrCodeHandler.generateScanIntent();
+				startActivityForResult(iqri, QRCodeHandler.INTENT_SCAN_QRCODE);
+        	// If they can only read from external storage, send them to the classic
+        	// import activity:
+        	} else if (!canScanQRs && canReadFromSD) {
 	        	Intent i = new Intent(this, ImportActivity.class);
 	        	startActivity(i);
         	}
@@ -292,37 +307,6 @@ public class CryptnosMainMenu extends ListActivity implements SiteListListener {
 			case CryptnosApplication.DIALOG_UPGRADE_TO_UTF8:
 				dialog = theApp.onCreateDialog(id);
 				break;
-			// But we'll handle the Advanced Settings warning dialog here:
-			case DIALOG_ADVANCED_SETTINGS_WARNING:
-				AlertDialog.Builder adb = new AlertDialog.Builder(this);
-				adb.setTitle(getResources().getString(R.string.mainmenu_dialog_advanced_settings_title));
-				adb.setMessage(getResources().getString(R.string.mainmenu_dialog_advanced_settings_text));
-	    		adb.setCancelable(true);
-	    		// What to do when the Yes button is clicked:
-	    		adb.setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
-					// If they said yes, launch the Advanced Settings activity:
-					public void onClick(DialogInterface dialog, int which) {
-			            Intent i1 = new Intent(getBaseContext(),
-			            		AdvancedSettingsActivity.class);
-			            startActivity(i1);
-					}
-	    		});
-	    		// What to do when the No button is clicked:
-    			adb.setNegativeButton(android.R.string.no, new DialogInterface.OnClickListener() {
- 		           public void onClick(DialogInterface dialog, int id) {
- 		        	   // For now, just cancel the dialog.  We'll follow
- 		        	   // up on that below.
- 		        	   dialog.cancel();
- 		           }
- 		       	});
-    			// What to do if the dialog is canceled:
-    			adb.setOnCancelListener(new DialogInterface.OnCancelListener() {
-					public void onCancel(DialogInterface dialog) {
-						theActivity.removeDialog(DIALOG_ADVANCED_SETTINGS_WARNING);
-					}
-				});
-				dialog = (Dialog)adb.create();
-				break;
 	  		// The site list building progress dialog is actually handled by
     		// the application, but we need to attach it here to actually get
     		// it to display.  If we get this value, pass the buck:
@@ -348,8 +332,10 @@ public class CryptnosMainMenu extends ListActivity implements SiteListListener {
 										QRCodeHandler qrCodeHandler = 
 											theApp.getQRCodeHandler();
 										Intent iqri = qrCodeHandler.generateScanIntent();
-										theActivity.startActivityForResult(iqri,
+										if (iqri != null)
+											theActivity.startActivityForResult(iqri,
 												QRCodeHandler.INTENT_SCAN_QRCODE);
+										else Toast.makeText(getBaseContext(), "ERROR: Got null intent!", Toast.LENGTH_LONG).show();
 										break;
 									// The first item, and which should be the default, is
 									// to import from a file.  Launch the old import
@@ -381,8 +367,7 @@ public class CryptnosMainMenu extends ListActivity implements SiteListListener {
 	    		// option should always be to a file, while the second will be a QR code.
 	    		adb3.setItems(getResources().getStringArray(R.array.importExportMethods),
 	    				new DialogInterface.OnClickListener() {
-							public void onClick(DialogInterface dialog,
-									int which) {
+							public void onClick(DialogInterface dialog, int which) {
 								switch (which) {
 									// Exporting to a QR code will be handled by the
 									// site list activity, which is well suited to adding
@@ -417,66 +402,73 @@ public class CryptnosMainMenu extends ListActivity implements SiteListListener {
 			// If the user tried to import a site from a QR code and it will overwrite
 			// an existing site, warn the user before actually overwriting it:
 			case DIALOG_QRIMPORT_OVERWRITE_WARNING:
-				AlertDialog.Builder adb4 = new AlertDialog.Builder(this);
-				adb4.setTitle(getResources().getString(R.string.mainmenu_dialog_import_overwrite_title));
-				String message = getResources().getString(R.string.mainmenu_dialog_import_overwrite_warn);
-				message = message.replace(getResources().getString(R.string.meta_replace_token), 
-						siteParamsFromQRCode.getSite());
-				adb4.setMessage(message);
-	    		adb4.setCancelable(true);
-	    		// What to do when the Yes button is clicked:
-	    		adb4.setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
-					// If they said yes:
-					public void onClick(DialogInterface dialog, int which) {
-						try {
-							// Try to add the record to the database:
-							mDBHelper.createRecord(siteParamsFromQRCode);
-//							long rowID = mDBHelper.createRecord(siteParamsFromQRCode);
-//							if (rowID != ParamsDbAdapter.DB_ERROR)
-//								Toast.makeText(getBaseContext(), 
-//		    						"DEBUG: Insert successful!",
-//		    						Toast.LENGTH_LONG).show();
-//							else
-//								Toast.makeText(getBaseContext(), 
-//		    						"DEBUG: Insert failed!",
-//		    						Toast.LENGTH_LONG).show();
-							// Set the site list to "dirty" so it will be rebuilt:
-							theApp.setSiteListDirty();
-							// Notify the user of our success:
-							String message = getResources().getString(R.string.mainmenu_dialog_import_success);
-							message = message.replace(getResources().getString(R.string.meta_replace_token),
-									siteParamsFromQRCode.getSite());
-							Toast.makeText(getBaseContext(), message, Toast.LENGTH_LONG).show();
-							// Clear out the imported site so we can use it again:
-							siteParamsFromQRCode = null;
-						} catch (Exception e) {
-							// Warn the user if we failed, then clear out the imported
-							// site data:
-							Toast.makeText(getBaseContext(),
-									getResources().getString(R.string.mainmenu_dialog_import_error2),
-									Toast.LENGTH_LONG).show();
-							siteParamsFromQRCode = null;
+				// Since this relies on the existence of the site parameter object we
+				// got from the scan, we need to test and make sure it's populated.
+				// When this process is complete, we null it out to conserve memory
+				// and to signal that we're done.  Unfortunately, I ran into issues
+				// with this in practices, particularly if this dialog was created and
+				// subsequently cleared, then the user rotated the device.  During
+				// orientation changes, the activity is disposed of then rebuilt.  In
+				// this case, Andorid tries to launch this dialog again.  If the site
+				// parameters happen to be null, this code blows up at this point.
+				// So we'll test to make sure we have site parameters before trying
+				// to launch the dialog.  If we don't, we'll silently fall through
+				// and the dialog won't launch.
+				if (siteParamsFromQRCode != null) {
+					AlertDialog.Builder adb4 = new AlertDialog.Builder(this);
+					adb4.setTitle(getResources().getString(R.string.mainmenu_dialog_import_overwrite_title));
+					String message = getResources().getString(R.string.mainmenu_dialog_import_overwrite_warn);
+					message = message.replace(getResources().getString(R.string.meta_replace_token), 
+							siteParamsFromQRCode.getSite());
+					adb4.setMessage(message);
+		    		adb4.setCancelable(true);
+		    		// What to do when the Yes button is clicked:
+		    		adb4.setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
+						// If they said yes:
+						public void onClick(DialogInterface dialog, int which) {
+							try {
+								if (siteParamsFromQRCode != null) {
+									// Try to add the record to the database:
+									mDBHelper.createRecord(siteParamsFromQRCode);
+									// Set the site list to "dirty" so it will be rebuilt:
+									theApp.setSiteListDirty();
+									// Notify the user of our success:
+									String message = getResources().getString(R.string.mainmenu_dialog_import_success);
+									message = message.replace(getResources().getString(R.string.meta_replace_token),
+											siteParamsFromQRCode.getSite());
+									Toast.makeText(getBaseContext(), message, Toast.LENGTH_LONG).show();
+									// Clear out the imported site so we can use it again:
+									siteParamsFromQRCode = null;
+								}
+							} catch (Exception e) {
+								// Warn the user if we failed, then clear out the imported
+								// site data:
+								Toast.makeText(getBaseContext(),
+										getResources().getString(R.string.mainmenu_dialog_import_error2),
+										Toast.LENGTH_LONG).show();
+								siteParamsFromQRCode = null;
+							}
 						}
-					}
-	    		});
-	    		// What to do when the No button is clicked:
-    			adb4.setNegativeButton(android.R.string.no, new DialogInterface.OnClickListener() {
- 		           public void onClick(DialogInterface dialog, int id) {
- 		        	   // For now, just cancel the dialog.  We'll follow
- 		        	   // up on that below.
- 		        	   dialog.cancel();
- 		           }
- 		       	});
-    			// What to do if the dialog is canceled:
-    			adb4.setOnCancelListener(new DialogInterface.OnCancelListener() {
-					public void onCancel(DialogInterface dialog) {
-						// Note that we clear out the imported site here as well,
-						// just in case:
-						siteParamsFromQRCode = null;
-						theActivity.removeDialog(DIALOG_QRIMPORT_OVERWRITE_WARNING);
-					}
-				});
-				dialog = (Dialog)adb4.create();
+		    		});
+		    		// What to do when the No button is clicked:
+	    			adb4.setNegativeButton(android.R.string.no, new DialogInterface.OnClickListener() {
+	 		           public void onClick(DialogInterface dialog, int id) {
+	 		        	   // For now, just cancel the dialog.  We'll follow
+	 		        	   // up on that below.
+	 		        	   dialog.cancel();
+	 		           }
+	 		       	});
+	    			// What to do if the dialog is canceled:
+	    			adb4.setOnCancelListener(new DialogInterface.OnCancelListener() {
+						public void onCancel(DialogInterface dialog) {
+							// Note that we clear out the imported site here as well,
+							// just in case:
+							siteParamsFromQRCode = null;
+							theActivity.removeDialog(DIALOG_QRIMPORT_OVERWRITE_WARNING);
+						}
+					});
+					dialog = (Dialog)adb4.create();
+				}
 				break;
     	}
     	return dialog;
@@ -498,9 +490,6 @@ public class CryptnosMainMenu extends ListActivity implements SiteListListener {
     				// probably cause the progress dialog to load.  When we get the
     				// list, our SiteListListener method will handle the next step.
     				if (params != null) {
-//    					Toast.makeText(getBaseContext(), 
-//        						"DEBUG: Code read OK, requesting site list...",
-//        						Toast.LENGTH_LONG).show();
     					siteParamsFromQRCode = params;
     					theApp.requestSiteList(this, this);
     				// If we got a null from the import, something blew up:
@@ -542,6 +531,7 @@ public class CryptnosMainMenu extends ListActivity implements SiteListListener {
 	        // Get a handier reference to our resources so we can get access to
 	        // the strings more quickly:
 	        Resources res = getResources();
+	        QRCodeHandler qrCodeHandler = theApp.getQRCodeHandler();
 	        // The most commonly used item will be generating existing passphrases,
 	        // so that should be at the top.  But this only makes sense if there
 	        // are already parameters saved.
@@ -572,17 +562,18 @@ public class CryptnosMainMenu extends ListActivity implements SiteListListener {
 	        	item.put("line2", res.getString(R.string.mainmenu_delete2));
 	        	menuItems.add(item);
 	        	// Exporting a set of parameters only makes sense if we have sites
-	        	// to export and we can write to the SD card:
-	        	if (theApp.canWriteToExternalStorage()) {
+	        	// to export and we can either write to the SD card or generate
+	        	// QR codes:
+	        	if (theApp.canWriteToExternalStorage() || qrCodeHandler.canGenerateQRCodes()) {
 		        	item = new HashMap<String,String>();
 		        	item.put("line1", res.getString(R.string.mainmenu_export1));
 		        	item.put("line2", res.getString(R.string.mainmenu_export2));
 		        	menuItems.add(item);
 	        	}
 	        }
-	        // Importing a set of parameters only makes sense if we can read
-	        // from the SD card:
-	        if (theApp.canReadFromExternalStorage()) {
+	        // Importing a set of parameters only makes sense if we can either read
+	        // from the SD card or scan QR codes:
+	        if (theApp.canReadFromExternalStorage() || qrCodeHandler.canScanQRCodes()) {
 		    	item = new HashMap<String,String>();
 		    	item.put("line1", res.getString(R.string.mainmenu_import1));
 		    	item.put("line2", res.getString(R.string.mainmenu_import2));
@@ -630,34 +621,16 @@ public class CryptnosMainMenu extends ListActivity implements SiteListListener {
 				// imported a set of parameters from a scan and now we want to import it.
 				// If that's the case, the parameters should be stored in this member:
 				if (siteParamsFromQRCode != null) {
-//					Toast.makeText(getBaseContext(), 
-//							"DEBUG: Got site list, checking for existing site...",
-//							Toast.LENGTH_LONG).show();
 					// If the site token is in the list, show a dialog warning the user
 					// that we're about to overwrite an existing site:
 					if (theApp.siteListContainsSite(siteParamsFromQRCode.getSite())) {
-//						Toast.makeText(getBaseContext(), 
-//	    						"DEBUG: Existing site found, show overwrite warning...",
-//	    						Toast.LENGTH_LONG).show();
 						showDialog(DIALOG_QRIMPORT_OVERWRITE_WARNING);
 					}
 					// Otherwise, we'll go ahead and import that site directly into the
 					// database:
 					else {
-//						Toast.makeText(getBaseContext(), 
-//	    						"DEBUG: No exsiting site found, add site to DB...",
-//	    						Toast.LENGTH_LONG).show();
 						// Try to add the site to the database:
 						mDBHelper.createRecord(siteParamsFromQRCode);
-//						long rowID = mDBHelper.createRecord(siteParamsFromQRCode);
-//						if (rowID != ParamsDbAdapter.DB_ERROR)
-//							Toast.makeText(getBaseContext(), 
-//	    						"DEBUG: Insert successful!",
-//	    						Toast.LENGTH_LONG).show();
-//						else
-//							Toast.makeText(getBaseContext(), 
-//	    						"DEBUG: Insert failed!",
-//	    						Toast.LENGTH_LONG).show();
 						// Mark the site list as "dirty" so it will get rebuilt the next
 						// time it's needed:
 						theApp.setSiteListDirty();

@@ -303,7 +303,7 @@ public class AdvancedSettingsActivity extends Activity {
 			public void onItemSelected(AdapterView<?> arg0, View arg1,
 					int arg2, long arg3) {
 				if (spinQRScanners.getSelectedItemPosition() != lastQRScannerSelection) {
-					theApp.getQRCodeHandler().setPreferredQRCodeApp((String)spinFileManagers.getSelectedItem());
+					theApp.getQRCodeHandler().setPreferredQRCodeApp((String)spinQRScanners.getSelectedItem());
 					lastQRScannerSelection = spinQRScanners.getSelectedItemPosition();
 				}
 			}

@@ -21,7 +21,7 @@ public final class R {
     }
     public static final class id {
         public static final int ScrollView01=0x7f060007;
-        public static final int ScrollViewSettings=0x7f060031;
+        public static final int ScrollViewSettings=0x7f060032;
         public static final int about_blank=0x7f060004;
         public static final int about_copyright=0x7f060003;
         public static final int about_header=0x7f060001;
@@ -35,41 +35,42 @@ public final class R {
         public static final int btnImport=0x7f06002e;
         public static final int btnOIImportFileSelect=0x7f060029;
         public static final int btnPickSites=0x7f06001f;
-        public static final int chkCopyPasswordsToClipboard=0x7f060033;
-        public static final int chkShowMasterPasswords=0x7f060034;
+        public static final int chkCopyPasswordsToClipboard=0x7f060034;
+        public static final int chkShowMasterPasswords=0x7f060035;
+        public static final int imgQRCode=0x7f060031;
         public static final int labelCharLimit=0x7f060012;
         public static final int labelCharTypes=0x7f060010;
-        public static final int labelDefaultEncoding=0x7f060037;
-        public static final int labelEncoding=0x7f060035;
+        public static final int labelDefaultEncoding=0x7f060038;
+        public static final int labelEncoding=0x7f060036;
         public static final int labelExportFile=0x7f060018;
-        public static final int labelFileManagerPreference=0x7f060038;
+        public static final int labelFileManagerPreference=0x7f060039;
         public static final int labelHash=0x7f06000c;
         public static final int labelHelp=0x7f060026;
         public static final int labelHelpBackPrompt=0x7f060025;
         public static final int labelImportFile=0x7f060028;
         public static final int labelImportWarning=0x7f06002d;
         public static final int labelIterations=0x7f06000e;
-        public static final int labelNoFileManagersAvailable=0x7f06003a;
-        public static final int labelNoQRScannersAvailable=0x7f06003d;
+        public static final int labelNoFileManagersAvailable=0x7f06003b;
+        public static final int labelNoQRScannersAvailable=0x7f06003e;
         public static final int labelOtherParams=0x7f060024;
         public static final int labelOutput=0x7f060014;
         public static final int labelPassphrase=0x7f06000a;
         public static final int labelPassphrase1=0x7f06001b;
         public static final int labelPassphrase2=0x7f06001d;
         public static final int labelPassphraseImport=0x7f06002b;
-        public static final int labelQRScannerPreference=0x7f06003b;
+        public static final int labelQRScannerPreference=0x7f06003c;
         public static final int labelSite=0x7f060008;
         public static final int labelSiteName=0x7f060023;
         public static final int layoutExport=0x7f060017;
         public static final int layoutImport=0x7f060027;
-        public static final int layoutSettings=0x7f060032;
+        public static final int layoutSettings=0x7f060033;
         public static final int spinCharLimit=0x7f060013;
         public static final int spinCharTypes=0x7f060011;
-        public static final int spinEncodings=0x7f060036;
-        public static final int spinFileManagers=0x7f060039;
+        public static final int spinEncodings=0x7f060037;
+        public static final int spinFileManagers=0x7f06003a;
         public static final int spinHashes=0x7f06000d;
         public static final int spinImportFiles=0x7f06002a;
-        public static final int spinQRScanners=0x7f06003c;
+        public static final int spinQRScanners=0x7f06003d;
         public static final int tableLayout1=0x7f060021;
         public static final int tableRow1=0x7f060022;
         public static final int text1=0x7f06002f;
@@ -92,8 +93,9 @@ public final class R {
         public static final int import_layout=0x7f030005;
         public static final int main=0x7f030006;
         public static final int mainmenu_row=0x7f030007;
-        public static final int settings_layout=0x7f030008;
-        public static final int sitelist_row=0x7f030009;
+        public static final int qrview_layout=0x7f030008;
+        public static final int settings_layout=0x7f030009;
+        public static final int sitelist_row=0x7f03000a;
     }
     public static final class string {
         public static final int about_copyright=0x7f040081;

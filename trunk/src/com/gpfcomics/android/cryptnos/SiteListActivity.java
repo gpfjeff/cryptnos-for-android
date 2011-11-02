@@ -55,6 +55,7 @@
 */
 package com.gpfcomics.android.cryptnos;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 
@@ -119,6 +120,9 @@ import android.widget.AdapterView.AdapterContextMenuInfo;
 	/** A constant indicating that we should show the confirm delete all
 	 *  dialog. */
 	static final int DIALOG_CONFIRM_DELETE_ALL = DIALOG_CONFIRM_DELETE + 1;
+	/** A constant indicating the request code to look for when returning from
+	 *  a third-party QR code generating app that needs us to display its code. */
+	static final int REQUEST_GEN_QRCODE = 101010;
 
 	/** A reference to our top-level application */
 	private CryptnosApplication theApp = null;
@@ -380,7 +384,7 @@ import android.widget.AdapterView.AdapterContextMenuInfo;
 	        // If our default is to export a QR code, get the site parameter data
 	        // and do whatever is necessary to display the code:
 	        case MODE_EXPORT_QR:
-	        	if (theApp.getQRCodeHandler().canHandleQRCodes())
+	        	if (theApp.getQRCodeHandler().canGenerateQRCodes())
 	        		exportSiteToQRCode();
 	        	else Toast.makeText(this, R.string.error_qrexport_no_app_found,
 		        		Toast.LENGTH_LONG).show();
@@ -408,7 +412,7 @@ import android.widget.AdapterView.AdapterContextMenuInfo;
         menu.add(0, MENU_GENERATE, 0, R.string.menu_generate);
         menu.add(0, MENU_EDIT, 1, R.string.menu_edit);
         menu.add(0, MENU_DELETE, 2, R.string.menu_delete);
-        if (theApp.getQRCodeHandler().canHandleQRCodes())
+        if (theApp.getQRCodeHandler().canGenerateQRCodes())
         	menu.add(0, MENU_EXPORT_QR, 3, R.string.menu_export_qrcode);
 	}
     
@@ -444,7 +448,7 @@ import android.widget.AdapterView.AdapterContextMenuInfo;
     			return true;
     		// Export to a QR code:
     		case MENU_EXPORT_QR:
-	        	if (theApp.getQRCodeHandler().canHandleQRCodes())
+	        	if (theApp.getQRCodeHandler().canGenerateQRCodes())
 	        		exportSiteToQRCode();
 	        	else Toast.makeText(this, R.string.error_qrexport_no_app_found,
 		        		Toast.LENGTH_LONG).show();
@@ -522,6 +526,37 @@ import android.widget.AdapterView.AdapterContextMenuInfo;
             		Toast.LENGTH_LONG).show();
 		}
 	}
+	
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+    	// Let the super do its part:
+    	super.onActivityResult(requestCode, resultCode, data);
+    	// Which request are we responding to?
+		switch (requestCode) {
+			// If we requested that a QR code be generated:
+			case REQUEST_GEN_QRCODE:
+		    	// We'll need the QR code handler for this:
+				QRCodeHandler qrCodeHandler = theApp.getQRCodeHandler();
+		    	// Check to see if the code was generated successfully:
+				if (qrCodeHandler.wasGenerateSuccessful(resultCode, data)) {
+					// Try to get the path to the generated file:
+					String pathToFile = qrCodeHandler.getPathToGeneratedQRCodeFile(data);
+					// If we got a path, look to see if it actually points to a file:
+					if (pathToFile != null) {
+						File theFile = new File(pathToFile);
+						if (theFile.exists() && theFile.canRead()) {
+							// Generate the intent for the QRViewActivity to display
+							// the generated code:
+							Intent i = new Intent(this, QRViewActivity.class);
+				        	i.putExtra("qrcode_file", pathToFile);
+				        	startActivity(i);
+				        } else Toast.makeText(this, "ERROR: File could not be read!",
+			            		Toast.LENGTH_LONG).show();
+					} else Toast.makeText(this, "ERROR: Path to file was null!",
+		            		Toast.LENGTH_LONG).show();
+				} else Toast.makeText(this, "ERROR: QR code failed to generate!",
+	            		Toast.LENGTH_LONG).show();
+		}
+    }
 
 	/**
 	 * Assuming that a site has already been selected, either by being in QR export
@@ -548,19 +583,17 @@ import android.widget.AdapterView.AdapterContextMenuInfo;
 					// Get the app's QR code handler and make sure we can work with
 					// QR codes:
 					QRCodeHandler qrCodeHandler = theApp.getQRCodeHandler();
-					if (qrCodeHandler.canHandleQRCodes()) {
+					if (qrCodeHandler.canGenerateQRCodes()) {
 						// Generate our intent to encode data:
 						Intent i = qrCodeHandler.generateEncodeIntent(params);
 						// Some QR encoders will display the generated code for us
 						// while some will not.  If they won't, we'll need to get
 						// the raw image data from the encoder and display it ourselves.
-						if (qrCodeHandler.needQRViewActivity()) {
-							// TODO: This isn't implemented yet
-				        	Toast.makeText(this, R.string.error_not_implemented,
-					        		Toast.LENGTH_LONG).show();
+						if (qrCodeHandler.needQRViewActivity())
+							startActivityForResult(i, REQUEST_GEN_QRCODE);
 				        // If the encoder will display the code for us, just send
 				        // the intent to generate the code:
-						} else startActivity(i);
+						else startActivity(i);
 					// If we can't export QR codes, complain:
 					} else Toast.makeText(this, R.string.error_qrexport_no_app_found,
 							Toast.LENGTH_LONG).show();

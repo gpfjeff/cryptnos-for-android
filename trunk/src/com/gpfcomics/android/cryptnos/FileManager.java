@@ -23,6 +23,9 @@
  * 
  * UPDATES FOR 1.2.1:  Added ES File Explorer
  * 
+ * UPDATES FOR 1.3.0:  Abstracted third-party app names into constants and pulled
+ * hard-coded error strings out into strings.xml where they belong.
+ * 
  * This program is Copyright 2011, Jeffrey T. Darlington.
  * E-mail:  android_support@cryptnos.com
  * Web:     http://www.cryptnos.com/
@@ -47,6 +50,7 @@ import java.util.ArrayList;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.content.res.Resources;
 import android.net.Uri;
 
 /**
@@ -57,7 +61,7 @@ import android.net.Uri;
  * provide sufficient abstraction to allow new file managers to be added over time
  * as new Intents are discovered.
  * @author Jeffrey T. Darlington
- * @version 1.2.1
+ * @version 1.3.0
  * @since 1.2
  */
 public class FileManager {
@@ -67,19 +71,28 @@ public class FileManager {
 	/** A constant used to represent the case where no file manager is currently
 	 *  selected.  This could be the user's preference, or it could be that no
 	 *  known file manager is currently available. */
-	public static final int NO_FILE_MANAGER = 0;
+	public static final int APP_NO_FILE_MANAGER = 0;
 	
 	/** A constant used to represent that OI File Manager is selected as the
 	 *  user's preferred file manager. */
-	public static final int OI_FILE_MANAGER = 1;
+	public static final int APP_OI_FILE_MANAGER = 1;
+	
+	/** This constant represents the OI File Manager app name */
+	public static final String NAME_OI_FILE_MANAGER = "OI File Manager";
 	
 	/** A constant used to represent that AndExplorer is selected as the
 	 *  user's preferred file manager. */
-	public static final int ANDEXPLORER = 2;
+	public static final int APP_ANDEXPLORER = 2;
+	
+	/** This constant represents the AndExplorer app name */
+	public static final String NAME_ANDEXPLORER = "AndExplorer";
 	
 	/** A constant used to represent that ES File Explorer is selected as the
 	 *  user's preferred file manager. */
-	public static final int ES_FILE_EXPLORER = 3;
+	public static final int APP_ES_FILE_EXPLORER = 3;
+	
+	/** This constant represents the ES File Explorer app name */
+	public static final String NAME_ES_FILE_EXPLORER = "ES File Explorer";
 	
 	/** The return code expected when we call startActivityForResult() with our
 	 *  generated Intent to select a file. */
@@ -125,7 +138,7 @@ public class FileManager {
 	
 	/** The user's current preferred file manager.  Must be one of the public
 	 *  constant values.  Defaults to NO_FILE_MANAGER. */
-	private int preferredFM = NO_FILE_MANAGER;
+	private int preferredFM = APP_NO_FILE_MANAGER;
 	
 	/** A list of currently available file managers by constant code.  May be null
 	 *  if no recognized file managers are available. */
@@ -138,7 +151,7 @@ public class FileManager {
 	 * @param theApp A reference to the main Cryptnos application
 	 */
 	public FileManager(CryptnosApplication theApp) {
-		this(theApp, NO_FILE_MANAGER);
+		this(theApp, APP_NO_FILE_MANAGER);
 	}
 	
 	/**
@@ -176,19 +189,19 @@ public class FileManager {
 		// First, OI File Manager:
 		try {
 			pm.getPackageInfo(PACKAGE_OI_FILE_MANAGER, 0);
-			fmList.add(new Integer(OI_FILE_MANAGER));
+			fmList.add(new Integer(APP_OI_FILE_MANAGER));
 		}
 		catch (PackageManager.NameNotFoundException ex1) {}
 		// AndExplorer:
 		try {
 			pm.getPackageInfo(PACKAGE_ANDEXPLORER, 0);
-			fmList.add(new Integer(ANDEXPLORER));
+			fmList.add(new Integer(APP_ANDEXPLORER));
 		}
 		catch (PackageManager.NameNotFoundException ex2) {}
 		// ES File Explorer:
 		try {
 			pm.getPackageInfo(PACKAGE_ES_FILE_EXPLORER, 0);
-			fmList.add(new Integer(ES_FILE_EXPLORER));
+			fmList.add(new Integer(APP_ES_FILE_EXPLORER));
 		}
 		catch (PackageManager.NameNotFoundException ex3) {}
 		// Now check the ArrayList's size.  If we got anything at all, we found
@@ -209,19 +222,19 @@ public class FileManager {
 			}
 			// If the user has a preference and it's not in the list, reset the
 			// preference to no file manager:
-			if (preferredFM != NO_FILE_MANAGER && !inThere) {
-				preferredFM = NO_FILE_MANAGER;
+			if (preferredFM != APP_NO_FILE_MANAGER && !inThere) {
+				preferredFM = APP_NO_FILE_MANAGER;
 				SharedPreferences.Editor editor = theApp.getPrefs().edit();
-				editor.putInt(CryptnosApplication.PREFS_FILE_MANAGER, NO_FILE_MANAGER);
+				editor.putInt(CryptnosApplication.PREFS_FILE_MANAGER, APP_NO_FILE_MANAGER);
 				editor.commit();
 			}
 		// If no recognized file managers were found, default the user's preference
 		// to no file manager and write that preference to the preference file:
 		} else {
-			preferredFM = NO_FILE_MANAGER;
+			preferredFM = APP_NO_FILE_MANAGER;
 			availableFMs = null;
 			SharedPreferences.Editor editor = theApp.getPrefs().edit();
-			editor.putInt(CryptnosApplication.PREFS_FILE_MANAGER, NO_FILE_MANAGER);
+			editor.putInt(CryptnosApplication.PREFS_FILE_MANAGER, APP_NO_FILE_MANAGER);
 			editor.commit();
 		}
 	}
@@ -255,14 +268,14 @@ public class FileManager {
 		// the rest of the available names and add them to the list.
 		if (availableFMs != null && availableFMs.length > 0) {
 			names = new String[availableFMs.length + 1];
-			names[0] = mapCodeToName(NO_FILE_MANAGER);
+			names[0] = mapCodeToName(APP_NO_FILE_MANAGER);
 			for (int i = 1; i < names.length; i++)
 				names[i] = mapCodeToName(availableFMs[i - 1]);
 		// If no file managers could be found, return a single-element array with
 		// a message stating as such:
 		} else {
 			names = new String[1];
-			names[0] = "No recognized file managers found";
+			names[0] = theApp.getBaseContext().getResources().getString(R.string.error_no_file_managers_found);
 		}
 		return names;
 	}
@@ -287,9 +300,9 @@ public class FileManager {
 		// the choice is a valid one.  No file manager is always valid; however,
 		// if the code is anything else, make sure it's in the list of available
 		// file managers before adding it.
-		if (code == NO_FILE_MANAGER ||
-				((code == OI_FILE_MANAGER || code == ANDEXPLORER ||
-						code == ES_FILE_EXPLORER)) &&
+		if (code == APP_NO_FILE_MANAGER ||
+				((code == APP_OI_FILE_MANAGER || code == APP_ANDEXPLORER ||
+						code == APP_ES_FILE_EXPLORER)) &&
 				codeInAvailableList(code)) {
 			// Store the preference, first locally then in the shared preferences:
 			preferredFM = code;
@@ -317,14 +330,14 @@ public class FileManager {
 			String buttonText) {
 		switch (preferredFM) {
 			// Generate an OI File Manager intent:
-			case OI_FILE_MANAGER:
+			case APP_OI_FILE_MANAGER:
 				Intent oii = new Intent(FILE_SELECT_INTENT_OI);
 				oii.setData(Uri.parse("file://" + rootPath));
 				oii.putExtra("org.openintents.extra.TITLE", dialogTitle);
 				oii.putExtra("org.openintents.extra.BUTTON_TEXT", buttonText);
 				return oii;
 			// Generate an AndExplorer intent:
-			case ANDEXPLORER:
+			case APP_ANDEXPLORER:
 				Intent aei = new Intent();
 				aei.setAction(Intent.ACTION_PICK);
 				aei.setDataAndType(Uri.fromFile(new File(rootPath)),
@@ -333,13 +346,13 @@ public class FileManager {
 				aei.putExtra("browser_list_layout", "0");
 				return aei;
 			// ES File Explorer:
-			case ES_FILE_EXPLORER:
+			case APP_ES_FILE_EXPLORER:
 				Intent esi = new Intent(FILE_SELECT_INTENT_ES);
 				esi.putExtra("com.estrongs.intent.extra.TITLE", buttonText);
 				return esi;
 			// If there's no preference or it's something we don't recognize,
 			// do nothing:
-			case NO_FILE_MANAGER:
+			case APP_NO_FILE_MANAGER:
 			default:
 				return null;
 		}
@@ -352,14 +365,14 @@ public class FileManager {
 			String buttonText) {
 		switch (preferredFM) {
 			// Generate an OI File Manager intent:
-			case OI_FILE_MANAGER:
+			case APP_OI_FILE_MANAGER:
 				Intent oii = new Intent(DIR_SELECT_INTENT_OI);
 				oii.setData(Uri.parse("file://" + rootPath));
 				oii.putExtra("org.openintents.extra.TITLE", dialogTitle);
 				oii.putExtra("org.openintents.extra.BUTTON_TEXT", buttonText);
 				return oii;
 			// Generate an AndExplorer intent:
-			case ANDEXPLORER:
+			case APP_ANDEXPLORER:
 				Intent aei = new Intent();
 				aei.setAction(Intent.ACTION_PICK);
 				aei.setDataAndType(Uri.fromFile(new File(rootPath)),
@@ -367,13 +380,13 @@ public class FileManager {
 				aei.putExtra("explorer_title", dialogTitle);
 				return aei;
 			// ES File Explorer:
-			case ES_FILE_EXPLORER:
+			case APP_ES_FILE_EXPLORER:
 				Intent esi = new Intent(DIR_SELECT_INTENT_ES);
 				esi.putExtra("com.estrongs.intent.extra.TITLE", buttonText);
 				return esi;
 			// If there's no preference or it's something we don't recognize,
 			// do nothing:
-			case NO_FILE_MANAGER:
+			case APP_NO_FILE_MANAGER:
 			default:
 				return null;
 		}
@@ -390,11 +403,11 @@ public class FileManager {
 		if (data == null) return null;
 		switch (preferredFM) {
 			// Getting the file from OI File Manager is pretty simple:
-			case OI_FILE_MANAGER:
+			case APP_OI_FILE_MANAGER:
 				return data.getDataString();
 			// AndExplorer takes a bit more work, and it may technically not return
 			// anything useful:
-			case ANDEXPLORER:
+			case APP_ANDEXPLORER:
 				Uri uri = data.getData();
 				if (uri != null)
 				{
@@ -406,13 +419,13 @@ public class FileManager {
 				else return null;
 			// This was taken pretty much verbatim from the ES File Explorer
 			// Developers page (http://www.estrongs.com/en/support/developers.html):
-			case ES_FILE_EXPLORER:
+			case APP_ES_FILE_EXPLORER:
 				Uri uri2 = data.getData();
 				if (uri2 != null) return uri2.getPath();
 				else return null;    
 			// If there's no preference or it's something we don't recognize,
 			// do nothing:
-			case NO_FILE_MANAGER:
+			case APP_NO_FILE_MANAGER:
 			default:
 				return null;
 		}
@@ -450,12 +463,12 @@ public class FileManager {
 		// if the preferred FM isn't the "no file manager" selection.  So first
 		// we'll check to see if the preferred FM is actually available, *then*
 		// we'll make the check.
-		if (codeInAvailableList(preferredFM)) return preferredFM != NO_FILE_MANAGER;
+		if (codeInAvailableList(preferredFM)) return preferredFM != APP_NO_FILE_MANAGER;
 		// If we couldn't find the preferred FM in the available list, force
 		// the preference back to nothing selected and return false.  This will
 		// revert us back to the default behavior.
 		else {
-			setPreferredFileManager(NO_FILE_MANAGER);
+			setPreferredFileManager(APP_NO_FILE_MANAGER);
 			return false;
 		}
 	}
@@ -467,7 +480,8 @@ public class FileManager {
 	 * @return A String containing the recognized file manager names
 	 */
 	public String getRecognizedFileManagerNames() {
-		return "\tOI File Manager\n\tAndExplorer\n\tES File Explorer";
+		return "\t" + NAME_OI_FILE_MANAGER + "\n\t" + NAME_ANDEXPLORER +
+			"\n\t" + NAME_ES_FILE_EXPLORER;
 	}
 	
 	/* Private methods: ***********************************************************/
@@ -479,19 +493,20 @@ public class FileManager {
 	 * recognized
 	 */
 	private String mapCodeToName(int code) {
+		Resources res = theApp.getBaseContext().getResources();
 		// Simple enough:  Switch on code and return a string.  If it's a code
 		// we don't recognize, throw an exception:
 		switch (code) {
-			case NO_FILE_MANAGER:
-				return "No file manager selected";
-			case OI_FILE_MANAGER:
-				return "OI File Manager";
-			case ANDEXPLORER:
-				return "AndExplorer";
-			case ES_FILE_EXPLORER:
-				return "ES File Explorer";
+			case APP_NO_FILE_MANAGER:
+				return res.getString(R.string.error_no_file_managers_selected);
+			case APP_OI_FILE_MANAGER:
+				return NAME_OI_FILE_MANAGER;
+			case APP_ANDEXPLORER:
+				return NAME_ANDEXPLORER;
+			case APP_ES_FILE_EXPLORER:
+				return NAME_ES_FILE_EXPLORER;
 			default:
-				throw new IllegalArgumentException("Invalid file manager code");
+				throw new IllegalArgumentException(res.getString(R.string.error_invalid_file_manager_code));
 		}
 	}
 	
@@ -501,21 +516,22 @@ public class FileManager {
 	 * @return The file manager's code, or NO_FILE_MANAGER if any error occurs
 	 */
 	private int mapNameToCode(String name) {
+		Resources res = theApp.getBaseContext().getResources();
 		// This is the inverse of mapCodeToName(), but a bit more forgiving.
 		// Compare the name to the recognized strings and return the appropriate
 		// code.  If the name isn't recognize, default back to no file manager
 		// preference.
-		if (name.compareTo("No recognized file managers found") == 0)
-			return NO_FILE_MANAGER;
-		if (name.compareTo("No file manager selected") == 0)
-			return NO_FILE_MANAGER;
-		if (name.compareTo("OI File Manager") == 0)
-			return OI_FILE_MANAGER;
-		if (name.compareTo("AndExplorer") == 0)
-			return ANDEXPLORER;
-		if (name.compareTo("ES File Explorer") == 0)
-			return ES_FILE_EXPLORER;
-		return NO_FILE_MANAGER;
+		if (name.compareTo(res.getString(R.string.error_no_file_managers_found)) == 0)
+			return APP_NO_FILE_MANAGER;
+		if (name.compareTo(res.getString(R.string.error_no_file_managers_selected)) == 0)
+			return APP_NO_FILE_MANAGER;
+		if (name.compareTo(NAME_OI_FILE_MANAGER) == 0)
+			return APP_OI_FILE_MANAGER;
+		if (name.compareTo(NAME_ANDEXPLORER) == 0)
+			return APP_ANDEXPLORER;
+		if (name.compareTo(NAME_ES_FILE_EXPLORER) == 0)
+			return APP_ES_FILE_EXPLORER;
+		return APP_NO_FILE_MANAGER;
 	}
 	
 	/**
@@ -529,7 +545,7 @@ public class FileManager {
 		// This is a bit of a kludge, but always return true if we happen to
 		// get passed in the "no file manager selected" code.  After all, no
 		// selection at all is technically a valid one.
-		if (code == NO_FILE_MANAGER) return true;
+		if (code == APP_NO_FILE_MANAGER) return true;
 		// Otherwise, step through the available list and return true if we can
 		// find the code.  I wish there were a more efficient way to do this, but
 		// fortunately our lists should be small.

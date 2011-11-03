@@ -85,16 +85,16 @@ public class EditParametersActivity extends Activity {
 
 	/** A constant specifying that this activity is being called in new
 	 *  (generate) mode. */
-	public static final int NEW_MODE = 0;
+	public static final int MODE_NEW = 0;
 	/** A constant specifying that this activity is being called in edit
 	 *  mode. */
-	public static final int EDIT_MODE = 1;
+	public static final int MODE_EDIT = 1;
 	
 	/** A constant indicating the Help option menu item. */
 	public static final int OPTMENU_HELP = Menu.FIRST;
 
 	/** The current mode of this activity. */
-	private int mode = NEW_MODE;
+	private int mode = MODE_NEW;
 	
 	/** The EditText view containing the site token. */
 	private EditText txtSite = null;
@@ -193,9 +193,9 @@ public class EditParametersActivity extends Activity {
             if (extras != null)
             {
             	mode = extras.getInt("mode");
-            	if (mode < NEW_MODE || mode > EDIT_MODE) mode = NEW_MODE;
+            	if (mode < MODE_NEW || mode > MODE_EDIT) mode = MODE_NEW;
             	// If we're supposed to be in edit mode, we need data to edit:
-            	if (mode == EDIT_MODE)
+            	if (mode == MODE_EDIT)
             	{
             		try
             		{
@@ -243,7 +243,7 @@ public class EditParametersActivity extends Activity {
             				{
             					Toast.makeText(this, R.string.error_bad_restore,
             						Toast.LENGTH_LONG).show();
-            					mode = NEW_MODE;
+            					mode = MODE_NEW;
             				}
             				c.close();
             			}
@@ -253,7 +253,7 @@ public class EditParametersActivity extends Activity {
             			{
         					Toast.makeText(this, R.string.error_bad_restore,
            						Toast.LENGTH_LONG).show();
-            				mode = NEW_MODE;
+            				mode = MODE_NEW;
             			}
             		}
             		// If anything else blew up, throw an error:
@@ -261,7 +261,7 @@ public class EditParametersActivity extends Activity {
             		{
     					Toast.makeText(this, R.string.error_bad_restore,
        						Toast.LENGTH_LONG).show();
-        				mode = NEW_MODE;
+        				mode = MODE_NEW;
             		}
             	}
             }
@@ -273,7 +273,7 @@ public class EditParametersActivity extends Activity {
             // get performed if we're restoring a previous state; in that
             // case, we want the values the user previously had, not the
             // defaults.
-            if (mode == NEW_MODE) {
+            if (mode == MODE_NEW) {
                 hashSpinner.setSelection(1);
                 txtIterations.setText("1");
                 rebuildCharLimitSpinner("SHA-1");
@@ -284,7 +284,7 @@ public class EditParametersActivity extends Activity {
         // Depending on the mode, make a few last minute tweaks:
         switch (mode)
         {
-	        case EDIT_MODE:
+	        case MODE_EDIT:
 	        	setTitle(R.string.edit_title);
 	        	txtSite.setEnabled(false);
 	        	break;
@@ -308,7 +308,7 @@ public class EditParametersActivity extends Activity {
 				// edit the previously saved one.  If the site token matches,
 				// rowID should be populated with the row ID of the last save
 				// and we'll default to editing the same parameters.
-				if (mode == NEW_MODE && (lastSite == null ||
+				if (mode == MODE_NEW && (lastSite == null ||
 					site.compareTo(lastSite) != 0))
 						rowID = ParamsDbAdapter.DB_ERROR;
 				// A bit of error checking.  Make sure both the site and
@@ -559,7 +559,7 @@ public class EditParametersActivity extends Activity {
     		// on which mode we were called in:
 	    	case OPTMENU_HELP:
 	        	Intent i = new Intent(this, HelpActivity.class);
-	        	if (mode == NEW_MODE)
+	        	if (mode == MODE_NEW)
 	        		i.putExtra("helptext", R.string.help_text_start);
 	        	else i.putExtra("helptext", R.string.help_text_existing);
 	        	startActivity(i);

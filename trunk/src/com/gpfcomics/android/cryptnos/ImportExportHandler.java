@@ -837,7 +837,7 @@ public class ImportExportHandler {
  	 * This Thread performs the grunt work of the Cryptnos import process if
  	 * the file is in the old platform-specific format.
 	 * @author Jeffrey T. Darlington
-	 * @version 1.1
+	 * @version 1.3.0
 	 * @since 1.0
 	 */
 	private class OldFormatImporter extends Thread
@@ -1324,7 +1324,7 @@ public class ImportExportHandler {
 	 * This Thread performs the grunt work of the Cryptnos import process if
  	 * the file is in the new XML-based cross-platform format.
 	 * @author Jeffrey T. Darlington
-	 * @version 1.1
+	 * @version 1.3.0
 	 * @since 1.1
 	 */
 	private class XMLFormat1Importer extends Thread

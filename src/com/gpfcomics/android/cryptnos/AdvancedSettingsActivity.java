@@ -127,6 +127,8 @@ public class AdvancedSettingsActivity extends Activity {
 	 *  the previous selection if the user cancels the change. */
 	private int lastFileManagerSelection = 0;
 	
+	/** The current selection in the QR scanner spinner.  This is used to restore
+	 *  the previous selection if the user cancels the change. */
 	private int lastQRScannerSelection = 0;
 	
     @Override

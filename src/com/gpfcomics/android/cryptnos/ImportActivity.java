@@ -457,7 +457,7 @@ public class ImportActivity extends Activity implements ImportListener, SiteList
     			});
     			adb2.setNegativeButton(android.R.string.no, new DialogInterface.OnClickListener() {
   		           public void onClick(DialogInterface dialog, int id) {
-  		        	   // Saying no is the same as cancelling:
+  		        	   // Saying no is the same as canceling:
   		        	   dialog.cancel();
   		           }
     			});

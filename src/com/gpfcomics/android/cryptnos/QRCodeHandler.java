@@ -42,6 +42,7 @@ import android.app.Activity;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.content.res.Resources;
 import android.widget.Toast;
 
 /**
@@ -68,11 +69,20 @@ public class QRCodeHandler {
 	/** This constant identifies ZXing's Barcode Scanner */
 	public static final int APP_ZXING = 1;
 	
+	/** This constant represents the ZXing Barcode Scanner app name */
+	public static final String NAME_ZXING = "ZXing Barcode Scanner";
+	
 	/** This constant identifies QR Droid */
 	public static final int APP_QRDROID = 2;
 	
+	/** This constant represents the QR Droid app name */
+	public static final String NAME_QRDROID = "QR Droid";
+	
 	/** This constant identifies QR Droid Private */
 	public static final int APP_QRDROID_PRIVATE = 3;
+	
+	/** This constant represents the QR Droid Private app name */
+	public static final String NAME_QRDROID_PRIVATE = "QR Droid Private";
 	
 	/** This constant represents the activity request code used by startActivityForResult()
 	 *  and onActivityResult() for scanning QR codes to import a set of site parameters. */
@@ -286,7 +296,7 @@ public class QRCodeHandler {
 		// a message stating as such:
 		} else {
 			names = new String[1];
-			names[0] = "No recognized barcode scanners found";
+			names[0] = theApp.getBaseContext().getString(R.string.error_no_qrscanners_found);
 		}
 		return names;
 	}
@@ -786,7 +796,8 @@ public class QRCodeHandler {
 	 * @return A String containing the recognized scanner names
 	 */
 	public String getRecognizedQRScannerNames() {
-		return "\tZXing Barcode Scanner\n\tQR Droid\n\tQR Droid Private";
+		return "\t" + NAME_ZXING + "\n\t" +
+			NAME_QRDROID + "\n\t" + NAME_QRDROID_PRIVATE;
 	}
 
 
@@ -799,19 +810,20 @@ public class QRCodeHandler {
 	 * recognized
 	 */
 	private String mapCodeToName(int code) {
+		Resources res = theApp.getBaseContext().getResources();
 		// Simple enough:  Switch on code and return a string.  If it's a code
 		// we don't recognize, throw an exception:
 		switch (code) {
 			case APP_NONE_SELECTED:
-				return "No barcode scanner selected";
+				return res.getString(R.string.error_no_qrscanner_selected);
 			case APP_ZXING:
-				return "ZXing Barcode Scanner";
+				return NAME_ZXING;
 			case APP_QRDROID:
-				return "QR Droid";
+				return NAME_QRDROID;
 			case APP_QRDROID_PRIVATE:
-				return "QR Droid Private";
+				return NAME_QRDROID_PRIVATE;
 			default:
-				throw new IllegalArgumentException("Invalid barcode scanner code");
+				throw new IllegalArgumentException(res.getString(R.string.error_invalid_qrscanner_code));
 		}
 	}
 	
@@ -821,19 +833,20 @@ public class QRCodeHandler {
 	 * @return The barcode scanner's code, or NO_QRCODE_APP if any error occurs
 	 */
 	private int mapNameToCode(String name) {
+		Resources res = theApp.getBaseContext().getResources();
 		// This is the inverse of mapCodeToName(), but a bit more forgiving.
 		// Compare the name to the recognized strings and return the appropriate
 		// code.  If the name isn't recognize, default back to no file manager
 		// preference.
-		if (name.compareTo("No recognized barcode scanners found") == 0)
+		if (name.compareTo(res.getString(R.string.error_no_qrscanners_found)) == 0)
 			return APP_NONE_SELECTED;
-		if (name.compareTo("No barcode scanner selected") == 0)
+		if (name.compareTo(res.getString(R.string.error_no_qrscanner_selected)) == 0)
 			return APP_NONE_SELECTED;
-		if (name.compareTo("ZXing Barcode Scanner") == 0)
+		if (name.compareTo(NAME_ZXING) == 0)
 			return APP_ZXING;
-		if (name.compareTo("QR Droid") == 0)
+		if (name.compareTo(NAME_QRDROID) == 0)
 			return APP_QRDROID;
-		if (name.compareTo("QR Droid Private") == 0)
+		if (name.compareTo(NAME_QRDROID_PRIVATE) == 0)
 			return APP_QRDROID_PRIVATE;
 		return APP_NONE_SELECTED;
 	}

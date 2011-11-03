@@ -392,6 +392,7 @@ public class CryptnosApplication extends Application {
 		// and mark it as "dirty".  This frees up memory and forces us to
 		// rebuild the list again when it's needed.
 		siteList = null;
+		siteListHash = null;
 		// Clear out the salt as well:
 		super.onLowMemory();
 	}
@@ -404,6 +405,7 @@ public class CryptnosApplication extends Application {
 		// and mark it as "dirty".  This frees up memory and forces us to
 		// rebuild the list again when it's needed.
 		siteList = null;
+		siteListHash = null;
 		// Then let the system do whatever else it needs to do:
 		super.onTerminate();
 	}
@@ -550,7 +552,7 @@ public class CryptnosApplication extends Application {
 		// see if we need to create it before returning it:
 		if (fileManager == null)
 			fileManager = new FileManager(this, prefs.getInt(PREFS_FILE_MANAGER,
-					FileManager.NO_FILE_MANAGER));
+					FileManager.APP_NO_FILE_MANAGER));
 		return fileManager;
 	}
 	

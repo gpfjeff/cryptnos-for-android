@@ -37,7 +37,7 @@
  * Generate Existing Password activity.  Use the appropriate constructor for
  * the required instance.
  * 
- * This program is Copyright 2010, Jeffrey T. Darlington.
+ * This program is Copyright 2011, Jeffrey T. Darlington.
  * E-mail:  android_support@cryptnos.com
  * Web:     http://www.cryptnos.com/
  * 
@@ -56,7 +56,11 @@
 package com.gpfcomics.android.cryptnos;
 
 /**
- * 
+ * This class encapsulates parameter and password data for use in the New, Edit,
+ * and Generate Existing Password activities.  It is primarily intended to help
+ * make these activities behave a bit nicer where faced with the situation where
+ * the user initiates a simple configuration change, such as rotating the screen
+ * or sliding out a physical keyboard.
  * @author Jeffrey T. Darlington
  * @version 1.2.2
  * @since 1.2.2

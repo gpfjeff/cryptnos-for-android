@@ -12,9 +12,9 @@
 <string name="mainmenu_delete1">Delete parameters</string>
 <string name="mainmenu_delete2">Delete saved parameters from the database</string>
 <string name="mainmenu_export1">Export</string>
-<string name="mainmenu_export2">Export saved parameters to an encrypted file on your SD card</string>
+<string name="mainmenu_export2">Export saved parameters to an encrypted file or QR code</string>
 <string name="mainmenu_import1">Import</string>
-<string name="mainmenu_import2">Import saved parameters from an encrypted file on your SD card</string>
+<string name="mainmenu_import2">Import saved parameters from an encrypted file or QR code</string>
 <string name="mainmenu_advanced1">Advanced Settings</string>
 <string name="mainmenu_advanced2">Modify advanced settings that affect how Cryptnos works</string>
 <string name="mainmenu_help1">Cryptnos Help</string>
@@ -172,6 +172,12 @@
 <string name="error_upgrader_old_version">Error: The currently installed version of Cryptnos is older than the last version of Cryptnos to run. This could cause the app to become unstable. Please clear all your saved data and reinstall.</string>
 <string name="error_upgrader_change_encoding_warning">Your current system default for text encoding is \"xxx\". For compatibility reasons, we suggest you change this to UTF-8, but this may break your existing passwords. Would you like to change your text encoding now?</string>
 <string name="error_file_manager_not_found">Error: File manager xxx could not be found. Please check your file manager preference setting.</string>
+<string name="error_no_file_managers_found">No recognized file managers found</string>
+<string name="error_no_file_managers_selected">No file manager selected</string>
+<string name="error_invalid_file_manager_code">Invalid file manager code</string>
+<string name="error_no_qrscanners_found">No recognized barcode scanners found</string>
+<string name="error_no_qrscanner_selected">No barcode scanner selected</string>
+<string name="error_invalid_qrscanner_code">Invalid barcode scanner code</string>
 <string name="error_qrexport_no_app_found">Error: No QR code scanning app found. Please install one to enable this feature.</string>
 <string name="error_qrexport_fail">Error: An unknown error occurred. Your site parameters could not be exported.</string>
 <string name="error_unknown">Error: An unknown error has occurred.</string>

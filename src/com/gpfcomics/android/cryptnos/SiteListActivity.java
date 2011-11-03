@@ -362,7 +362,7 @@ import android.widget.AdapterView.AdapterContextMenuInfo;
         	// it with information from the database:
 	        case MODE_EDIT:
 	            Intent i1 = new Intent(this, EditParametersActivity.class);
-	            i1.putExtra("mode", EditParametersActivity.EDIT_MODE);
+	            i1.putExtra("mode", EditParametersActivity.MODE_EDIT);
 	            i1.putExtra(ParamsDbAdapter.DBFIELD_SITE, 
 	            	SiteParameters.generateKeyFromSite(selectedSite, theApp));
 	            startActivity(i1);
@@ -437,7 +437,7 @@ import android.widget.AdapterView.AdapterContextMenuInfo;
 	        // Edit the selected parameters:
     		case MENU_EDIT:
 	            Intent i2 = new Intent(this, EditParametersActivity.class);
-	            i2.putExtra("mode", EditParametersActivity.EDIT_MODE);
+	            i2.putExtra("mode", EditParametersActivity.MODE_EDIT);
 	            i2.putExtra(ParamsDbAdapter.DBFIELD_SITE, 
 	            	SiteParameters.generateKeyFromSite(selectedSite, theApp));
 	            startActivity(i2);

@@ -37,7 +37,8 @@
  * calling third-party file manager intent.
  * 
  * UPDATES FOR 1.3.0:  Added "show master passwords" functionality.  Add the ability
- * for the user to selectively import site parameters from a file.
+ * for the user to selectively import site parameters from a file.  Added view state
+ * functionality to better handle configuration changes.
  * 
  * This program is Copyright 2011, Jeffrey T. Darlington.
  * E-mail:  android_support@cryptnos.com
@@ -68,10 +69,10 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.DialogInterface.OnMultiChoiceClickListener;
 import android.os.Bundle;
-import android.text.method.PasswordTransformationMethod;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
@@ -79,6 +80,7 @@ import android.widget.LinearLayout;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
+import android.widget.AdapterView.OnItemSelectedListener;
 
 /**
  * The Import Activity provides the user interface for the Cryptnos import
@@ -181,11 +183,26 @@ public class ImportActivity extends Activity implements ImportListener, SiteList
         // Determine whether or not the user has specified to show or hide
         // master passwords and toggle the behavior of the master passphrase
         // box accordingly:
-        if (!theApp.showMasterPasswords())
-        	txtPassphrase.setTransformationMethod(PasswordTransformationMethod.getInstance());
+        if (theApp.showMasterPasswords())
+        	txtPassphrase.setTransformationMethod(null);
 
-        // Get the import root path:
-        importRootPath = theApp.getImportExportRootPath();
+        // If we're coming back from a configuration change, such as rotating the
+        // device or sliding out a physical keyboard, we want to restore the user's
+        // previous selections.  Try to grab the view state and if present restore
+        // the user's inputs.  Otherwise, set some sane defaults and move on.
+        try {
+        	final ImportViewState state =
+        		(ImportViewState)getLastNonConfigurationInstance();
+        	if (state != null) {
+        		importRootPath = new File(state.getImportRootPath());
+        		importFile = state.getImportFile();
+        		txtPassphrase.setText(state.getPassword());
+        		importedSites = state.getImportedSites();
+        		selectedSites = state.getSelectedSites();
+        	} else setDefaults();
+        } catch (Exception e) {
+        	setDefaults();
+        }
         
         // Check the import path and make sure it's a directory,
         // then make sure it is not empty:
@@ -199,8 +216,17 @@ public class ImportActivity extends Activity implements ImportListener, SiteList
         		// instruction label to the new instruction set:
         		layout.removeView(spinnerFiles);
         		labelInstructions.setText(R.string.import_file_label_oiimport);
-        		btnSelectFile.setText(getResources().getString(R.string.import_file_button_prompt) +
-        				" " + getResources().getString(R.string.import_file_button_prompt_none));
+        		// For the select button, check to see if we already have an import file
+        		// path.  If we do, we're probably coming back from a configuration
+        		// change, so we'll populate the button with that selected file.
+        		// Otherwise, tell the user no file has been selected.
+        		if (importFile != null)
+        			btnSelectFile.setText(getResources().getString(R.string.import_file_button_prompt) +
+        				" " + importFile);
+        		else
+        			btnSelectFile.setText(getResources().getString(R.string.import_file_button_prompt) +
+            				" " + getResources().getString(R.string.import_file_button_prompt_none));
+
         		
         	// If an external file selection routine isn't available, fall
         	// back to our old original method.  This restricts the user's
@@ -225,6 +251,7 @@ public class ImportActivity extends Activity implements ImportListener, SiteList
             	if (fileListTemp.size() > 0) {
             		String[] fileList = new String[fileListTemp.size()];
             		fileListTemp.toArray(fileList);
+            		fileListTemp = null;
             		java.util.Arrays.sort(fileList, String.CASE_INSENSITIVE_ORDER);
             		ArrayAdapter<String> fileAdapter = new ArrayAdapter<String>(this,
             				android.R.layout.simple_spinner_item, fileList);
@@ -232,6 +259,22 @@ public class ImportActivity extends Activity implements ImportListener, SiteList
             		spinnerFiles.setAdapter(fileAdapter);
             		spinnerFiles.setPromptId(R.string.import_file_prompt);
             		labelInstructions.setText(R.string.import_file_label_filefound);
+            		// If we already have an import file selected, most likely because
+            		// we're coming from a configuration change, restore the user's
+            		// selection by finding the file name string in the list and
+            		// moving the spinner to that location.
+            		if (importFile != null) {
+            			int selection = 0;
+            			for (int j = 0; j < fileList.length; j++) {
+            				if (fileList[j].compareTo(importFile) == 0) {
+            					selection = j;
+            					break;
+            				}
+            			}
+            			spinnerFiles.setSelection(selection, true);
+            		// If we don't already have a file selected, go ahead and take
+            		// note of the current default:
+            		} else  importFile = (String)spinnerFiles.getSelectedItem();
             	// If no files could be found on the SD card, disable
             	// the form elements:
             	} else disableForm();
@@ -239,6 +282,17 @@ public class ImportActivity extends Activity implements ImportListener, SiteList
         // Similarly, if we can't get access to the SD card at
         // all, there's no point going forward:
         } else disableForm();
+        
+        // When the user selects a file in the file spinner, put the name of the file
+        // in the import file string so we can preserve the selection later.
+        spinnerFiles.setOnItemSelectedListener(new OnItemSelectedListener() {
+			public void onItemSelected(AdapterView<?> arg0, View arg1,
+					int arg2, long arg3) {
+				importFile = (String)spinnerFiles.getSelectedItem();
+			}
+			public void onNothingSelected(AdapterView<?> arg0) {
+			}
+        });
         
         /** What to do when the Import button is clicked */
         btnImport.setOnClickListener(new View.OnClickListener() {
@@ -499,6 +553,15 @@ public class ImportActivity extends Activity implements ImportListener, SiteList
     	}
     	return false;
     }
+	
+	/**
+	 * Set a series of sane defaults for when we load this activity fresh and new,
+	 * rather than when we return from a configuration change.
+	 */
+	private void setDefaults() {
+        // Get the import root path:
+        importRootPath = theApp.getImportExportRootPath();
+	}
     
     /**
      * Disable the form elements not needed if there are no
@@ -621,4 +684,74 @@ public class ImportActivity extends Activity implements ImportListener, SiteList
 		// and see if we're going to overwrite something.
 	}
     
+	public Object onRetainNonConfigurationInstance() {
+		// Preserve our view state:
+		final ImportViewState state = new ImportViewState(
+				importRootPath.getAbsolutePath(),
+				importFile,
+				txtPassphrase.getText().toString(),
+				importedSites,
+				selectedSites);
+		return state;
+	}
+	
+	/**
+	 * This private class implements the view state for the ImportActivity so it can
+	 * recover gracefully from configuration changes, such as rotating the device or
+	 * sliding out a physical keyboard.
+	 * @author Jeffrey T. Darlington
+	 * @version 1.3.0
+	 * @since 1.3.0
+	 */
+	private class ImportViewState {
+		
+		/** The import root path */
+		private String importRootPath = null;
+		
+		/** The import file name */
+		private String importFile = null;
+		
+		/** The user's import password */
+		private String password = null;
+
+		/** The currently imported sites */
+		private Object[] importedSites = null;
+		
+		/** The currently selected sites */
+		private boolean[] selectedSites = null;
+		
+		/**
+		 * 
+		 * @param importRootPath The import root path
+		 * @param importFile The import file name
+		 * @param password The user's import password
+		 * @param importedSites The currently imported sites
+		 * @param selectedSites The currently selected sites
+		 */
+		protected ImportViewState(String importRootPath, String importFile,
+				String password, Object[] importedSites, boolean[] selectedSites) {
+			this.importRootPath = importRootPath;
+			this.importFile = importFile;
+			this.password = password;
+			this.importedSites = importedSites;
+			this.selectedSites = selectedSites;
+		}
+		
+		/** The import root path */
+		protected String getImportRootPath() { return importRootPath; }
+		
+		/** The import file name */
+		protected String getImportFile() { return importFile; }
+		
+		/** The user's import password */
+		protected String getPassword() { return password; }
+		
+		/** The currently imported sites */
+		protected Object[] getImportedSites() { return importedSites; }
+		
+		/** The currently selected sites */
+		protected boolean[] getSelectedSites() { return selectedSites; }
+		
+	}
+	
 }

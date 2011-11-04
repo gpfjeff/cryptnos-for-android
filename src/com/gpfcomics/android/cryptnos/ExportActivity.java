@@ -68,7 +68,6 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.DialogInterface.OnMultiChoiceClickListener;
 import android.os.Bundle;
-import android.text.method.PasswordTransformationMethod;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -190,9 +189,9 @@ public class ExportActivity extends Activity implements
         // Determine whether or not the user has specified to show or hide
         // master passwords and toggle the behavior of the master passphrase
         // boxes accordingly:
-        if (!theApp.showMasterPasswords()) {
-        	txtPassphrase1.setTransformationMethod(PasswordTransformationMethod.getInstance());
-        	txtPassphrase2.setTransformationMethod(PasswordTransformationMethod.getInstance());
+        if (theApp.showMasterPasswords()) {
+        	txtPassphrase1.setTransformationMethod(null);
+        	txtPassphrase2.setTransformationMethod(null);
         }
         
         // Asbestos underpants:

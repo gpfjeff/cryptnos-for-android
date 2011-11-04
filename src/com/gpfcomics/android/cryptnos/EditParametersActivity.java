@@ -54,7 +54,6 @@ import android.app.Activity;
 import android.content.Intent;
 import android.database.Cursor;
 import android.os.Bundle;
-import android.text.method.PasswordTransformationMethod;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -154,8 +153,8 @@ public class EditParametersActivity extends Activity {
         // Determine whether or not the user has specified to show or hide
         // master passwords and toggle the behavior of the master passphrase
         // box accordingly:
-        if (!theApp.showMasterPasswords())
-        	txtPassphrase.setTransformationMethod(PasswordTransformationMethod.getInstance());
+        if (theApp.showMasterPasswords())
+        	txtPassphrase.setTransformationMethod(null);
         
         // Set the prompt for the top of the drop-downs when they display.
         // There's probably a way to set this in the layout XML, but I didn't

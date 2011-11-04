@@ -15,7 +15,7 @@
 <string name="mainmenu_export2">Export saved parameters to an encrypted file or QR code</string>
 <string name="mainmenu_import1">Import</string>
 <string name="mainmenu_import2">Import saved parameters from an encrypted file or QR code</string>
-<string name="mainmenu_advanced1">Advanced Settings</string>
+<string name="mainmenu_advanced1">Settings</string>
 <string name="mainmenu_advanced2">Modify advanced settings that affect how Cryptnos works</string>
 <string name="mainmenu_help1">Cryptnos Help</string>
 <string name="mainmenu_help2">Help and tutorials on how to use Cryptnos</string>

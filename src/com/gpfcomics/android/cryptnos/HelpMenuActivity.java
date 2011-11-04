@@ -133,6 +133,12 @@ public class HelpMenuActivity extends ListActivity {
         	i.putExtra("helptext", R.string.help_text_license);
         	startActivity(i);
         }
+        // Launch the about activity:
+        else if (menuItem.compareTo(res.getString(R.string.mainmenu_about1)) == 0)
+        {
+        	Intent i = new Intent(this, AboutActivity.class);
+        	startActivity(i);
+        }
         // For the moment, nothing is working.  Show a quick Toast to let
         // the user know that's our fault and not theirs.
         else Toast.makeText(this, R.string.error_not_implemented,
@@ -163,6 +169,11 @@ public class HelpMenuActivity extends ListActivity {
         // Get a handier reference to our resources so we can get access to
         // the strings more quickly:
         Resources res = this.getResources();
+        // Add the "About" item:
+    	item = new HashMap<String,String>();
+    	item.put("line1", res.getString(R.string.mainmenu_about1));
+    	item.put("line2", res.getString(R.string.mainmenu_about2));
+    	menuItems.add(item);
         // Add the "What is Cryptnos?" item:
     	item = new HashMap<String,String>();
     	item.put("line1", res.getString(R.string.help_menu_whatis1));

@@ -33,6 +33,7 @@
 			<EditText android:layout_width="fill_parent"
 				android:layout_height="wrap_content"
 				android:id="@+id/txtPassphrase1"
+				android:password="true"
 				android:ellipsize="none"
 				android:saveEnabled="false"
 				android:hint="@string/export_password1_hint"></EditText>
@@ -43,6 +44,7 @@
 			<EditText android:layout_width="fill_parent"
 				android:layout_height="wrap_content"
 				android:id="@+id/txtPassphrase2"
+				android:password="true"
 				android:ellipsize="none"
 				android:saveEnabled="false"
 				android:hint="@string/export_password2_hint"></EditText>

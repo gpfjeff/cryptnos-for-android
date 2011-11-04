@@ -37,6 +37,8 @@
  * context menu has be updated as well to make exporting to QR code an option
  * in all list modes.
  * 
+ * "QR code" is a registered trademark of Denso Wave Incorporated.
+ * 
  * This program is Copyright 2011, Jeffrey T. Darlington.
  * E-mail:  android_support@cryptnos.com
  * Web:     http://www.cryptnos.com/

@@ -60,6 +60,8 @@
  * object so it only gets created when it is first called.  Changed setSiteListDirty()
  * to null out site list as well as set the dirty flag.
  * 
+ * "QR code" is a registered trademark of Denso Wave Incorporated.
+ * 
  * This program is Copyright 2011, Jeffrey T. Darlington.
  * E-mail:  android_support@cryptnos.com
  * Web:     http://www.cryptnos.com/

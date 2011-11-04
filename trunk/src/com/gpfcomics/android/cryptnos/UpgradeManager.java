@@ -47,6 +47,11 @@
  * 
  * UPDATES FOR 1.2.5:  Added the 1.2.5 version code, commented out for now.
  * 
+ * UPDATES FOR 1.3.0:  Added the 1.3.0 version code.  Added default preferences for
+ * "Show Master Passwords" and QR code scanner preference. 
+ * 
+ * "QR code" is a registered trademark of Denso Wave Incorporated.
+ * 
  * This program is Copyright 2011, Jeffrey T. Darlington.
  * E-mail:  android_support@cryptnos.com
  * Web:     http://www.cryptnos.com/

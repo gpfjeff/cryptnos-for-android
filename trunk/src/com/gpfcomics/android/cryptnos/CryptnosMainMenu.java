@@ -28,6 +28,8 @@
  * SiteListActivity handles much of the QR export process, the main menu does
  * most of the import process.  Also performed minor tweaks to existing code.
  * 
+ * "QR code" is a registered trademark of Denso Wave Incorporated.
+ * 
  * This program is Copyright 2011, Jeffrey T. Darlington.
  * E-mail:  android_support@cryptnos.com
  * Web:     http://www.cryptnos.com/

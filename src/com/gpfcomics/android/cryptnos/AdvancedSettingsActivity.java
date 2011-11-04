@@ -17,6 +17,8 @@
  * UPDATES FOR 1.3.0:  Added controls for QR scanner preference and "show master
  * passwords" setting
  * 
+ * "QR code" is a registered trademark of Denso Wave Incorporated.
+ * 
  * This program is Copyright 2011, Jeffrey T. Darlington.
  * E-mail:  android_support@cryptnos.com
  * Web:     http://www.cryptnos.com/

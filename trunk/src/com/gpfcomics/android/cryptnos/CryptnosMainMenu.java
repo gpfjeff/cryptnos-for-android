@@ -179,14 +179,8 @@ public class CryptnosMainMenu extends ListActivity implements SiteListListener {
     	boolean canGenQRs = qrCodeHandler.canGenerateQRCodes();
     	boolean canWriteToSD = theApp.canWriteToExternalStorage();
     	boolean canReadFromSD = theApp.canReadFromExternalStorage();
-        // Now test which option the user selected.  Launch the about activity:
-        if (menuItem.compareTo(res.getString(R.string.mainmenu_about1)) == 0)
-        {
-        	Intent i = new Intent(this, AboutActivity.class);
-        	startActivity(i);
-        }
         // Launch the help/tutorial activity
-        else if (menuItem.compareTo(res.getString(R.string.mainmenu_help1)) == 0)
+        if (menuItem.compareTo(res.getString(R.string.mainmenu_help1)) == 0)
         {
         	Intent i = new Intent(this, HelpMenuActivity.class);
         	startActivity(i);
@@ -588,11 +582,6 @@ public class CryptnosMainMenu extends ListActivity implements SiteListListener {
 	    	item = new HashMap<String,String>();
 	    	item.put("line1", res.getString(R.string.mainmenu_help1));
 	    	item.put("line2", res.getString(R.string.mainmenu_help2));
-	    	menuItems.add(item);
-	        // Finally, show a simple about box:
-	    	item = new HashMap<String,String>();
-	    	item.put("line1", res.getString(R.string.mainmenu_about1));
-	    	item.put("line2", res.getString(R.string.mainmenu_about2));
 	    	menuItems.add(item);
 	    	// Now that we've got our list, create a SimpleAdapter to map each
 	    	// hash map item to certain text fields in a row view.  This is a bit

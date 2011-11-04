@@ -35,7 +35,8 @@
  * Instrumentation.checkStartActivityResult()".  Added try/catch block around
  * calling third-party file manager intent.
  * 
- * UPDATES FOR 1.3.0: Added "show master passwords" functionality
+ * UPDATES FOR 1.3.0: Added "show master passwords" functionality.  Added view
+ * state functionality to preserve user inputs on orientation change.
  * 
  * This program is Copyright 2011, Jeffrey T. Darlington.
  * E-mail:  android_support@cryptnos.com
@@ -93,7 +94,7 @@ import android.widget.Toast;
  * but this class will be responsible for gathering the inputs and creating
  * the progress dialog that the handler will update.
  * @author Jeffrey T. Darlington
- * @version 1.2.6
+ * @version 1.3.0
  * @since 1.0
  */
 public class ExportActivity extends Activity implements
@@ -151,6 +152,12 @@ public class ExportActivity extends Activity implements
 	boolean[] selectedSites = null;
 	/** A File object representing the root of our export file path. */
 	private File exportRootPath = null;
+	/** This boolean flag determines whether or not we will rebuild the
+	 *  selected sites array.  By default, we want to do this.  But if
+	 *  we're coming back from a configuration change, we don't; we want
+	 *  to use the copy coming from the view state.  We will test this
+	 *  flag when the time comes to rebuild the array. */
+	private boolean rebuildSelectedSites = true;
 	
     public void onCreate(Bundle savedInstanceState) {
         // The usual GUI setup stuff:
@@ -187,10 +194,31 @@ public class ExportActivity extends Activity implements
         	txtPassphrase1.setTransformationMethod(PasswordTransformationMethod.getInstance());
         	txtPassphrase2.setTransformationMethod(PasswordTransformationMethod.getInstance());
         }
-
-        // Get the export root path:
-        exportRootPath = theApp.getImportExportRootPath();
         
+        // Asbestos underpants:
+        try {
+        	// Check to see if we've preserved the view state from a previous version.
+        	// This often happens on a configuration change, such as rotating the device
+        	// or sliding out a physical keyboard.  If such a state exists, populate the
+        	// internal variables and UI elements to recreate the previous state.
+        	final ExportViewState state =
+        		(ExportViewState)getLastNonConfigurationInstance();
+        	if (state != null) {
+        		exportRootPath = new File(state.getExportPath());
+        		txtExportFile.setText(state.getExportFile());
+        		txtPassphrase1.setText(state.getPassword1());
+        		txtPassphrase2.setText(state.getPassword2());
+        		selectedSites = state.getSelectedSites();
+        		// Set this flag to make sure we don't override the selected sites
+        		// array when we get the site list from the main app class:
+        		rebuildSelectedSites = false;
+        	// If a previous state did not exist, set our default values:
+        	} else setDefaults();
+        // Similarly, if anything blew up above, punt with the defaults:
+        } catch (Exception e) {
+        	setDefaults();
+        }
+
         // If we found a file manager's pick file intent, update the UI to
         // let the user select a path using the Selected Path button.  The
         // instructions label contains the old text by default, so update it
@@ -202,18 +230,6 @@ public class ExportActivity extends Activity implements
         // If a pick file intent could not be found, default to the old way
         // of doing things and remove the Selected Path button from the view:
         } else layout.removeView(btnPickPath);
-
-        // Set the default export file name based on today's date.  I'm not
-        // sure how well this will work for any calendar other than Gregorian,
-        // but this should produce "cryptnos_export_YYYYMMDD_HHMMSS.dat".
-        Calendar calendar = Calendar.getInstance();
-        txtExportFile.setText("cryptnos_export_" +
-        		String.valueOf(calendar.get(Calendar.YEAR)) +
-        		zeroPadNumber(calendar.get(Calendar.MONTH) + 1) +
-        		zeroPadNumber(calendar.get(Calendar.DAY_OF_MONTH)) + "_" +
-        		zeroPadNumber(calendar.get(Calendar.HOUR_OF_DAY)) +
-        		zeroPadNumber(calendar.get(Calendar.MINUTE)) +
-        		zeroPadNumber(calendar.get(Calendar.SECOND)) + ".dat");
         
         /**
          * What to do when the Pick Sites button is clicked
@@ -534,6 +550,27 @@ public class ExportActivity extends Activity implements
     	}
     	return false;
     }
+	
+	/**
+	 * Set some default values for when we first come into the activity.  This
+	 * is pulled into its own method because several paths need to perform the
+	 * same steps, so this encapsulates it into one place.
+	 */
+	private void setDefaults() {
+        // Get the export root path:
+        exportRootPath = theApp.getImportExportRootPath();
+        // Set the default export file name based on today's date.  I'm not
+        // sure how well this will work for any calendar other than Gregorian,
+        // but this should produce "cryptnos_export_YYYYMMDD_HHMMSS.dat".
+        Calendar calendar = Calendar.getInstance();
+        txtExportFile.setText("cryptnos_export_" +
+        		String.valueOf(calendar.get(Calendar.YEAR)) +
+        		zeroPadNumber(calendar.get(Calendar.MONTH) + 1) +
+        		zeroPadNumber(calendar.get(Calendar.DAY_OF_MONTH)) + "_" +
+        		zeroPadNumber(calendar.get(Calendar.HOUR_OF_DAY)) +
+        		zeroPadNumber(calendar.get(Calendar.MINUTE)) +
+        		zeroPadNumber(calendar.get(Calendar.SECOND)) + ".dat");
+	}
     
     /**
      * Given an integer (assumed to be < 100), return a zero-padded string
@@ -578,21 +615,93 @@ public class ExportActivity extends Activity implements
     
 	public void onSiteListReady(String[] siteList) {
 		try {
+			// Make sure we got something useful:
 			if (siteList != null) {
 				// Copy the generated list back to the caller:
                 allSites = siteList;
-                // Create the selection list, defaulting to everything being
-                // deselected:
-                selectedSites = new boolean[allSites.length];
-                for (int i = 0; i < selectedSites.length; i++)
-                	selectedSites[i] = false;
+                // If we need to rebuild the selection list, do so and
+                // default everything to being deselected.  Note that if
+                // we're coming from a configuration change, we don't want
+                // to do this as we'll lose the user's current selection.
+                if (rebuildSelectedSites) {
+                	selectedSites = new boolean[allSites.length];
+	                for (int i = 0; i < selectedSites.length; i++)
+	                	selectedSites[i] = false;
+                }
+            // The site list was empty:
 			} else Toast.makeText(this, R.string.error_bad_listfetch,
             		Toast.LENGTH_LONG).show();
-		}
-		catch (Exception e) {
+		// Something blew up:
+		} catch (Exception e) {
         	Toast.makeText(this, R.string.error_bad_listfetch,
             		Toast.LENGTH_LONG).show();
 		}
+	}
+	
+	public Object onRetainNonConfigurationInstance() {
+		// Preserve our view state:
+		final ExportViewState state = new ExportViewState(
+				exportRootPath.getAbsolutePath(),
+				txtExportFile.getText().toString(),
+				txtPassphrase1.getText().toString(),
+				txtPassphrase2.getText().toString(),
+				selectedSites);
+		return state;
+	}
+	
+	/**
+	 * This class preserves the view state of the export activity during a
+	 * configuration change, such as rotating the device or sliding out a
+	 * physical keyboard.
+	 * @author Jeffrey T. Darlington
+	 * @version 1.3.0
+	 * @since 1.3.0
+	 */
+	private class ExportViewState {
+
+		/** The current export root path */
+		private String exportPath = null;
+		/** The current export file name */
+		private String exportFile = null;
+		/** The current value of the first password box */
+		private String password1 = null;
+		/** The current value of the second password box */
+		private String password2 = null;
+		/** The current value of the selected sites array */
+		boolean[] selectedSites = null;
+
+		/**
+		 * The constructor
+		 * @param exportPath The current export root path
+		 * @param exportFile The current export file name
+		 * @param password1 The current value of the first password box
+		 * @param password2 The current value of the second password box
+		 * @param selectedSites The current value of the selected sites array
+		 */
+		protected ExportViewState(String exportPath, String exportFile, String password1,
+				String password2, boolean[] selectedSites) {
+			this.exportPath = exportPath;
+			this.exportFile = exportFile;
+			this.password1 = password1;
+			this.password2 = password2;
+			this.selectedSites = selectedSites;
+		}
+		
+		/** The current export root path */
+		protected String getExportPath() { return exportPath; }
+		
+		/** The current export file name */
+		protected String getExportFile() { return exportFile; }
+		
+		/** The current value of the first password box */
+		protected String getPassword1() { return password1; }
+		
+		/** The current value of the second password box */
+		protected String getPassword2() { return password2; }
+		
+		/** The current value of the selected sites array */
+		protected boolean[] getSelectedSites() { return selectedSites; }
+		
 	}
 
 }

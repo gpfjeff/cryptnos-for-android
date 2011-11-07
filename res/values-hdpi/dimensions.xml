@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <integer name="main_menu_grid_padding">15</integer>
+</resources>

@@ -48,22 +48,28 @@
 */
 package com.gpfcomics.android.cryptnos;
 
-import java.util.*;
-
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
-import android.app.ListActivity;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
 import android.content.res.Resources;
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
+import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.ListView;
-import android.widget.SimpleAdapter;
+import android.view.ViewGroup;
+import android.widget.AdapterView;
+import android.widget.BaseAdapter;
+import android.widget.GridView;
+import android.widget.TextView;
 import android.widget.Toast;
+import android.widget.AdapterView.OnItemClickListener;
 
 /**
  * The main menu activity for the Cryptnos Android application. 
@@ -71,12 +77,14 @@ import android.widget.Toast;
  * @version 1.3.0
  * @since 1.0
  */
-public class CryptnosMainMenu extends ListActivity implements SiteListListener {
+public class CryptnosMainMenu extends Activity implements SiteListListener {
 	
 	/* Public Constants *******************************************************/
 	
 	/** A constant indicating the Help option menu item. */
 	public static final int OPTMENU_HELP = Menu.FIRST;
+	/** A constant indicating the About option menu item. */
+	public static final int OPTMENU_ABOUT = OPTMENU_HELP + 1;
 	
 	/* Private Constants ********************************************************/
 
@@ -96,6 +104,23 @@ public class CryptnosMainMenu extends ListActivity implements SiteListListener {
 	 *  export method dialogs */
 	private static final int IMPORT_EXPORT_METHOD_QRCODE =
 		IMPORT_EXPORT_METHOD_FILE + 1;
+	
+	/** The New menu item identifier */
+	private static final int MENUITEM_NEW = 0;
+	/** The Regenerate menu item identifier */
+	private static final int MENUITEM_REGEN = 1;
+	/** The Edit menu item identifier */
+	private static final int MENUITEM_EDIT = 2;
+	/** The Delete menu item identifier */
+	private static final int MENUITEM_DELETE = 3;
+	/** The Export menu item identifier */
+	private static final int MENUITEM_EXPORT = 4;
+	/** The Import menu item identifier */
+	private static final int MENUITEM_IMPORT = 5;
+	/** The Settings menu item identifier */
+	private static final int MENUITEM_SETTINGS = 6;
+	/** The Help menu item identifier */
+	private static final int MENUITEM_HELP = 7;
 
 	/* Private Members **********************************************************/
 	
@@ -105,6 +130,14 @@ public class CryptnosMainMenu extends ListActivity implements SiteListListener {
 	private ParamsDbAdapter mDBHelper;
 	/** A site parameters object to store parameters scanned from a QR code */
 	private SiteParameters siteParamsFromQRCode = null;
+	/** A reference to the common QR code handler object */
+	private QRCodeHandler qrCodeHandler = null;
+	/** The current count of how many sites in within the database */
+	private int siteCount = 0;
+	/** This array, built in buildMenu(), determines the current capabilities based on
+	 *  various factors.  Use the MENUITEM_* constants to determine whether or not a
+	 *  given menu item is currently enabled. */
+	private boolean[] menuEnabled = null;
 
 	/* Public methods: ***********************************************************/
 	
@@ -115,11 +148,33 @@ public class CryptnosMainMenu extends ListActivity implements SiteListListener {
         {
 	        // The usual GUI setup stuff:
 	    	super.onCreate(savedInstanceState);
-	        setContentView(R.layout.main);
+	        setContentView(R.layout.mainmenu_grid);
             // Get a reference to the top-level application, as well as the
-            // DB helper:
+            // DB helper and QR code handler:
             theApp = (CryptnosApplication)getApplication();
             mDBHelper = theApp.getDBHelper();
+	        qrCodeHandler = theApp.getQRCodeHandler();
+	        // We want to put the version number (android:versionName from the
+	        // manifest) into the About header.  This is not quite as simple as
+	        // it sounds.  In order to do this, we first need to get a hold of
+	        // the header TextView so we can modify it:
+	        TextView header = (TextView)findViewById(R.id.txtVersionLabel);
+	        // This seems like a round-about way of doing things, but get the
+	        // PackageInfo for the Cryptnos application package.  From that we
+	        // can get the version name string.  Append that to the current value
+	        // of the header string, which is populated from the strings.xml
+	        // file like everything else.  If that fails for some reason, print
+	        // something else to indicate the error.  The advantage here is that
+	        // we can update the version string in one place (the manifest) and
+	        // that will propagate here with no code changes.
+	        try {
+		        PackageInfo info =
+		        	this.getPackageManager().getPackageInfo(this.getPackageName(),
+	        			PackageManager.GET_META_DATA);
+		        header.setText(header.getText().toString().concat(" " + info.versionName)); 
+	        } catch (Exception e) {
+	        	header.setText(header.getText().toString().concat(" ???"));
+	        }
         	// Run the UpgradeManager if it hasn't already been run this session:
         	if (!theApp.hasUpgradeManagerRun()) theApp.runUpgradeManager(this);
         }
@@ -129,6 +184,7 @@ public class CryptnosMainMenu extends ListActivity implements SiteListListener {
         catch (Exception e)
         {
         	Toast.makeText(this, e.getMessage(), Toast.LENGTH_LONG).show();
+        	finish();
         }
     }
     
@@ -155,123 +211,13 @@ public class CryptnosMainMenu extends ListActivity implements SiteListListener {
         }
     }
     
-    @SuppressWarnings("unchecked")
-	@Override
-    protected void onListItemClick(ListView l, View v, int position, long id) {
-        // Let the super do whatever it needs to do:
-    	super.onListItemClick(l, v, position, id);
-    	// This seems a bit weird, but here's how this seems to work.  Use
-    	// the internal list view to get the item at the selected position,
-    	// which is the HashMap we used to create the menu item with.  Then
-    	// use the HashMap.get() method to get the "line1" value, which is
-    	// the main text of the menu, and hold onto it.  We'll use that to
-    	// check out what activity needs to be performed in each case.
-        HashMap<String,String> menuItemHash = 
-        	(HashMap<String,String>)getListView().getItemAtPosition(position);
-        String menuItem = (String)menuItemHash.get("line1");
-        // Go ahead and get a copy of our resources, as we'll need that when we
-        // compare menu text strings below:
-        Resources res = this.getResources();
-        // We may not always need this, but grab the QR code handler as well:
-        QRCodeHandler qrCodeHandler = theApp.getQRCodeHandler();
-        // For imports and exports, it will help if we know what the app is
-        // capable of.  Find out whether or not we can read and/or write external
-        // storage and scan/generate QR codes and take note of our capabilities.
-    	boolean canScanQRs = qrCodeHandler.canScanQRCodes();
-    	boolean canGenQRs = qrCodeHandler.canGenerateQRCodes();
-    	boolean canWriteToSD = theApp.canWriteToExternalStorage();
-    	boolean canReadFromSD = theApp.canReadFromExternalStorage();
-        // Launch the help/tutorial activity
-        if (menuItem.compareTo(res.getString(R.string.mainmenu_help1)) == 0)
-        {
-        	Intent i = new Intent(this, HelpMenuActivity.class);
-        	startActivity(i);
-        }
-        // Launch the generate new password activity:
-        else if (menuItem.compareTo(res.getString(R.string.mainmenu_generate1)) == 0)
-        {
-        	Intent i = new Intent(this, EditParametersActivity.class);
-        	startActivity(i);
-        }
-        // Launch the edit activity menu (i.e. display the site listing so
-        // the user can pick some parameters to edit):
-        else if (menuItem.compareTo(res.getString(R.string.mainmenu_edit1)) == 0)
-        {
-        	Intent i = new Intent(this, SiteListActivity.class);
-        	i.putExtra("mode", SiteListActivity.MODE_EDIT);
-        	startActivity(i);
-        }
-        // Launch the edit activity menu (i.e. display the site listing so
-        // the user can pick some parameters to edit):
-        else if (menuItem.compareTo(res.getString(R.string.mainmenu_existing1)) == 0)
-        {
-        	Intent i = new Intent(this, SiteListActivity.class);
-        	i.putExtra("mode", SiteListActivity.MODE_EXISTING);
-        	startActivity(i);
-        }
-        // Launch the delete activity menu (i.e. display the site listing so
-        // the user can pick some parameters to delete):
-        else if (menuItem.compareTo(res.getString(R.string.mainmenu_delete1)) == 0)
-        {
-        	Intent i = new Intent(this, SiteListActivity.class);
-        	i.putExtra("mode", SiteListActivity.MODE_DELETE);
-        	startActivity(i);
-        }
-        // Choose an export method:
-        else if (menuItem.compareTo(res.getString(R.string.mainmenu_export1)) == 0)
-        {
-        	// If we can both generate QR codes and write to external storage, ask the
-        	// user which export method they'd like to use:
-        	if (canGenQRs && canWriteToSD) {
-        		showDialog(DIALOG_CHOOSE_EXPORT_METHOD);
-        	// If they can generate QR codes but can't write to external storage, go
-        	// ahead and launch site list activity in QR export mode:
-        	} else if (canGenQRs && !canWriteToSD) {
-	        	Intent eqi = new Intent(this, SiteListActivity.class);
-	        	eqi.putExtra("mode", SiteListActivity.MODE_EXPORT_QR);
-	        	startActivity(eqi);
-        	// If they can't generate QR codes but can write to external storage, go
-        	// ahead and launch the classic export activity:
-        	} else if (!canGenQRs && canWriteToSD) {
-	        	Intent i = new Intent(this, ExportActivity.class);
-	        	startActivity(i);
-        	}
-        }
-        // Choose an import method:
-        else if (menuItem.compareTo(res.getString(R.string.mainmenu_import1)) == 0)
-        {
-        	// If we can both scan QR codes and read from external storage, let the
-        	// user pick which import method they'd like to use:
-        	if (canScanQRs && canReadFromSD) {
-        		showDialog(DIALOG_CHOOSE_IMPORT_METHOD);
-        	// If they can only scan QR codes, launch the QR code scanner:
-        	} else if (canScanQRs && !canReadFromSD) {
-				Intent iqri = qrCodeHandler.generateScanIntent();
-				startActivityForResult(iqri, QRCodeHandler.INTENT_SCAN_QRCODE);
-        	// If they can only read from external storage, send them to the classic
-        	// import activity:
-        	} else if (!canScanQRs && canReadFromSD) {
-	        	Intent i = new Intent(this, ImportActivity.class);
-	        	startActivity(i);
-        	}
-        }
-        // Launch the advanced settings activity:
-        else if (menuItem.compareTo(res.getString(R.string.mainmenu_advanced1)) == 0)
-        {
-        	Intent i = new Intent(this, AdvancedSettingsActivity.class);
-        	startActivity(i);
-        }
-        // For the moment, nothing is working.  Show a quick Toast to let
-        // the user know that's our fault and not theirs.
-        else Toast.makeText(this, R.string.error_not_implemented,
-        		Toast.LENGTH_SHORT).show();
-    }
-    
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
-    	// Add the "Help" menu items:
+    	// Add the "Help" and "About" menu items:
     	menu.add(0, OPTMENU_HELP, Menu.NONE,
         	R.string.optmenu_help).setIcon(android.R.drawable.ic_menu_help);
+    	menu.add(0, OPTMENU_ABOUT, Menu.NONE,
+            	R.string.optmenu_about).setIcon(android.R.drawable.ic_menu_info_details);
     	return true;
     }
     
@@ -284,9 +230,14 @@ public class CryptnosMainMenu extends ListActivity implements SiteListListener {
     		// such a change will require using the HelpMenuActivity rather
     		// than the HelpActivity.)
 	    	case OPTMENU_HELP:
-	        	Intent i = new Intent(this, HelpActivity.class);
-	        	i.putExtra("helptext", R.string.help_text_whatis);
-	        	startActivity(i);
+	        	Intent i1 = new Intent(this, HelpActivity.class);
+	        	i1.putExtra("helptext", R.string.help_text_whatis);
+	        	startActivity(i1);
+	    		return true;
+	    	// If the About item is selected, show the "About box":
+	    	case OPTMENU_ABOUT:
+	        	Intent i2 = new Intent(this, AboutActivity.class);
+	        	startActivity(i2);
 	    		return true;
     	}
     	return false;
@@ -325,8 +276,6 @@ public class CryptnosMainMenu extends ListActivity implements SiteListListener {
 									// Import from a QR code:
 									case IMPORT_EXPORT_METHOD_QRCODE:
 										// Launch the preferred QR code scanner:
-										QRCodeHandler qrCodeHandler = 
-											theApp.getQRCodeHandler();
 										Intent iqri = qrCodeHandler.generateScanIntent();
 										if (iqri != null)
 											theActivity.startActivityForResult(iqri,
@@ -472,7 +421,6 @@ public class CryptnosMainMenu extends ListActivity implements SiteListListener {
     
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
     	super.onActivityResult(requestCode, resultCode, data);
-		QRCodeHandler qrCodeHandler = theApp.getQRCodeHandler();
     	// What result code did we get:
     	switch (requestCode) {
     		// If we're coming back from scanning a QR code:
@@ -505,102 +453,182 @@ public class CryptnosMainMenu extends ListActivity implements SiteListListener {
     private void buildMenu()
     {
     	try {
-	    	// This is a bit wonky, but so far this is the only way I've been
-	    	// able to find to get this to work.  First, we need to know how
-	    	// many records we have saved in the database.  It won't make much
-	    	// sense to show certain menu items if there are no saved parameters.
-	        int siteCount = mDBHelper.recordCount();
-	        // Here's where we get funky.  To make a list activity, we need a
-	        // list to work from.  Most examples do this by mapping to a database
-	        // but we haven't gotten to that point yet.  Instead, we're building
-	        // a list on the fly.  So we'll start with an ArrayList.  But it can't
-	        // be any old ArrayList; it has to have a Map of some sort.  So we'll
-	        // use a HashMap to map strings to strings.  The first string will
-	        // be the main menu text, while the second will be additional help
-	        // text below it.
-	        //
-	        // Start by making the list itself, then declaring the hash map but
-	        // not instantiating it.
-	        ArrayList<HashMap<String,String>> menuItems =
-	        	new ArrayList<HashMap<String,String>>();
-	        HashMap<String,String> item = null;
-	        // Get a handier reference to our resources so we can get access to
-	        // the strings more quickly:
-	        Resources res = getResources();
-	        QRCodeHandler qrCodeHandler = theApp.getQRCodeHandler();
-	        // The most commonly used item will be generating existing passphrases,
-	        // so that should be at the top.  But this only makes sense if there
-	        // are already parameters saved.
-	        if (siteCount > 0)
-	        {
-	        	item = new HashMap<String,String>();
-	        	item.put("line1", res.getString(R.string.mainmenu_existing1));
-	        	item.put("line2", res.getString(R.string.mainmenu_existing2));
-	        	menuItems.add(item);
-	        }
-	        // Add an item for generating new passphrases by entering new sets of
-	        // parameters:
-	    	item = new HashMap<String,String>();
-	    	item.put("line1", res.getString(R.string.mainmenu_generate1));
-	    	item.put("line2", res.getString(R.string.mainmenu_generate2));
-	    	menuItems.add(item);
-	    	// These three require items in the database:
-	        if (siteCount > 0)
-	        {
-	        	// Edit an existing set of parameters:
-	        	item = new HashMap<String,String>();
-	        	item.put("line1", res.getString(R.string.mainmenu_edit1));
-	        	item.put("line2", res.getString(R.string.mainmenu_edit2));
-	        	menuItems.add(item);
-	        	// Delete a set of parameters:
-	        	item = new HashMap<String,String>();
-	        	item.put("line1", res.getString(R.string.mainmenu_delete1));
-	        	item.put("line2", res.getString(R.string.mainmenu_delete2));
-	        	menuItems.add(item);
-	        	// Exporting a set of parameters only makes sense if we have sites
-	        	// to export and we can either write to the SD card or generate
-	        	// QR codes:
-	        	if (theApp.canWriteToExternalStorage() || qrCodeHandler.canGenerateQRCodes()) {
-		        	item = new HashMap<String,String>();
-		        	item.put("line1", res.getString(R.string.mainmenu_export1));
-		        	item.put("line2", res.getString(R.string.mainmenu_export2));
-		        	menuItems.add(item);
+    		// Find out how many records are currently in the database:
+	        siteCount = mDBHelper.recordCount();
+	        // To determine whether or not a menu item is enabled or disabled, we
+	        // have to determine our capabilities.  Start by creating a new boolean
+	        // array, which will default all to false:
+	        menuEnabled = new boolean[8];
+	        // These items are always enabled:
+	        menuEnabled[MENUITEM_NEW] = true;
+	        menuEnabled[MENUITEM_SETTINGS] = true;
+	        menuEnabled[MENUITEM_HELP] = true;
+	        // The following settings only make sense if there are items
+	        // currently in the database:
+	        if (siteCount > 0) {
+	        	menuEnabled[MENUITEM_REGEN] = true;
+	        	menuEnabled[MENUITEM_EDIT] = true;
+	        	menuEnabled[MENUITEM_DELETE] = true;
+	        	// Exporting requires both sites to be in the database and
+	        	// the ability to either write to external storage or the
+	        	// ability to generate QR codes:
+	        	if (theApp.canWriteToExternalStorage() ||
+	        			qrCodeHandler.canGenerateQRCodes()) {
+		        	menuEnabled[MENUITEM_EXPORT] = true;
 	        	}
 	        }
-	        // Importing a set of parameters only makes sense if we can either read
-	        // from the SD card or scan QR codes:
+	        // Importing relies on the ability to read from storage or import
+	        // QR codes:
 	        if (theApp.canReadFromExternalStorage() || qrCodeHandler.canScanQRCodes()) {
-		    	item = new HashMap<String,String>();
-		    	item.put("line1", res.getString(R.string.mainmenu_import1));
-		    	item.put("line2", res.getString(R.string.mainmenu_import2));
-		    	menuItems.add(item);
+	        	menuEnabled[MENUITEM_IMPORT] = true;
 	        }
-	        // Add the advanced settings item:
-	    	item = new HashMap<String,String>();
-	    	item.put("line1", res.getString(R.string.mainmenu_advanced1));
-	    	item.put("line2", res.getString(R.string.mainmenu_advanced2));
-	    	menuItems.add(item);
-	        // Add the help/tutorials item:
-	    	item = new HashMap<String,String>();
-	    	item.put("line1", res.getString(R.string.mainmenu_help1));
-	    	item.put("line2", res.getString(R.string.mainmenu_help2));
-	    	menuItems.add(item);
-	    	// Now that we've got our list, create a SimpleAdapter to map each
-	    	// hash map item to certain text fields in a row view.  This is a bit
-	    	// weird, but that's the way Android seems to do it.
-	    	SimpleAdapter menuAdapter = new SimpleAdapter(
-	    			this,
-	    			menuItems,
-	    			R.layout.mainmenu_row,
-	    			new String[] { "line1", "line2" },
-	    			new int[] { R.id.text1, R.id.text2 }
-	    		);
-	    	// Last but not least, set the adapter for the list, making it all
-	    	// active:
-	    	setListAdapter(menuAdapter);
+	        // Now get access to the grid view, set its adapter, and figure out what
+	        // to do if the menu item is enabled:
+	        GridView grid = (GridView)findViewById(R.id.gridMainMenu);
+            grid.setAdapter(new MainMenuShortcutAdapter(this));
+            grid.setOnItemClickListener(new OnItemClickListener() {
+				public void onItemClick(AdapterView<?> parent, View view, int menuItem,
+						long id) {
+			        // For imports and exports, it will help if we know what the app is
+			        // capable of.  Find out whether or not we can read and/or write external
+			        // storage and scan/generate QR codes and take note of our capabilities.
+			    	boolean canScanQRs = qrCodeHandler.canScanQRCodes();
+			    	boolean canGenQRs = qrCodeHandler.canGenerateQRCodes();
+			    	boolean canWriteToSD = theApp.canWriteToExternalStorage();
+			    	boolean canReadFromSD = theApp.canReadFromExternalStorage();
+			    	// Perform the appropriate task depending on the menu item
+			    	// selected:
+					switch (menuItem) {
+						// For a new set of parameters, launch the Edit utility in its
+						// default mode, so we'll start creating a new site:
+						case MENUITEM_NEW:
+				        	Intent i1 = new Intent(getBaseContext(),
+				        			EditParametersActivity.class);
+				        	startActivity(i1);
+							break;
+						// The Regenerate item recreates an existing password but does
+						// so in a read-only way so we can't change any of the parameters.
+						// Note that this menu item is only enabled if there are one or
+						// more parameters in the database.  Also note that this actually
+						// launches the site list activity so the user can pick the site
+						// to regenerate, but we specify which subsequent action will be
+						// the default for a tap.
+						case MENUITEM_REGEN:
+							if (menuEnabled[MENUITEM_REGEN]) {
+					        	Intent i2 = new Intent(getBaseContext(),
+					        			SiteListActivity.class);
+					        	i2.putExtra("mode", SiteListActivity.MODE_EXISTING);
+					        	startActivity(i2);
+							}
+							break;
+						// The Edit item allows us to edit the parameters of a given set
+						// of parameters, except for the site token or name.  Like
+						// Regenerate, this requires at least one item to be in the
+						// database, and we actually call the site list activity but set
+						// the default tap action to edit mode.
+						case MENUITEM_EDIT:
+							if (menuEnabled[MENUITEM_EDIT]) {
+					        	Intent i3 = new Intent(getBaseContext(),
+					        			SiteListActivity.class);
+					        	i3.putExtra("mode", SiteListActivity.MODE_EDIT);
+					        	startActivity(i3);
+							}
+							break;
+						// Delete removes one or more sets of parameters from the
+						// database.  Like Regenerate and Edit, we need to have something
+						// in the database and we pass the buck to the site list activity,
+						// setting the default action to delete.
+						case MENUITEM_DELETE:
+							if (menuEnabled[MENUITEM_DELETE]) {
+					        	Intent i4 = new Intent(getBaseContext(),
+					        			SiteListActivity.class);
+					        	i4.putExtra("mode", SiteListActivity.MODE_DELETE);
+					        	startActivity(i4);
+							}
+							break;
+						// Export allows us to transfer one or more sets of parameters to
+						// another copy of Cryptnos, either as a means of sharing amongst
+						// devices or for backing up our data.  There are currently two
+						// export methods, via encrypted file and via QR code, and which
+						// options are available depends on the capabilities of the device.
+						// Export is only available if we have something we can export.
+						case MENUITEM_EXPORT:
+							if (menuEnabled[MENUITEM_EXPORT]) {
+					        	// If we can both generate QR codes and write to external
+								// storage, ask the user which export method they'd like to
+								// use:
+					        	if (canGenQRs && canWriteToSD) {
+					        		showDialog(DIALOG_CHOOSE_EXPORT_METHOD);
+					        	// If they can generate QR codes but can't write to external
+					        	// storage, go ahead and launch site list activity in QR
+					        	// export mode:
+					        	} else if (canGenQRs && !canWriteToSD) {
+						        	Intent i5a = new Intent(getBaseContext(),
+						        			SiteListActivity.class);
+						        	i5a.putExtra("mode", SiteListActivity.MODE_EXPORT_QR);
+						        	startActivity(i5a);
+					        	// If they can't generate QR codes but can write to external
+						        // storage, go ahead and launch the classic export activity:
+					        	} else if (!canGenQRs && canWriteToSD) {
+						        	Intent i5b = new Intent(getBaseContext(),
+						        			ExportActivity.class);
+						        	startActivity(i5b);
+					        	}
+							}
+							break;
+						// Import is the inverse of Export:  We bring in data previously
+						// exported by another copy of Cryptnos.  We can either import
+						// from an encrypted file or from a QR code.  Note that import
+						// may not be available if the device's current state does not
+						// support it.
+						case MENUITEM_IMPORT:
+							if (menuEnabled[MENUITEM_IMPORT]) {
+					        	// If we can both scan QR codes and read from external
+								// storage, let the user pick which import method they'd
+								// like to use:
+					        	if (canScanQRs && canReadFromSD) {
+					        		showDialog(DIALOG_CHOOSE_IMPORT_METHOD);
+					        	// If they can only scan QR codes, launch the QR code scanner:
+					        	} else if (canScanQRs && !canReadFromSD) {
+									Intent iqri = qrCodeHandler.generateScanIntent();
+									startActivityForResult(iqri, QRCodeHandler.INTENT_SCAN_QRCODE);
+					        	// If they can only read from external storage, send them to
+								// the classic import activity:
+					        	} else if (!canScanQRs && canReadFromSD) {
+						        	Intent i6 = new Intent(getBaseContext(),
+						        			ImportActivity.class);
+						        	startActivity(i6);
+					        	}
+							}
+							break;
+						// Settings allows us to determine how Cryptnos works behind the
+						// scenes.  This option is always available.
+						case MENUITEM_SETTINGS:
+				        	Intent i7 = new Intent(getBaseContext(),
+				        			AdvancedSettingsActivity.class);
+				        	startActivity(i7);
+							break;
+						// The Help system guides the user in how to use Cryptnos.  This
+						// option is also always available.
+						case MENUITEM_HELP:
+				        	Intent i8 = new Intent(getBaseContext(), HelpMenuActivity.class);
+				        	startActivity(i8);
+							break;
+						// If we got anything else, default to saying the option is not
+						// implemented.  Who knows... maybe we added a feature and forgot
+						// to implement it?
+						default:
+							Toast.makeText(getBaseContext(), R.string.error_not_implemented,
+					        		Toast.LENGTH_LONG).show();
+						break;
+					}
+				}
+            });
     	} catch (Exception e) {
-        	Toast.makeText(this, e.getMessage(), Toast.LENGTH_LONG).show();
-        }
+    		Toast.makeText(this, getResources().getString(R.string.error_unknown),
+    				Toast.LENGTH_LONG).show();
+    		finish();
+    	}
     }
 
 	public void onSiteListReady(String[] siteList) {
@@ -648,5 +676,113 @@ public class CryptnosMainMenu extends ListActivity implements SiteListListener {
 			siteParamsFromQRCode = null;
 		}
 	}
+
+	/**
+	 * This private sub-class of BaseAdapter is used in building the Cryptnos icon-based
+	 * main menu.
+	 * @author Jeffrey T. Darlington
+	 * @version 1.3.0
+	 * @since 1.3.0
+	 */
+    private class MainMenuShortcutAdapter extends BaseAdapter {
+    	
+    	/** The calling context */
+    	private Context context = null;
+    	/** The resources of the calling context */
+    	private Resources res = null;
+    	
+    	/**
+    	 * Constructor
+    	 * @param context The calling context
+    	 */
+    	MainMenuShortcutAdapter(Context context) {
+    		this.context = context;
+    		res = context.getResources();
+    	}
+
+		public int getCount() {
+			return 8;
+		}
+
+		public Object getItem(int position) {
+			return null;
+		}
+
+		public long getItemId(int position) {
+			return 0;
+		}
+
+		public View getView(int menuItem, View convertView, ViewGroup parent) {
+			// For convenience, all our "icons" will actually be TextViews, as we can
+			// combine text and icons together.  Start by declaring the temporary view
+			// we will use along the way.
+			TextView tv = null;
+			// Does the view already exist?  If not, create the object and give it a
+			// few defining values to start with.  Otherwise, cast the existing object
+			// to a TextView and move on.
+            if (convertView == null) {
+            	int padding = res.getInteger(R.integer.main_menu_grid_padding);
+                tv = new TextView(context);
+                tv.setGravity(Gravity.CENTER);
+                tv.setPadding(padding, padding, padding, padding);
+            } else {
+                tv = (TextView) convertView;
+            }
+            // Declare an icon drawable and a string title, then switch across the
+            // menu item position to determine which item we're currently building:
+            Drawable icon = null;
+            String title = null;
+            switch (menuItem) {
+	            case MENUITEM_NEW:
+	            	icon = res.getDrawable(R.drawable.key_add);
+	            	title = res.getString(R.string.mainmenugrid_new);
+	            	break;
+	            case MENUITEM_REGEN:
+	            	icon = res.getDrawable(R.drawable.key_regenerate);
+	            	title = res.getString(R.string.mainmenugrid_regenerate);
+	            	break;
+	            case MENUITEM_EDIT:
+	            	icon = res.getDrawable(R.drawable.key_edit);
+	            	title = res.getString(R.string.mainmenugrid_edit);
+	            	break;
+	            case MENUITEM_DELETE:
+	            	icon = res.getDrawable(R.drawable.key_delete);
+	            	title = res.getString(R.string.mainmenugrid_delete);
+	            	break;
+	            case MENUITEM_EXPORT:
+	            	icon = res.getDrawable(R.drawable.key_export);
+	            	title = res.getString(R.string.mainmenugrid_export);
+	            	break;
+	            case MENUITEM_IMPORT:
+	            	icon = res.getDrawable(R.drawable.key_import);
+	            	title = res.getString(R.string.mainmenugrid_import);
+	            	break;
+	            case MENUITEM_SETTINGS:
+	            	icon = res.getDrawable(R.drawable.settings);
+	            	title = res.getString(R.string.mainmenugrid_settings);
+	            	break;
+	            case MENUITEM_HELP:
+	            	icon = res.getDrawable(R.drawable.help);
+	            	title = res.getString(R.string.mainmenugrid_help);
+	            	break;
+            }
+            // Look at the enabled array for the menu items (built by buildMenu() in our
+            // parent) and see if the item is supposed to be enabled or not.  If it should
+            // be disabled, set the alpha value of the icon to about 1/4 the full strength.
+            // This will make it look dim against the dark background and thus disabled.
+            // Otherwise, set the alpha at full strength.  (If we don't go that, the icon
+            // might still look disabled even if we change state and it *should* be
+            // enabled.
+            if (!menuEnabled[menuItem]) icon.setAlpha(64);
+            else icon.setAlpha(255);
+            // Now assign the icon above the title text and return the text view object:
+            tv.setCompoundDrawablesWithIntrinsicBounds(
+                    null, icon, null, null);
+            tv.setText(title);
+            tv.setTag(title);
+            return tv;
+		}
+    	
+    }
 
 }

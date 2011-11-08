@@ -478,11 +478,16 @@ import android.widget.AdapterView.AdapterContextMenuInfo;
 	    	case OPTMENU_DELETE_ALL:
 	    		showDialog(DIALOG_CONFIRM_DELETE_ALL);
 	    		return true;
-	    	// If the Help item is selected, open up the "Working with
-	    	// existing parameters" help:
+	    	// If the Help item is selected, check which mode we're in.  If we're in
+	    	// QR code export mode, send the user to the import/export help item.
+	    	// Otherwise, send the user to the "working with existing parameters"
+	    	// help item.
 	    	case OPTMENU_HELP:
 	        	Intent i = new Intent(this, HelpActivity.class);
-	        	i.putExtra("helptext", R.string.help_text_existing);
+	    		if (mode == MODE_EXPORT_QR)
+		        	i.putExtra("helptext", R.string.help_text_importexport);
+	    		else
+	    			i.putExtra("helptext", R.string.help_text_existing);
 	        	startActivity(i);
 	    		return true;
     	}

@@ -15,7 +15,7 @@
  * UPDATES FOR 1.2.4:  Added checkbox to manage the "copy to clipboard" setting
  * 
  * UPDATES FOR 1.3.0:  Added controls for QR scanner preference and "show master
- * passwords" setting
+ * passwords" setting.  Added debug info controls.
  * 
  * "QR code" is a registered trademark of Denso Wave Incorporated.
  * 
@@ -40,19 +40,30 @@ package com.gpfcomics.android.cryptnos;
 import java.nio.charset.Charset;
 
 import android.app.Activity;
+import android.app.ActivityManager;
 import android.app.AlertDialog;
 import android.app.Dialog;
+import android.app.ActivityManager.MemoryInfo;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
+import android.content.res.Resources;
+import android.os.Build;
 import android.os.Bundle;
+import android.util.DisplayMetrics;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.View.OnClickListener;
+import android.view.ViewGroup;
+import android.view.ViewGroup.LayoutParams;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.CheckBox;
+import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.Spinner;
 import android.widget.TextView;
@@ -110,6 +121,12 @@ public class AdvancedSettingsActivity extends Activity {
 	/** A CheckBox to manage the "show master passwords" setting */
 	private CheckBox chkShowMasterPasswords = null;
 	
+	/** A CheckBox to manage the "show debugging info" setting */
+	private CheckBox chkShowDebugInfo = null;
+	
+	/** An EditText box to display debugging information */
+	private EditText txtDebugInfo = null;
+	
 	/** A reference to the linear layout that contains our UI elements */
 	private LinearLayout layout = null;
 
@@ -133,6 +150,12 @@ public class AdvancedSettingsActivity extends Activity {
 	 *  the previous selection if the user cancels the change. */
 	private int lastQRScannerSelection = 0;
 	
+	/** The user's currently selection of default text encoding */
+	private String currentEncoding = null;
+	
+	/** The system default text encoding */
+	private String systemDefaultEncoding = null;
+	
     @Override
 	public void onCreate(Bundle savedInstanceState) {
         // The usual GUI setup stuff:
@@ -148,13 +171,11 @@ public class AdvancedSettingsActivity extends Activity {
         
         // Get the current system default text encoding.  We'll use this to display
         // the default in a label later.
-        String systemDefault = null;
-        try { systemDefault = System.getProperty("file.encoding", "Unknown"); }
-        catch (Exception ex) { systemDefault = "Unknown"; }
+        try { systemDefaultEncoding = System.getProperty("file.encoding", "Unknown"); }
+        catch (Exception ex) { systemDefaultEncoding = "Unknown"; }
         
         // Get the current text encoding value from the preferences if possible,
         // falling back to the system encoding or just plain UTF-8 if necessary:
-        String currentEncoding = null;
         try {
         	currentEncoding = prefs.getString(CryptnosApplication.PREFS_TEXT_ENCODING,
         		System.getProperty("file.encoding",
@@ -202,7 +223,7 @@ public class AdvancedSettingsActivity extends Activity {
         String labelText =
         	getResources().getString(R.string.settings_default_encoding_label);
         labelDefaultEncoding.setText(labelText.replace(getResources().getString(R.string.meta_replace_token),
-        		systemDefault));
+        		systemDefaultEncoding));
         
         // Get handy references to the file manager UI elements:
     	spinFileManagers = (Spinner)findViewById(R.id.spinFileManagers);
@@ -342,6 +363,17 @@ public class AdvancedSettingsActivity extends Activity {
 			}
         });
         
+        // Get the debugging checkbox and give it some functionality.  If the checkbox
+        // is checked, we'll show the debugging EditText box with a bunch of info
+        // culled from the system.  If the box is cleared, we'll hide the box.
+        chkShowDebugInfo = (CheckBox)findViewById(R.id.chkShowDebugInfo);
+        chkShowDebugInfo.setOnClickListener(new OnClickListener() {
+			public void onClick(View v) {
+				if (chkShowDebugInfo.isChecked()) buildDebugInfoBox();
+				else layout.removeView(txtDebugInfo);
+			}
+        });
+        
     }
     
     protected Dialog onCreateDialog(int id) {
@@ -361,8 +393,8 @@ public class AdvancedSettingsActivity extends Activity {
 					// take note of the new encoding position.
 					public void onClick(DialogInterface dialog, int which) {
 						try {
-							String newEncoding = (String)spinEncodings.getSelectedItem();
-							theApp.setTextEncoding(newEncoding);
+							currentEncoding = (String)spinEncodings.getSelectedItem();
+							theApp.setTextEncoding(currentEncoding);
 							theApp.refreshParameterSalt();
 							lastEncodingSelection = spinEncodings.getSelectedItemPosition();
 						}
@@ -450,5 +482,97 @@ public class AdvancedSettingsActivity extends Activity {
     	return false;
     }
 	
+	/**
+	 * Build and display the debug info text box:
+	 */
+	private void buildDebugInfoBox() {
+		// If the box already exists, we won't bother reallocating it; we'll just
+		// reuse it.  But if the box has not been created yet, we need to create
+		// it first.
+		if (txtDebugInfo == null) {
+			txtDebugInfo = new EditText(theApp);
+			txtDebugInfo.setLayoutParams(new ViewGroup.LayoutParams(
+					LayoutParams.FILL_PARENT, LayoutParams.WRAP_CONTENT));
+		}
+		// Grab our resource bundle so getting to certain values will be easier:
+		Resources res = getBaseContext().getResources();
+		// We'll be doing a lot of appending of strings, so it will be more
+		// efficient to use a StringBuilder here instead of concatenation:
+		StringBuilder message = new StringBuilder();
+		// Get the version of Cryptnos itself.  We'll need to get this from the
+		// PackageInfo, which could throw exceptions.
+		message.append("Cryptnos version: ");
+		try {
+			PackageInfo info =
+	        	theApp.getPackageManager().getPackageInfo(theApp.getPackageName(),
+        			PackageManager.GET_META_DATA);
+			message.append(info.versionName);
+		} catch (Exception e) {
+			message.append("Unknown");
+		}
+		// Some basic Android build information.  I'm not sure how much of this is
+		// really relevant, but it's available so we'll print it for now.
+		message.append("\nAndroid API: " + Build.VERSION.SDK);
+		message.append("\nBrand: " + Build.BRAND);
+		message.append("\nDevice: " + Build.DEVICE);
+		message.append("\nModel: " + Build.MODEL);
+		message.append("\nProduct: " + Build.PRODUCT);
+		message.append("\nBuild Type: " + Build.TYPE);
+		// Get the memory information from the activity service:
+		MemoryInfo mi = new MemoryInfo();
+		ActivityManager activityManager =
+			(ActivityManager)this.getSystemService(Context.ACTIVITY_SERVICE);
+		activityManager.getMemoryInfo(mi);
+		message.append("\nAvailable memory: " + prettyBitString(mi.availMem));
+		// Try to get the actual screen resolution and density.  We'll need some
+		// display metrics to do this.  Note that for the density, we'll take the
+		// horizontal and vertical densities and compute an average, which we'll
+		// the round to an integer.
+		DisplayMetrics dm = res.getDisplayMetrics();
+		message.append("\nScreen resolution: " + dm.widthPixels + " x " + 
+				dm.heightPixels + "\nScreen density (approx): " +
+				String.valueOf(Math.round((dm.xdpi + dm.ydpi) / 2.0f)) + " dpi");
+		// The detected screen resolution and size classes correspond to which set
+		// of resources we'll be using.  Resolution (ldpi, mdpi, hdpi, xhpid) and
+		// size (small, normal, large, xlarge) can greatly affect how Cryptnos is
+		// displayed on devices.  By using some alternate resource trickery, we
+		// can get back what Android thinks the display is like, which will give us
+		// some insight into what might be going wrong if the display looks wonky.
+		message.append("\nDetected screen resolution class: " +
+				res.getString(R.string.debug_resolution));
+		message.append("\nDetected screen size class: " +
+				res.getString(R.string.debug_screensize));
+		// Display the system default and user preference of text encoding:
+		message.append("\nSystem default encoding: " + systemDefaultEncoding);
+		message.append("\nUser selected encoding: " + currentEncoding);
+		// Display the user's preference of file manager and QR scanner:
+		message.append("\nUser selected file manager: " +
+				theApp.getFileManager().getPreferredFileManagerName());
+		message.append("\nUser selected QR scanner: " +
+				theApp.getQRCodeHandler().getPreferredQRCodeAppName());
+		// Now take the generated text, stuff it into the text box, and add the
+		// text box to the end of the current layout:
+		txtDebugInfo.setText(message.toString());
+		layout.addView(txtDebugInfo);
+	}
+	
+	/**
+	 * Given a size of memory in bits, return a user-friendy string showing the
+	 * approximate size in common byte ranges (kilobytes, megabytes, gigabytes, etc.).
+	 * @param bits The amount of available memory in bits
+	 * @return A string suitable for printing that displays a user-friendly memory
+	 * size
+	 */
+	public String prettyBitString(long bits) {
+		if (bits < 0L) return "Unknown";
+		if (bits < 1024L) return bits + "B";
+		else if (bits < 1048576L)
+			return Math.round((double)bits / 1024.0) + "KiB";
+		else if (bits < 1073741824L)
+			return Math.round((double)bits / 1048576.0) + "MiB";
+		else if (bits < 1099511627776L)
+			return Math.round((double)bits / 1073741824.0) + "GiB";
+		else return Math.round((double)bits / 1099511627776.0) + "TiB";
+	}
 
 }

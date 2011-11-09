@@ -60,6 +60,11 @@
 				android:layout_height="wrap_content"
 				android:id="@+id/labelNoQRScannersAvailable"
 				android:text="@string/settings_no_qrscanner_available"></TextView>
+			<CheckBox android:id="@+id/chkShowDebugInfo"
+				android:text="@string/settings_show_debug_able"
+				android:layout_width="fill_parent"
+				android:layout_height="wrap_content"
+				android:layout_gravity="center_horizontal"></CheckBox>
 		</LinearLayout>
 	</ScrollView>
 </LinearLayout>

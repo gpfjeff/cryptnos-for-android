@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+<string name="debug_resolution">mdpi</string>
+<string name="debug_screensize">normal</string>
 <string name="app_name">Cryptnos</string>
 <string name="app_description">Cryptnos is a small utility for generating strong, unique, yet repeatable passwords using cryptographic hashes.</string>
 <string name="meta_replace_token">xxx</string>
@@ -135,6 +137,7 @@
 <string name="settings_show_master_passwd">Show master passwords</string>
 <string name="settings_show_master_passwd_dialog_title">Show Master Passwords</string>
 <string name="settings_show_master_passwd_dialog_text">Showing master passwords may pose a greater security risk should someone view your screen as you type. Are you sure you wish to turn this feature on?</string>
+<string name="settings_show_debug_able">Show debug information</string>
 <string name="about_title">About Cryptnos</string>
 <string name="about_header">Version</string>
 <string name="about_link">http://www.cryptnos.com/</string>

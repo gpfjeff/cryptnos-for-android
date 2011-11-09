@@ -105,10 +105,10 @@ public class CryptnosMainMenu extends Activity implements SiteListListener {
 	private static final int IMPORT_EXPORT_METHOD_QRCODE =
 		IMPORT_EXPORT_METHOD_FILE + 1;
 	
-	/** The New menu item identifier */
-	private static final int MENUITEM_NEW = 0;
 	/** The Regenerate menu item identifier */
-	private static final int MENUITEM_REGEN = 1;
+	private static final int MENUITEM_REGEN = 0;
+	/** The New menu item identifier */
+	private static final int MENUITEM_NEW = 1;
 	/** The Edit menu item identifier */
 	private static final int MENUITEM_EDIT = 2;
 	/** The Delete menu item identifier */

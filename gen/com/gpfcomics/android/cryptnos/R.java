@@ -34,7 +34,7 @@ public final class R {
         public static final int logo=0x7f02000f;
         public static final int logo_xhdpi=0x7f020010;
         public static final int settings=0x7f020011;
-        public static final int settings_96=0x7f020012;
+        public static final int settings_xhdpi=0x7f020012;
     }
     public static final class id {
         public static final int ScrollView01=0x7f070007;

@@ -69,6 +69,8 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.DialogInterface.OnMultiChoiceClickListener;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -99,13 +101,17 @@ import android.widget.AdapterView.OnItemSelectedListener;
  */
 public class ImportActivity extends Activity implements ImportListener, SiteListListener {
 
-	/** A constant indicating that we should show the progress dialog. */
-	static final int DIALOG_PROGRESS = 1200;
+	/** A constant indicating that we should show a progress dialog during the
+	 *  process of importing sites from a file. */
+	static final int DIALOG_PROGRESS_FILE_READ = 1200;
 	/** A constant indicating that we should show the imported sites dialog. */
-	static final int DIALOG_IMPORTED_SITES = DIALOG_PROGRESS + 1;
+	static final int DIALOG_IMPORTED_SITES = DIALOG_PROGRESS_FILE_READ + 1;
 	/** A constant indicating that we'll warn the user if they're about to overwrite
 	 *  an existing site in the database. */
 	static final int DIALOG_OVERWRITE_WARNING = DIALOG_IMPORTED_SITES + 1;
+	/** A constant indicating that we should show a progress dialog during the
+	 *  process of actually importing sites into the database. */
+	static final int DIALOG_PROGRESS_DB_WRITE = DIALOG_OVERWRITE_WARNING + 1;
 	
 	/** A constant indicating the Help option menu item. */
 	public static final int OPTMENU_HELP = Menu.FIRST;
@@ -140,6 +146,8 @@ public class ImportActivity extends Activity implements ImportListener, SiteList
 	private Object[] importedSites = null;
 	/** A boolean array indicating which sites were selected from the import list */
 	private boolean[] selectedSites = null;
+	/** The count of the imported sites that are selected for import */
+	private int selectedSiteCount = 0;
 	
 	/** A reference to our top-level application */
 	private CryptnosApplication theApp = null;
@@ -150,11 +158,18 @@ public class ImportActivity extends Activity implements ImportListener, SiteList
 	private ProgressDialog progressDialog = null;
 	/** The export handler */
 	private ImportExportHandler importer = null;
+	/** A reference back to ourself, used primarily for accessing Activity
+	 *  methods within some of the inner classes */
+	private ImportActivity me = null;
 
     public void onCreate(Bundle savedInstanceState) {
         // The usual GUI setup stuff:
     	super.onCreate(savedInstanceState);
         setContentView(R.layout.import_layout);
+        
+        // This may seem silly, but get a reference to ourself.  We'll need this
+        // in some of the inner classes to access some of the Activity methods.
+        me = this;
 
         // Get a reference to the top-level application, as well as the
         // DB helper:
@@ -199,6 +214,7 @@ public class ImportActivity extends Activity implements ImportListener, SiteList
         		txtPassphrase.setText(state.getPassword());
         		importedSites = state.getImportedSites();
         		selectedSites = state.getSelectedSites();
+        		selectedSiteCount = state.getSelectedSiteCount();
         	} else setDefaults();
         } catch (Exception e) {
         	setDefaults();
@@ -324,7 +340,7 @@ public class ImportActivity extends Activity implements ImportListener, SiteList
 					else theFile = new File(importRootPath, (String)spinnerFiles.getSelectedItem());
 					importFile = theFile.getAbsolutePath();
 					password = txtPassphrase.getText().toString();
-					showDialog(DIALOG_PROGRESS);
+					showDialog(DIALOG_PROGRESS_FILE_READ);
 				}
 			}
         });
@@ -422,7 +438,7 @@ public class ImportActivity extends Activity implements ImportListener, SiteList
 	    	// The progress dialog does the work of the actual export.  We'll
 	    	// create this dialog, create an exporter object and pass a
 	    	// reference to the dialog along with it. 
-	    	case DIALOG_PROGRESS:
+	    	case DIALOG_PROGRESS_FILE_READ:
 	    		// Create the progress dialog:
 	    		progressDialog = new ProgressDialog(this);
 	    		progressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
@@ -430,7 +446,7 @@ public class ImportActivity extends Activity implements ImportListener, SiteList
 	            progressDialog.setMessage(getResources().getString(R.string.import_progress_message));
 	            // Create the importer and put it to work:
 	    		importer = new ImportExportHandler(theActivity,
-	    			progressDialog, DIALOG_PROGRESS);
+	    			progressDialog, DIALOG_PROGRESS_FILE_READ);
 	    		importer.importFromFile(importFile, password, this);
 	            dialog = progressDialog;
 	    		break;
@@ -527,6 +543,19 @@ public class ImportActivity extends Activity implements ImportListener, SiteList
 				});
     			dialog = (Dialog)adb2.create();
 	    		break;
+	    	// Since the actual insert into the database can take a while, we need
+	    	// another progress dialog to handle that process:
+	    	case DIALOG_PROGRESS_DB_WRITE:
+	    		// Create the progress dialog:
+	    		progressDialog = new ProgressDialog(this);
+	    		progressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
+	    		progressDialog.setMax(selectedSiteCount);
+	            progressDialog.setMessage(getResources().getString(R.string.import_progress_message));
+	            dialog = progressDialog;
+	            // Create the database insert worker and set it to work: 
+	            DBInsertWorker insertWorker = new DBInsertWorker(dbInsertHandler);
+	            insertWorker.start();
+	    		break;
     	}
     	return dialog;
     }
@@ -586,11 +615,11 @@ public class ImportActivity extends Activity implements ImportListener, SiteList
      */
     private void importedSitesSelected() {
     	// Get the count of sites selected in the dialog:
-    	int selectedCount = 0;
+    	selectedSiteCount = 0;
     	for (int i = 0; i < selectedSites.length; i++)
-    		if (selectedSites[i]) selectedCount++;
+    		if (selectedSites[i]) selectedSiteCount++;
     	// Were any sites selected?
-    	if (selectedCount > 0) {
+    	if (selectedSiteCount > 0) {
     		// Check to see if any of the imported sites will overwrite an
     		// existing site.  We'll do this by looping through the imported
     		// site list, check to see if that site is currently selected.  If
@@ -626,34 +655,11 @@ public class ImportActivity extends Activity implements ImportListener, SiteList
      * and the user has selected one or more sites to import.
      */
     private void doFinalImport() {
-    	// Asbestos underpants:
-    	try {
-    		// Whatever happens here, we should probably force the site list to be
-    		// rebuilt the next time it is needed:
-    		theApp.setSiteListDirty();
-    		// Keep track of how many sites we'll import:
-    		int count = 0;
-    		// Loop through the list of imported sites.  If the site was selected,
-    		// try to add it to the database and count it:
-    		for (int i = 0; i < importedSites.length; i++) {
-    			if (selectedSites[i]) {
-    				dbHelper.createRecord((SiteParameters)importedSites[i]);
-    				count++;
-    			}
-    		}
-    		// Build our success message:
-    		String message = getResources().getString(R.string.import_complete_message);
-    		message = message.replace(getResources().getString(R.string.meta_replace_token),
-    				String.valueOf(count));
-    		Toast.makeText(this, message, Toast.LENGTH_LONG).show();
-    	// Something blew up:
-    	} catch (Exception e) {
-    		Toast.makeText(this, R.string.error_import_unknown_error,
-    				Toast.LENGTH_LONG).show();
-    	}
-    	// Regardless of what happens above, exist out of this activity and return
-    	// to the main menu:
-    	finish();
+    	// Originally, this method did the actual work of inserting the data into the
+    	// database.  However, this proved to be too much work to be doing in the UI
+    	// thread, so we'll launch a progress dialog and let a worker thread do the
+    	// work.
+    	showDialog(DIALOG_PROGRESS_DB_WRITE);
     }
     
 	public void onSitesImported(Object[] importedSites) {
@@ -691,7 +697,8 @@ public class ImportActivity extends Activity implements ImportListener, SiteList
 				importFile,
 				txtPassphrase.getText().toString(),
 				importedSites,
-				selectedSites);
+				selectedSites,
+				selectedSiteCount);
 		return state;
 	}
 	
@@ -720,6 +727,9 @@ public class ImportActivity extends Activity implements ImportListener, SiteList
 		/** The currently selected sites */
 		private boolean[] selectedSites = null;
 		
+		/** The currently selected site count */
+		private int selectedSiteCount = 0;
+		
 		/**
 		 * 
 		 * @param importRootPath The import root path
@@ -727,14 +737,17 @@ public class ImportActivity extends Activity implements ImportListener, SiteList
 		 * @param password The user's import password
 		 * @param importedSites The currently imported sites
 		 * @param selectedSites The currently selected sites
+		 * @param selectedSiteCount The currently selected site count
 		 */
 		protected ImportViewState(String importRootPath, String importFile,
-				String password, Object[] importedSites, boolean[] selectedSites) {
+				String password, Object[] importedSites, boolean[] selectedSites,
+				int selectedSiteCount) {
 			this.importRootPath = importRootPath;
 			this.importFile = importFile;
 			this.password = password;
 			this.importedSites = importedSites;
 			this.selectedSites = selectedSites;
+			this.selectedSiteCount = selectedSiteCount;
 		}
 		
 		/** The import root path */
@@ -752,6 +765,98 @@ public class ImportActivity extends Activity implements ImportListener, SiteList
 		/** The currently selected sites */
 		protected boolean[] getSelectedSites() { return selectedSites; }
 		
+		/** The currently selected site count */
+		protected int getSelectedSiteCount() { return selectedSiteCount; }
+		
+	}
+	
+	/**
+	 * This handler will handle messages coming from the database insert handler and
+	 * update the progress dialog accordingly
+	 */
+	private final Handler dbInsertHandler = new Handler()
+	{
+		public void handleMessage(Message msg) {
+			// Get our current success and total counts and update the progress dialog:
+            int success_count = msg.getData().getInt("success_count");
+            int total_count = msg.getData().getInt("total_count");
+            if (total_count >= 0) progressDialog.setProgress(total_count);
+            // If we meet or exceed maximum number of sites to import, print a
+            // success message and close up shop:
+            if (total_count >= progressDialog.getMax()) {
+            	me.removeDialog(DIALOG_PROGRESS_DB_WRITE);
+        		// Build our success message:
+        		String message = getResources().getString(R.string.import_complete_message);
+        		message = message.replace(getResources().getString(R.string.meta_replace_token),
+        				String.valueOf(success_count));
+        		Toast.makeText(getBaseContext(), message, Toast.LENGTH_LONG).show();
+        		// Close the import activity:
+        		me.finish();
+        	// If we get an error, display an error message and close both the
+        	// progress dialog and the import activity:
+            } else if (total_count < 0) {
+            	me.removeDialog(DIALOG_PROGRESS_DB_WRITE);
+        		Toast.makeText(getBaseContext(), R.string.error_import_unknown_error,
+        				Toast.LENGTH_LONG).show();
+            	me.finish();
+            }
+		}
+	};
+	
+	/**
+	 * This worker thread handles the actual work of inserting the imported and
+	 * selected sites into the database.  Since this process can actually take
+	 * a while, it needs to be done outside the UI thread.
+	 * @author Jeffrey T. Darlington
+	 * @version 1.3.0
+	 * @since 1.3.0
+	 */
+	private class DBInsertWorker extends Thread
+	{
+		/** The Handler to update our status to */
+    	private Handler mHandler;
+
+    	DBInsertWorker(Handler handler) {
+    		mHandler = handler;
+    	}
+    	
+    	public void run() {
+            Message msg = null;
+            Bundle b = null;
+    		// Keep track of how many total sites we'll try to import and how
+            // many we successfully import:
+    		int total_count = 0;
+    		int success_count = 0;
+            try {
+        		// Whatever happens here, we should probably force the site list to be
+        		// rebuilt the next time it is needed:
+        		theApp.setSiteListDirty();
+        		// Loop through the list of imported sites.  If the site was selected,
+        		// try to add it to the database and count it.  Send a message to the
+        		// handler for each item in the list.
+        		for (int i = 0; i < importedSites.length; i++) {
+        			if (selectedSites[i]) {
+        				total_count++;
+        				if (dbHelper.createRecord((SiteParameters)importedSites[i]) !=
+        						ParamsDbAdapter.DB_ERROR) success_count++;
+        			}
+            		msg = mHandler.obtainMessage();
+	                b = new Bundle();
+	                b.putInt("success_count", success_count);
+	                b.putInt("total_count", total_count);
+	                msg.setData(b);
+	                mHandler.sendMessage(msg);
+        		}
+        	// If something blew up, send a "total" of -1 to signal the error:
+            } catch (Exception e) {
+        		msg = mHandler.obtainMessage();
+                b = new Bundle();
+                b.putInt("success_count", success_count);
+                b.putInt("total_count", -1);
+                msg.setData(b);
+                mHandler.sendMessage(msg);
+            }
+    	}
 	}
 	
 }

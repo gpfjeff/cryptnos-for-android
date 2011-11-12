@@ -374,6 +374,23 @@ public class AdvancedSettingsActivity extends Activity {
 			}
         });
         
+        // For the most part, this activity handles configuration changes (like rotating
+        // the device or sliding out of physical keyboard) pretty well because all the
+        // settings are saved instantly once they are changed.  When a configuration
+        // change occurs the activity is destroyed and rebuilt, which just reads the
+        // settings from the preferences.  The debug info box isn't a preference, though,
+        // so we need to handle it separately.  Try and get the last non-config instance
+        // and see if the box was checked before the change.  If so, reset the checkbox
+        // to checked and rebuild the debug box.  Otherwise, make sure the checkbox
+        // is unchecked.
+        try {
+        	final SettingsState state = (SettingsState)getLastNonConfigurationInstance();
+        	if (state.getShowDebugInfo()) {
+        		chkShowDebugInfo.setChecked(true);
+        		buildDebugInfoBox();
+        	} else chkShowDebugInfo.setChecked(false);
+        } catch (Exception e) {}
+        
     }
     
     protected Dialog onCreateDialog(int id) {
@@ -482,6 +499,14 @@ public class AdvancedSettingsActivity extends Activity {
     	return false;
     }
 	
+	public Object onRetainNonConfigurationInstance() {
+		// When a configuration change occurs (i.e. rotating the device), save the
+		// state of the show debug info checkbox so it can be restored.  Everything
+		// else should be rebuilt automatically.
+		final SettingsState state = new SettingsState(chkShowDebugInfo.isChecked());
+		return state;
+	}
+	
 	/**
 	 * Build and display the debug info text box:
 	 */
@@ -563,7 +588,7 @@ public class AdvancedSettingsActivity extends Activity {
 	 * @return A string suitable for printing that displays a user-friendly memory
 	 * size
 	 */
-	public String prettyBitString(long bits) {
+	private String prettyBitString(long bits) {
 		if (bits < 0L) return "Unknown";
 		if (bits < 1024L) return bits + "B";
 		else if (bits < 1048576L)
@@ -573,6 +598,31 @@ public class AdvancedSettingsActivity extends Activity {
 		else if (bits < 1099511627776L)
 			return Math.round((double)bits / 1073741824.0) + "GiB";
 		else return Math.round((double)bits / 1099511627776.0) + "TiB";
+	}
+	
+	/**
+	 * This internal class saves the current state of the settings activity so it can
+	 * be restored after a configuration change.
+	 * @author Jeffrey T. Darlington
+	 * @version 1.3.0
+	 * @since 1.3.0
+	 */
+	private class SettingsState {
+		
+		/** The current state of the show debug info checkbox */
+		private boolean showDebugInfo = false;
+
+		/**
+		 * Constructor
+		 * @param showDebugInfo The current state of the show debug info checkbox
+		 */
+		SettingsState(boolean showDebugInfo) {
+			this.showDebugInfo = showDebugInfo;
+		}
+		
+		/** The current state of the show debug info checkbox */
+		protected boolean getShowDebugInfo() { return showDebugInfo; }
+		
 	}
 
 }

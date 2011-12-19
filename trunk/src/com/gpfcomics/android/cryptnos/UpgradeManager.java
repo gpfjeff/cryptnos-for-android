@@ -48,7 +48,9 @@
  * UPDATES FOR 1.2.5:  Added the 1.2.5 version code, commented out for now.
  * 
  * UPDATES FOR 1.3.0:  Added the 1.3.0 version code.  Added default preferences for
- * "Show Master Passwords" and QR code scanner preference. 
+ * "Show Master Passwords" and QR code scanner preference.
+ * 
+ * UPDATES FOR 1.3.1:  Added the 1.3.1 version code, commented out for now.
  * 
  * "QR code" is a registered trademark of Denso Wave Incorporated.
  * 
@@ -83,7 +85,7 @@ import android.widget.Toast;
  * changed or "upgraded" if the currently running version of Cryptnos is different
  * than the last run version.
  * @author Jeffrey T. Darlington
- * @version 1.3.0
+ * @version 1.3.1
  * @since 1.2
  */
 public class UpgradeManager {
@@ -158,6 +160,8 @@ public class UpgradeManager {
 	 *  by letting the user pick and choose which sites in an export file they'd
 	 *  like to import. */
 	private static final int VERSION_1_3_0 = 11;
+	
+	//private static final int VERSION_1_3_1 = 12;
 
 	/** A regular expression Pattern for matching the UTF-8 character
 	 *  encoding string.  This pattern is case insensitive. */

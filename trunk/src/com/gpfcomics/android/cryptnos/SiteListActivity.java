@@ -37,6 +37,9 @@
  * context menu has be updated as well to make exporting to QR code an option
  * in all list modes.
  * 
+ * UPDATES FOR 1.3.1:  Added setTextFilterEnabled() to ListView to enable filtering
+ * of the site list based on the user typing.
+ * 
  * "QR code" is a registered trademark of Denso Wave Incorporated.
  * 
  * This program is Copyright 2011, Jeffrey T. Darlington.
@@ -90,7 +93,7 @@ import android.widget.AdapterView.AdapterContextMenuInfo;
  * will also bring up a context menu that will allow any of the subsequent
  * actions to be selected.
  * @author Jeffrey T. Darlington
- * @version 1.3.0
+ * @version 1.3.1
  * @since 1.0
  */public class SiteListActivity extends ListActivity implements
  		SiteListListener {
@@ -142,7 +145,7 @@ import android.widget.AdapterView.AdapterContextMenuInfo;
 	/** A SimpleAdapter used to build the site list.  This has been pulled
 	 *  out into a member variable so it can be referenced from multiple
 	 *  locations. */
-	SimpleAdapter menuAdapter = null;
+	private SimpleAdapter menuAdapter = null;
 	
     @Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -155,7 +158,13 @@ import android.widget.AdapterView.AdapterContextMenuInfo;
         theApp = (CryptnosApplication)getApplication();
         DBHelper = theApp.getDBHelper();
         // Register the list for context menu events:
-        registerForContextMenu(getListView());
+        ListView lv = getListView();
+        registerForContextMenu(lv);
+        // Enable filtering of the list by letting the user type text while the
+        // list is displayed.  The request for focus helps make sure this gets
+        // enabled as soon as the view comes into play.
+        lv.setTextFilterEnabled(true);
+        lv.requestFocus();
         // Try to get the mode from the intent.  Note that if anything
     	// goes wrong, we go into edit mode rather than delete mode, so
     	// default actions won't destroy data.
@@ -523,6 +532,9 @@ import android.widget.AdapterView.AdapterContextMenuInfo;
 		    		);
 		        // And apply that adapter to the list:
 		        if (menuAdapter != null) setListAdapter(menuAdapter);
+		        // For good measure, request focus for the ListView again, just
+		        // to make sure filtering of the list continues to work:
+		        getListView().requestFocus();
 		    // If the site list was null, something bad must have happened:
 			} else Toast.makeText(this, R.string.error_bad_listfetch,
             		Toast.LENGTH_LONG).show();

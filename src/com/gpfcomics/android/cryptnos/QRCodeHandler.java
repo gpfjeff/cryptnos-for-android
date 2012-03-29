@@ -16,9 +16,11 @@
  * for availability, generating intents, and encoding and decoding site parameters
  * into and out of the QR code format.
  * 
+ * UPDATES FOR 1.3.1:  Minor tweaks to make Lint happy.
+ * 
  * "QR code" is a registered trademark of Denso Wave Incorporated.
  * 
- * This program is Copyright 2011, Jeffrey T. Darlington.
+ * This program is Copyright 2012, Jeffrey T. Darlington.
  * E-mail:  android_support@cryptnos.com
  * Web:     http://www.cryptnos.com/
  * 
@@ -43,6 +45,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.res.Resources;
+import android.os.Build;
 import android.widget.Toast;
 
 /**
@@ -55,7 +58,7 @@ import android.widget.Toast;
  * availability, generating intents, and encoding and decoding site parameters
  * into and out of the QR code format.
  * @author Jeffrey T. Darlington
- * @version 1.3.0
+ * @version 1.3.1
  * @since 1.3.0
  */
 public class QRCodeHandler {
@@ -203,19 +206,19 @@ public class QRCodeHandler {
 		// First, ZXing Barcode Scanner:
 		try {
 			pm.getPackageInfo(PACKAGE_ZXING, 0);
-			qrcappList.add(new Integer(APP_ZXING));
+			qrcappList.add(Integer.valueOf(APP_ZXING));
 		}
 		catch (PackageManager.NameNotFoundException ex1) {}
 		// QR Droid:
 		try {
 			pm.getPackageInfo(PACKAGE_QRDROID, 0);
-			qrcappList.add(new Integer(APP_QRDROID));
+			qrcappList.add(Integer.valueOf(APP_QRDROID));
 		}
 		catch (PackageManager.NameNotFoundException ex2) {}
 		// QR Droid Private:
 		try {
 			pm.getPackageInfo(PACKAGE_QRDROID_PRIVATE, 0);
-			qrcappList.add(new Integer(APP_QRDROID_PRIVATE));
+			qrcappList.add(Integer.valueOf(APP_QRDROID_PRIVATE));
 		}
 		catch (PackageManager.NameNotFoundException ex3) {}
 		// Now check the ArrayList's size.  If we got anything at all, we found
@@ -358,7 +361,10 @@ public class QRCodeHandler {
 				// ZXing Barcode Scanner:
 				case APP_ZXING:
 					intent = new Intent(INTENT_SCAN_ZXING);
-					intent.setPackage(PACKAGE_ZXING);
+					// Whoops... Intent.setPackage() is only used in Donut and later.
+					// We have to conditionally include this step.
+					if (Integer.parseInt(Build.VERSION.SDK) < Build.VERSION_CODES.DONUT)
+						intent.setPackage(PACKAGE_ZXING);
 					intent.putExtra("SCAN_MODE", "QR_CODE_MODE");
 					// Note that we don't want Barcode Scanner to save
 					// this in its scan history:
@@ -410,7 +416,10 @@ public class QRCodeHandler {
 					// ZXing Barcode Scanner:
 					case APP_ZXING:
 						intent = new Intent(INTENT_ENCODE_ZXING);
-						intent.setPackage(PACKAGE_ZXING);
+						// Whoops... Intent.setPackage() is only used in Donut and later.
+						// We have to conditionally include this step.
+						if (Integer.parseInt(Build.VERSION.SDK) < Build.VERSION_CODES.DONUT)
+							intent.setPackage(PACKAGE_ZXING);
 						intent.putExtra("ENCODE_DATA", encodedParams);
 						intent.putExtra("ENCODE_TYPE", "TEXT_TYPE");
 						// Don't echo back the text of the code beneath it:

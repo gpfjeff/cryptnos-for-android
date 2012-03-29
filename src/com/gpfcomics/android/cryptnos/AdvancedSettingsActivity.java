@@ -17,9 +17,11 @@
  * UPDATES FOR 1.3.0:  Added controls for QR scanner preference and "show master
  * passwords" setting.  Added debug info controls.
  * 
+ * UPDATES FOR 1.3.1:  Added option to clear passwords when Cryptnos loses focus
+ * 
  * "QR code" is a registered trademark of Denso Wave Incorporated.
  * 
- * This program is Copyright 2011, Jeffrey T. Darlington.
+ * This program is Copyright 2012, Jeffrey T. Darlington.
  * E-mail:  android_support@cryptnos.com
  * Web:     http://www.cryptnos.com/
  * 
@@ -74,7 +76,7 @@ import android.widget.AdapterView.OnItemSelectedListener;
  * This activity allows the user to tweak some of the more advanced settings within
  * Cryptnos, such as which text encoding to use.
  * @author Jeffrey T. Darlington
- * @version 1.3.0
+ * @version 1.3.1
  * @since 1.2
  */
 public class AdvancedSettingsActivity extends Activity {
@@ -120,6 +122,9 @@ public class AdvancedSettingsActivity extends Activity {
 	
 	/** A CheckBox to manage the "show master passwords" setting */
 	private CheckBox chkShowMasterPasswords = null;
+	
+	/** A CheckBox to manage the "clear passwords on focus loss" setting */
+	private CheckBox chkClearPasswdsOnFocusLoss = null;
 	
 	/** A CheckBox to manage the "show debugging info" setting */
 	private CheckBox chkShowDebugInfo = null;
@@ -362,7 +367,20 @@ public class AdvancedSettingsActivity extends Activity {
 				else theApp.toggleShowMasterPasswords();
 			}
         });
-        
+
+        // Similarly, show the checkbox to allow the user to toggle the setting to
+        // clear the master and generated password boxes when Cryptnos goes into
+        // the background.  We don't need a warning dialog on this one, so it's
+        // more like the "copy to clipboard" setting.
+        chkClearPasswdsOnFocusLoss = 
+        	(CheckBox)findViewById(R.id.chkClearPasswdsOnFocusLoss);
+        chkClearPasswdsOnFocusLoss.setChecked(theApp.clearPasswordsOnFocusLoss());
+        chkClearPasswdsOnFocusLoss.setOnClickListener(new OnClickListener() {
+			public void onClick(View v) {
+				theApp.toggleClearPasswordsOnFocusLoss();
+			}
+        });
+
         // Get the debugging checkbox and give it some functionality.  If the checkbox
         // is checked, we'll show the debugging EditText box with a bunch of info
         // culled from the system.  If the box is cleared, we'll hide the box.

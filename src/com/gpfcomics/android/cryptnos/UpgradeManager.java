@@ -50,11 +50,12 @@
  * UPDATES FOR 1.3.0:  Added the 1.3.0 version code.  Added default preferences for
  * "Show Master Passwords" and QR code scanner preference.
  * 
- * UPDATES FOR 1.3.1:  Added the 1.3.1 version code, commented out for now.
+ * UPDATES FOR 1.3.1:  Added the 1.3.1 version code.  Added default preference for
+ * "Clear Passwords on Focus Loss" preference.
  * 
  * "QR code" is a registered trademark of Denso Wave Incorporated.
  * 
- * This program is Copyright 2011, Jeffrey T. Darlington.
+ * This program is Copyright 2012, Jeffrey T. Darlington.
  * E-mail:  android_support@cryptnos.com
  * Web:     http://www.cryptnos.com/
  * 
@@ -161,7 +162,7 @@ public class UpgradeManager {
 	 *  like to import. */
 	private static final int VERSION_1_3_0 = 11;
 	
-	//private static final int VERSION_1_3_1 = 12;
+	private static final int VERSION_1_3_1 = 12;
 
 	/** A regular expression Pattern for matching the UTF-8 character
 	 *  encoding string.  This pattern is case insensitive. */
@@ -326,6 +327,17 @@ public class UpgradeManager {
 	        		// Also default the "show master passwords" setting to false:
 	        		editor.putBoolean(CryptnosApplication.PREFS_SHOW_MASTER_PASSWD, false);
 	        		oldVersion = VERSION_1_3_0;
+	        	}
+	        	// In version 1.3.1, we added the "clear passwords on focus loss"
+	        	// preference, which makes Cryptnos clear the master and generated
+	        	// password boxes whenever Cryptnos goes into the background (such as
+	        	// when the user switches to a different app).  To replicate the old
+	        	// behavior before we introduced this, we default this preference to
+	        	// off.
+	        	if (oldVersion < VERSION_1_3_1) {
+	        		editor.putBoolean(CryptnosApplication.PREFS_CLEAR_PASSWDS_ON_FOCUS_LOSS,
+	        				false);
+	        		oldVersion = VERSION_1_3_1;
 	        	}
 	        	// Additional version checks should follow here, allowing
 	        	// them to chain from check to check:

@@ -60,9 +60,12 @@
  * object so it only gets created when it is first called.  Changed setSiteListDirty()
  * to null out site list as well as set the dirty flag.
  * 
+ * UPDATES FOR 1.3.1:  Added option to clear passwords on focus loss.  Minor tweaks
+ * to make Lint happy.
+ * 
  * "QR code" is a registered trademark of Denso Wave Incorporated.
  * 
- * This program is Copyright 2011, Jeffrey T. Darlington.
+ * This program is Copyright 2012, Jeffrey T. Darlington.
  * E-mail:  android_support@cryptnos.com
  * Web:     http://www.cryptnos.com/
  * 
@@ -131,7 +134,7 @@ import android.widget.Toast;
  * mark the list as "dirty", forcing it to be reloaded the next time it is
  * requested.
  * @author Jeffrey T. Darlington
- * @version 1.3.0
+ * @version 1.3.1
  * @since 1.0
  */
 public class CryptnosApplication extends Application {
@@ -206,6 +209,10 @@ public class CryptnosApplication extends Application {
 	/** The ID string for the show master passwords setting within the shared
 	 *  preferences file. */
 	public static final String PREFS_SHOW_MASTER_PASSWD = "SHOW_MASTER_PASSWD";
+	/** The ID string for the clear passwords on focust loss setting within
+	 *  the shared preferences file. */
+	public static final String PREFS_CLEAR_PASSWDS_ON_FOCUS_LOSS =
+		"CLEAR_PASSWDS_ON_FOCUS_LOSS";
 	
 	/* Private Constants ********************************************************/
 
@@ -264,6 +271,10 @@ public class CryptnosApplication extends Application {
 	/** A boolean flag indicating whether or not the user has selected to display
 	 *  the master password while generating passwords. */
 	private static boolean showMasterPassword = false;
+	/** A boolena flag indicating the user's preference of whether or not the
+	 *  master and generated password boxes should be cleared if Cryptnos goes
+	 *  into the background (loses focus). */
+	private static boolean clearPasswordsOnFocusLoss = false;
 
 	/** The calling activity, so we can refer back to it.  This is usually the
 	 *  same as the site list listener, but doesn't necessarily have to be. */
@@ -378,7 +389,7 @@ public class CryptnosApplication extends Application {
 				// https://secure.wikimedia.org/wikipedia/en/wiki/Base64
 				b64Length = (byteLength + 2 - ((byteLength + 2) % 3)) / 3 * 4;
 				// Now store the hash name and length into the hash table:
-				hashLengths.put(hashes[i], new Integer(b64Length));
+				hashLengths.put(hashes[i], Integer.valueOf(b64Length));
 			}
 		// If anything blows up, set the hash table to null, which we'll catch
 		// as an error later:
@@ -717,6 +728,27 @@ public class CryptnosApplication extends Application {
 		showMasterPassword = !showMasterPassword;
 		SharedPreferences.Editor editor = prefs.edit();
 		editor.putBoolean(PREFS_SHOW_MASTER_PASSWD, showMasterPassword);
+		editor.commit();
+	}
+	
+	/**
+	 * Determine whether or not the master and generated password boxes should
+	 * be cleared whenever Cryptnos goes into the background (that is, it loses
+	 * focus and is no longer the visible activity).
+	 * @return True if the passwords should be cleared, false otherwise
+	 */
+	public boolean clearPasswordsOnFocusLoss() {
+		return clearPasswordsOnFocusLoss;
+	}
+	
+	/**
+	 * Toggle the "clear passwords on focus loss" setting and save the new
+	 * value to the application preferences.
+	 */
+	public void toggleClearPasswordsOnFocusLoss() {
+		clearPasswordsOnFocusLoss = !clearPasswordsOnFocusLoss;
+		SharedPreferences.Editor editor = prefs.edit();
+		editor.putBoolean(PREFS_CLEAR_PASSWDS_ON_FOCUS_LOSS, clearPasswordsOnFocusLoss);
 		editor.commit();
 	}
 	

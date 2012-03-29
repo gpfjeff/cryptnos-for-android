@@ -24,7 +24,9 @@
  * the official Android developer's blog, found here:
  * http://android-developers.blogspot.com/2010/07/how-to-have-your-cupcake-and-eat-it-too.html
  * 
- * This program is Copyright 2010, Jeffrey T. Darlington.
+ * UPDATES FOR 1.3.1:  Minor tweaks to make Lint happy.
+ * 
+ * This program is Copyright 2012, Jeffrey T. Darlington.
  * E-mail:  android_support@cryptnos.com
  * Web:     http://www.cryptnos.com/
  * 
@@ -54,7 +56,7 @@ import android.provider.Settings;
  * the API-specific properties to return the proper value for the platform
  * we're currently running on.
  * @author Jeffrey T. Darlington
- * @version 1.1
+ * @version 1.3.1
  * @since 1.1
  */
 public abstract class AndroidID {

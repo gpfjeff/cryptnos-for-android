@@ -97,15 +97,18 @@ public abstract class ClipboardManager {
 	private static class OldClipboardManager extends ClipboardManager {
 		
 		/** The actual ClipboardManager object */
+		@SuppressWarnings("deprecation")
 		private static android.text.ClipboardManager clippy = null;
 		
 		/** Our constructor */
+		@SuppressWarnings("deprecation")
 		public OldClipboardManager()
 		{
 			clippy = (android.text.ClipboardManager)theApp.getSystemService(
 					android.content.Context.CLIPBOARD_SERVICE);
 		}
 		
+		@SuppressWarnings("deprecation")
 		@Override
 		public void setText(CharSequence text)
 		{

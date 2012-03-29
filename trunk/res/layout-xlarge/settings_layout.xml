@@ -82,14 +82,27 @@
 			            android:text="@string/settings_show_master_passwd" />
 			    </TableRow>
 
+				<TableRow
+			        android:id="@+id/tableRow2"
+			        android:layout_width="wrap_content"
+			        android:layout_height="wrap_content" >
+
+		   			<CheckBox android:id="@+id/chkClearPasswdsOnFocusLoss"
+						android:text="@string/settings_clear_passwds_on_focus_loss"
+						android:layout_width="wrap_content"
+						android:layout_height="wrap_content"
+						android:layout_gravity="center_horizontal"></CheckBox>
+
+		   			<CheckBox android:id="@+id/chkShowDebugInfo"
+						android:text="@string/settings_show_debug_able"
+						android:layout_width="wrap_content"
+						android:layout_height="wrap_content"
+						android:layout_gravity="center_horizontal"></CheckBox>
+
+			    </TableRow>
+
 			</TableLayout>
 			
-   			<CheckBox android:id="@+id/chkShowDebugInfo"
-				android:text="@string/settings_show_debug_able"
-				android:layout_width="wrap_content"
-				android:layout_height="wrap_content"
-				android:layout_gravity="center_horizontal"></CheckBox>
-
 		</LinearLayout>
 	</ScrollView>
 </LinearLayout>

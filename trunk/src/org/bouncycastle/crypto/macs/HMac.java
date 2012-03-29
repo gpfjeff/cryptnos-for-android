@@ -32,23 +32,34 @@ public class HMac
     {
         blockLengths = new Hashtable();
         
-        blockLengths.put("GOST3411", new Integer(32));
+        // EDIT BY JTD 3/29/2012:  The original BouncyCastle code uses new Integer(...)
+        // calls for each of these, which causes Lint in the Android SDK to complain
+        // about performance issues.  To make Lint happy, I've replaced these calls
+        // with Integer.valueOf(), which should be more efficient as it will share
+        // instances of Integer objects with the save value (like the repeated 64s and
+        // 128s below) rather than create new objects for each one.  Note that Eclipse
+        // also complains about using a raw Hashtable rather than a generic one, but
+        // we want to change the BouncyCastle code as little as possible so it will
+        // make upgrading easier.  The Integer.valueOf() change has a legitimate
+        // performance advantage on Android so we'll break that rule this time.
         
-        blockLengths.put("MD2", new Integer(16));
-        blockLengths.put("MD4", new Integer(64));
-        blockLengths.put("MD5", new Integer(64));
+        blockLengths.put("GOST3411", Integer.valueOf(32));
         
-        blockLengths.put("RIPEMD128", new Integer(64));
-        blockLengths.put("RIPEMD160", new Integer(64));
+        blockLengths.put("MD2", Integer.valueOf(16));
+        blockLengths.put("MD4", Integer.valueOf(64));
+        blockLengths.put("MD5", Integer.valueOf(64));
         
-        blockLengths.put("SHA-1", new Integer(64));
-        blockLengths.put("SHA-224", new Integer(64));
-        blockLengths.put("SHA-256", new Integer(64));
-        blockLengths.put("SHA-384", new Integer(128));
-        blockLengths.put("SHA-512", new Integer(128));
+        blockLengths.put("RIPEMD128", Integer.valueOf(64));
+        blockLengths.put("RIPEMD160", Integer.valueOf(64));
         
-        blockLengths.put("Tiger", new Integer(64));
-        blockLengths.put("Whirlpool", new Integer(64));
+        blockLengths.put("SHA-1", Integer.valueOf(64));
+        blockLengths.put("SHA-224", Integer.valueOf(64));
+        blockLengths.put("SHA-256", Integer.valueOf(64));
+        blockLengths.put("SHA-384", Integer.valueOf(128));
+        blockLengths.put("SHA-512", Integer.valueOf(128));
+        
+        blockLengths.put("Tiger", Integer.valueOf(64));
+        blockLengths.put("Whirlpool", Integer.valueOf(64));
     }
     
     private static int getByteLength(

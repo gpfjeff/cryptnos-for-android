@@ -28,8 +28,12 @@
  * no enable and disable copying the generated password to the clipboard.
  *
  * UPDATES FOR 1.3.0:  Enabled "show master passwords" setting.
+ * 
+ * UPDATES FOR 1.3.1:  Added option to clear passwords when the activity loses
+ * focus.  Pressing Enter in the master password box now triggers the Generate
+ * butotn event.
  *
- * This program is Copyright 2011, Jeffrey T. Darlington.
+ * This program is Copyright 2012, Jeffrey T. Darlington.
  * E-mail:  android_support@cryptnos.com
  * Web:     http://www.cryptnos.com/
  * 
@@ -51,9 +55,11 @@ import android.app.Activity;
 import android.content.Intent;
 import android.database.Cursor;
 import android.os.Bundle;
+import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.View.OnKeyListener;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
@@ -67,7 +73,7 @@ import android.widget.Toast;
  * view, allowing the user to generate the password for a given site without
  * worrying about fat-fingering something and screwing up the site's settings. 
  * @author Jeffrey T. Darlington
- * @version 1.3.0
+ * @version 1.3.1
  * @since 1.0
  */
 public class GenerateExistingActivity extends Activity {
@@ -96,6 +102,14 @@ public class GenerateExistingActivity extends Activity {
 	 *  this member will hold the parameters to make working with them
 	 *  easier. */
 	private SiteParameters params = null;
+	/** This flag determines whether or not we should clear the master and
+	 *  generated password boxes when the activity is displayed.  There are
+	 *  several reasons why this may or may not happen, depending on the user's
+	 *  preferences and whether we're handling a configuration change like
+	 *  rotating the screen.  This is the "final" flag that determines whether
+	 *  or not the clearing takes place and this will be set to true or false
+	 *  based on all these factors.  By default, this will be false. */
+	private boolean clearPasswords = false;
 	
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -119,6 +133,10 @@ public class GenerateExistingActivity extends Activity {
         // box accordingly:
         if (theApp.showMasterPasswords())
         	txtPassphrase.setTransformationMethod(null);
+        
+        // Get the user's preference of whether the password boxes should be
+        // cleared when Cryptnos goes into the background:
+        clearPasswords = theApp.clearPasswordsOnFocusLoss();
 
         // Asbestos underpants:
         try {
@@ -133,6 +151,12 @@ public class GenerateExistingActivity extends Activity {
 	        	populateParametersLabel();
 	        	txtPassphrase.setText(state.getMasterPassword());
 	        	txtOutput.setText(state.getGeneratedPassword());
+	        	// Since we're restoring our state from a configuration change, we
+	        	// don't want the password boxes to be cleared, regardless of the
+	        	// user's preference.  Override whatever got set above and force
+	        	// this clearing not to take place.  See onResume() below for
+	        	// more details.
+	        	clearPasswords = false;
 	        // There was no saved state, so proceed to the next step:
 	        } else {
 	            // This activity doesn't make any sense if we don't get anything
@@ -232,6 +256,20 @@ public class GenerateExistingActivity extends Activity {
 					}
 				}
 	        });
+	        
+	        // Next, we'll add a key listener to the master password text box
+	        // and listen for the Enter key.  If the Enter key is pressed, we
+	        // don't want that character to be added to the master password.
+	        // Rather, we want it to trigger the generate password event, just
+	        // as if the user tapped the Generate button.
+	        txtPassphrase.setOnKeyListener(new OnKeyListener() {
+				public boolean onKey(View v, int keyCode, KeyEvent event) {
+					if (keyCode == KeyEvent.KEYCODE_ENTER) {
+						btnGenerate.performClick();
+						return true;
+					} else return false;
+				}
+	        });
 
 	    // Something blew up alone the way:
         } catch (Exception e) {
@@ -239,6 +277,38 @@ public class GenerateExistingActivity extends Activity {
 					Toast.LENGTH_LONG).show();
 			finish();
         }
+	}
+
+	@Override
+	public void onResume()
+	{
+		// The only thing we're concerned about when resuming is whether or not
+		// we should be clearing the master and generated password boxes.  In
+		// general, this is the user's preference.  The user may elect to have
+		// Cryptnos clear these boxes whenever it goes into the background (i.e.
+		// loses focus), such as when they multitask and switch to another
+		// application.  By default, this preference is turned off, which
+		// replicates the behavior of the app before the option was added.
+		//
+		// This becomes complicated when we have to take into account configuration
+		// changes, such as rotating the screen or sliding out a physical keyboard.
+		// Android handles these actions by destroying and recreating the activity.
+		// In this case, we *DON'T* want to clear the passwords, as that might be
+		// annoying.  When this happens, we explicitly override the user's preference
+		// and disable this functionality.
+		//
+		// By the time we reach this step, the clearPasswords flag should have
+		// already performed this logic and we should know whether or not we
+		// should clear those boxes.  If we need to clear them, we'll do that now.
+        if (clearPasswords) {
+        	txtPassphrase.setText("");
+        	txtOutput.setText("");
+        }
+        // Now restore the user's original preference, just in case we did
+        // override it to handle a configuration change:
+        clearPasswords = theApp.clearPasswordsOnFocusLoss();
+        // Call the super's onResume() to complete the process:
+        super.onResume();
 	}
 	
 	@Override

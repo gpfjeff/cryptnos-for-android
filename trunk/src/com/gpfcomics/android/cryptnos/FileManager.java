@@ -26,6 +26,8 @@
  * UPDATES FOR 1.3.0:  Abstracted third-party app names into constants and pulled
  * hard-coded error strings out into strings.xml where they belong.
  * 
+ * UPDATES FOR 1.3.1:  Minor tweaks to make Lint happy
+ * 
  * This program is Copyright 2011, Jeffrey T. Darlington.
  * E-mail:  android_support@cryptnos.com
  * Web:     http://www.cryptnos.com/
@@ -61,7 +63,7 @@ import android.net.Uri;
  * provide sufficient abstraction to allow new file managers to be added over time
  * as new Intents are discovered.
  * @author Jeffrey T. Darlington
- * @version 1.3.0
+ * @version 1.3.1
  * @since 1.2
  */
 public class FileManager {
@@ -189,19 +191,19 @@ public class FileManager {
 		// First, OI File Manager:
 		try {
 			pm.getPackageInfo(PACKAGE_OI_FILE_MANAGER, 0);
-			fmList.add(new Integer(APP_OI_FILE_MANAGER));
+			fmList.add(Integer.valueOf(APP_OI_FILE_MANAGER));
 		}
 		catch (PackageManager.NameNotFoundException ex1) {}
 		// AndExplorer:
 		try {
 			pm.getPackageInfo(PACKAGE_ANDEXPLORER, 0);
-			fmList.add(new Integer(APP_ANDEXPLORER));
+			fmList.add(Integer.valueOf(APP_ANDEXPLORER));
 		}
 		catch (PackageManager.NameNotFoundException ex2) {}
 		// ES File Explorer:
 		try {
 			pm.getPackageInfo(PACKAGE_ES_FILE_EXPLORER, 0);
-			fmList.add(new Integer(APP_ES_FILE_EXPLORER));
+			fmList.add(Integer.valueOf(APP_ES_FILE_EXPLORER));
 		}
 		catch (PackageManager.NameNotFoundException ex3) {}
 		// Now check the ArrayList's size.  If we got anything at all, we found

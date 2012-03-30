@@ -8,6 +8,7 @@
 <ImageView android:id="@+id/about_image"
 	android:layout_width="wrap_content"
 	android:layout_height="wrap_content"
+	android:contentDescription="@string/about_logo"
 	android:src="@drawable/logo"></ImageView>
 <TextView android:id="@+id/about_header"
 	android:textSize="24sp"

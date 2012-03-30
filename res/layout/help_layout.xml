@@ -15,6 +15,6 @@
 			android:layout_height="wrap_content"
 			android:textSize="15sp"
 			android:id="@+id/labelHelp"
-			android:text="This should get replaced by the relevant help text." android:layout_margin="3dip"></TextView>
+			android:text="@string/dummy_help" android:layout_margin="3dip"></TextView>
 	</ScrollView>
 </LinearLayout>

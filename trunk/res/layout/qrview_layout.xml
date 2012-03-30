@@ -2,5 +2,5 @@
         android:id="@+id/imgQRCode"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:scaleType="fitCenter"
-        android:background="#ffffffff" />
+        android:contentDescription="@string/qrview"
+        android:scaleType="fitCenter" />

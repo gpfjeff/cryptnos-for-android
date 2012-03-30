@@ -13,6 +13,7 @@
             android:layout_height="wrap_content"
             android:layout_gravity="center_horizontal"
             android:scaleType="fitCenter"
+            android:contentDescription="@string/about_logo"
             android:src="@drawable/logo" />
 
         <TextView

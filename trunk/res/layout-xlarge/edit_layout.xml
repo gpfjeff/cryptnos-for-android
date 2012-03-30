@@ -111,7 +111,7 @@
     		            android:autoText="false"
     		            android:ellipsize="none"
     		            android:gravity="right"
-    		            android:hint="          "
+    		            android:hint="@string/dummy_hint"
     		            android:numeric="integer"
     		            android:saveEnabled="false" >
     		        </EditText>

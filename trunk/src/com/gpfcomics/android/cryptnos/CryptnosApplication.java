@@ -340,9 +340,11 @@ public class CryptnosApplication extends Application {
 		editor.commit();
 		// Generate the parameter salt:
 		refreshParameterSalt();
-		// Get our copy-to-clipboard and show-master-password preferences:
+		// Get our boolean preferences: copy to clipboard, show master passwords, and
+		// clear passwords on focus loss.
 		copyPasswordsToClipboard = prefs.getBoolean(PREFS_COPY_TO_CLIPBOARD, true);
 		showMasterPassword = prefs.getBoolean(PREFS_SHOW_MASTER_PASSWD, false);
+		clearPasswordsOnFocusLoss = prefs.getBoolean(PREFS_CLEAR_PASSWDS_ON_FOCUS_LOSS, false);
 		// Now build our hash table of hash algorithms to lengths:
 		try {
 			// Get the list of hashes from the string resources:

@@ -40,6 +40,7 @@ package com.gpfcomics.android.cryptnos;
 
 import java.util.ArrayList;
 
+import android.annotation.TargetApi;
 import android.app.Activity;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -351,6 +352,7 @@ public class QRCodeHandler {
 	 *  no preference of barcode scanner, this returns null.
 	 *  @return The Intent to pass to startActivityForResult()
 	 */
+	@TargetApi(4)
 	public Intent generateScanIntent() {
 		// This is pointless if we can't handle QR codes:
 		if (canScanQRCodes()) {
@@ -394,6 +396,7 @@ public class QRCodeHandler {
 	 * @param siteParams The site parameters to encode
 	 * @return The Intent to pass to startActivityForResult()
 	 */
+	@TargetApi(4)
 	public Intent generateEncodeIntent(SiteParameters siteParams) {
 		// Asbestos underpants:
 		try {

@@ -45,6 +45,7 @@
 */
 package com.gpfcomics.android.cryptnos;
 
+import android.annotation.TargetApi;
 import android.app.Application;
 import android.os.Build;
 
@@ -117,6 +118,7 @@ public abstract class ClipboardManager {
 
 	}
 	
+	@TargetApi(11)
 	private static class HoneycombClipboardManager extends ClipboardManager {
 		
 		/** The actual ClipboardManager object */

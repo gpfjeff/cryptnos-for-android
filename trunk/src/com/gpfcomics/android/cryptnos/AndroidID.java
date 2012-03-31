@@ -44,6 +44,7 @@
 */
 package com.gpfcomics.android.cryptnos;
 
+import android.annotation.TargetApi;
 import android.app.Application;
 import android.os.Build;
 import android.provider.Settings;
@@ -109,6 +110,7 @@ public abstract class AndroidID {
 	 * @version 1.1
 	 * @since 1.1
 	 */
+	@TargetApi(3)
 	private static class SecureAndroidID extends AndroidID {
 
 		public SecureAndroidID() {}

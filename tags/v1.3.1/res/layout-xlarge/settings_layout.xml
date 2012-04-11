@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/ScrollViewSettings"
+    android:orientation="vertical"
+	android:layout_width="fill_parent"
+	android:layout_height="fill_parent"
+	android:padding="10sp">
+	<LinearLayout android:id="@+id/layoutSettings"
+   		android:orientation="vertical"
+   		android:layout_width="fill_parent"
+   		android:layout_height="wrap_content">
+		<TextView android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:textSize="20sp"
+			android:id="@+id/labelEncoding"
+			android:text="@string/settings_encoding_label"></TextView>
+		<Spinner android:layout_width="fill_parent"
+			android:layout_height="wrap_content"
+			android:clickable="true"
+			android:id="@+id/spinEncodings"></Spinner>
+		<TextView android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:textSize="20sp"
+			android:paddingBottom="10dp"
+			android:id="@+id/labelDefaultEncoding"
+			android:text="@string/settings_default_encoding_label"></TextView>
+		<TextView android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:textSize="20sp"
+			android:id="@+id/labelFileManagerPreference"
+			android:text="@string/settings_file_manager_pref_label"></TextView>
+		<Spinner android:layout_width="fill_parent"
+			android:layout_height="wrap_content"
+			android:clickable="true"
+			android:id="@+id/spinFileManagers"></Spinner>
+		<TextView android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:textSize="20sp"
+			android:id="@+id/labelNoFileManagersAvailable"
+			android:text="@string/settings_no_file_managers_available"></TextView>
+		<TextView android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:textSize="20sp"
+			android:id="@+id/labelQRScannerPreference"
+			android:text="@string/settings_qrscanner_pref_label"></TextView>
+		<Spinner android:layout_width="fill_parent"
+			android:layout_height="wrap_content"
+			android:clickable="true"
+			android:id="@+id/spinQRScanners"></Spinner>
+		<TextView android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:textSize="20sp"
+			android:id="@+id/labelNoQRScannersAvailable"
+			android:text="@string/settings_no_qrscanner_available"></TextView>
+
+		<TableLayout
+		    android:id="@+id/tableLayout1"
+		    android:layout_width="match_parent"
+		    android:layout_height="wrap_content"
+		    android:paddingTop="10sp"
+		    android:stretchColumns="0,1">
+
+		    <TableRow
+		        android:id="@+id/tableRow1"
+		        android:layout_width="wrap_content"
+		        android:layout_height="wrap_content" >
+
+		        <CheckBox
+		            android:id="@+id/chkCopyPasswordsToClipboard"
+		            android:layout_width="wrap_content"
+		            android:layout_height="wrap_content"
+		            android:layout_gravity="center_horizontal"
+		            android:text="@string/settings_copy_passwords" />
+
+		        <CheckBox
+		            android:id="@+id/chkShowMasterPasswords"
+		            android:layout_width="wrap_content"
+		            android:layout_height="wrap_content"
+		            android:layout_gravity="center_horizontal"
+		            android:text="@string/settings_show_master_passwd" />
+		    </TableRow>
+
+			<TableRow
+		        android:id="@+id/tableRow2"
+		        android:layout_width="wrap_content"
+		        android:layout_height="wrap_content" >
+
+	   			<CheckBox android:id="@+id/chkClearPasswdsOnFocusLoss"
+					android:text="@string/settings_clear_passwds_on_focus_loss"
+					android:layout_width="wrap_content"
+					android:layout_height="wrap_content"
+					android:layout_gravity="center_horizontal"></CheckBox>
+
+	   			<CheckBox android:id="@+id/chkShowDebugInfo"
+					android:text="@string/settings_show_debug_able"
+					android:layout_width="wrap_content"
+					android:layout_height="wrap_content"
+					android:layout_gravity="center_horizontal"></CheckBox>
+
+		    </TableRow>
+
+		</TableLayout>
+		
+	</LinearLayout>
+</ScrollView>

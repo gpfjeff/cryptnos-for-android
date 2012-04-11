@@ -1,0 +1,39 @@
+
+    <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+        android:id="@+id/linearLayout1"
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"
+        android:orientation="vertical"
+        android:gravity="center_horizontal"
+        android:layout_gravity="center_horizontal">
+
+        <ImageView
+            android:id="@+id/imgMainMenuLogo"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:scaleType="fitCenter"
+            android:contentDescription="@string/about_logo"
+            android:src="@drawable/logo" />
+
+        <TextView
+            android:id="@+id/txtVersionLabel"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_horizontal"
+            android:layout_gravity="center_horizontal"
+            android:text="@string/about_header"
+            android:paddingBottom="5sp" />
+
+        <GridView
+            android:id="@+id/gridMainMenu"
+            android:layout_width="fill_parent"
+            android:layout_height="fill_parent"
+            android:numColumns="4"
+            android:stretchMode="columnWidth"
+            android:gravity="center">
+        
+        
+        </GridView>
+
+    </LinearLayout>

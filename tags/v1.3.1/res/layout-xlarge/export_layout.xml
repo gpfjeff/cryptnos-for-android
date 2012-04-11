@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    android:padding="10sp" xmlns:tools="http://schemas.android.com/tools" tools:ignore="UselessParent">
+<ScrollView android:id="@+id/ScrollView01"
+	android:layout_width="fill_parent"
+	android:layout_height="wrap_content">
+	<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+	    android:orientation="vertical"
+	    android:layout_width="fill_parent"
+	    android:layout_height="wrap_content"
+	    android:id="@+id/layoutExport">
+			<TextView android:layout_width="wrap_content"
+				android:layout_height="wrap_content"
+				android:textSize="20sp"
+				android:id="@+id/labelExportFile"
+				android:text="@string/export_file_label"></TextView>
+			<Button android:layout_width="fill_parent"
+				android:layout_height="wrap_content"
+				android:id="@+id/btnExportPickPath"
+				android:text="@string/export_file_pick_path_button_label"></Button>
+			<EditText android:layout_width="fill_parent"
+				android:layout_height="wrap_content"
+				android:id="@+id/txtExportFile"
+				android:autoLink="none"
+				android:ellipsize="none"
+				android:hint="@string/export_file_hint"
+				android:autoText="false"></EditText>
+			<TextView android:layout_width="wrap_content"
+				android:layout_height="wrap_content"
+				android:textSize="20sp"
+				android:paddingTop="10dp"
+				android:id="@+id/labelPassphrase1"
+				android:text="@string/export_password1_label"></TextView>
+			<EditText android:layout_width="fill_parent"
+				android:layout_height="wrap_content"
+				android:id="@+id/txtPassphrase1"
+				android:password="true"
+				android:ellipsize="none"
+				android:saveEnabled="false"
+				android:hint="@string/export_password1_hint"></EditText>
+			<TextView android:layout_width="wrap_content"
+				android:layout_height="wrap_content"
+				android:textSize="20sp"
+				android:paddingTop="10dp"
+				android:id="@+id/labelPassphrase2"
+				android:text="@string/export_password2_label"></TextView>
+			<EditText android:layout_width="fill_parent"
+				android:layout_height="wrap_content"
+				android:id="@+id/txtPassphrase2"
+				android:password="true"
+				android:ellipsize="none"
+				android:saveEnabled="false"
+				android:hint="@string/export_password2_hint"></EditText>
+
+			<TableLayout
+			    android:id="@+id/tableLayout1"
+			    android:layout_width="match_parent"
+			    android:layout_height="wrap_content"
+	            android:paddingTop="10dp"
+			    android:stretchColumns="0,1" >
+
+			    <TableRow
+			        android:id="@+id/tableRow1"
+			        android:layout_width="wrap_content"
+			        android:layout_height="wrap_content" >
+
+			        <Button
+			            android:id="@+id/btnPickSites"
+			            android:layout_width="fill_parent"
+			            android:layout_height="wrap_content"
+			            android:text="@string/export_pick_sites_button_label" />
+
+			        <Button
+			            android:id="@+id/btnExport"
+			            android:layout_width="fill_parent"
+			            android:layout_height="wrap_content"
+			            android:text="@string/export_export_button_label" />
+			    </TableRow>
+
+			</TableLayout>
+
+	</LinearLayout>
+</ScrollView>
+</LinearLayout>

@@ -1,0 +1,193 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView  xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/ScrollView01"
+	android:layout_width="fill_parent"
+	android:layout_height="fill_parent"
+	android:orientation="vertical"
+   	android:padding="10sp" >
+	<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+   		android:orientation="vertical"
+   		android:layout_width="fill_parent"
+   		android:layout_height="wrap_content">
+
+   		<TableLayout
+   		    android:layout_width="fill_parent"
+   		    android:layout_height="wrap_content"
+   		    android:padding="10dp"
+   		    android:shrinkColumns="0"
+   		    android:stretchColumns="1" >
+
+   		    <TableRow
+   		        android:layout_width="wrap_content"
+   		        android:layout_height="wrap_content"
+   		        android:paddingRight="10sp" >
+
+   		        <TextView
+   		            android:id="@+id/labelSite"
+   		            android:layout_width="wrap_content"
+   		            android:layout_height="wrap_content"
+   		            android:lines="1"
+   		            android:text="@string/edit_site_label"
+   		            android:textSize="20sp" >
+   		        </TextView>
+
+   		        <EditText
+   		            android:id="@+id/txtSite"
+   		            android:layout_width="fill_parent"
+   		            android:layout_height="wrap_content"
+   		            android:autoLink="none"
+   		            android:autoText="false"
+   		            android:ellipsize="none"
+   		            android:hint="@string/edit_site_hint" >
+   		        </EditText>
+   		    </TableRow>
+
+   		    <TableRow
+   		        android:layout_width="wrap_content"
+   		        android:layout_height="wrap_content" >
+
+   		        <TextView
+   		            android:id="@+id/labelPassphrase"
+   		            android:layout_width="wrap_content"
+   		            android:layout_height="wrap_content"
+   		            android:paddingRight="10sp"
+   		            android:text="@string/edit_password_label"
+   		            android:textSize="20sp" >
+   		        </TextView>
+
+   		        <EditText
+   		            android:id="@+id/txtPassphrase"
+   		            android:password="true"
+   		            android:layout_width="fill_parent"
+   		            android:layout_height="wrap_content"
+   		            android:ellipsize="none"
+   		            android:hint="@string/edit_password_hint"
+   		            android:saveEnabled="false" >
+   		        </EditText>
+   		    </TableRow>
+
+   		    <TableRow
+   		        android:layout_width="wrap_content"
+   		        android:layout_height="wrap_content" >
+
+   		        <TextView
+   		            android:id="@+id/labelHash"
+   		            android:layout_width="wrap_content"
+   		            android:layout_height="wrap_content"
+   		            android:paddingRight="10sp"
+   		            android:text="@string/edit_hash_label"
+   		            android:textSize="20sp" >
+   		        </TextView>
+
+   		        <Spinner
+   		            android:id="@+id/spinHashes"
+   		            android:layout_width="fill_parent"
+   		            android:layout_height="wrap_content"
+   		            android:clickable="true"
+   		            android:entries="@array/hashList" >
+   		        </Spinner>
+   		    </TableRow>
+
+   		    <TableRow
+   		        android:layout_width="wrap_content"
+   		        android:layout_height="wrap_content" >
+
+   		        <TextView
+   		            android:id="@+id/labelIterations"
+   		            android:layout_width="wrap_content"
+   		            android:layout_height="wrap_content"
+   		            android:paddingRight="10sp"
+   		            android:text="@string/edit_iterations_label"
+   		            android:textSize="20sp" >
+   		        </TextView>
+
+   		        <EditText
+   		            android:id="@+id/txtIterations"
+   		            android:layout_width="fill_parent"
+   		            android:layout_height="wrap_content"
+   		            android:autoText="false"
+   		            android:ellipsize="none"
+   		            android:gravity="right"
+   		            android:hint="@string/dummy_hint"
+   		            android:numeric="integer"
+   		            android:saveEnabled="false" >
+   		        </EditText>
+   		    </TableRow>
+
+   		    <TableRow
+   		        android:layout_width="wrap_content"
+   		        android:layout_height="wrap_content" >
+
+   		        <TextView
+   		            android:id="@+id/labelCharTypes"
+   		            android:layout_width="wrap_content"
+   		            android:layout_height="wrap_content"
+   		            android:paddingRight="10sp"
+   		            android:text="@string/edit_chartypes_label"
+   		            android:textSize="20sp" >
+   		        </TextView>
+
+   		        <Spinner
+   		            android:id="@+id/spinCharTypes"
+   		            android:layout_width="fill_parent"
+   		            android:layout_height="wrap_content"
+   		            android:clickable="true"
+   		            android:entries="@array/charTypeList" >
+   		        </Spinner>
+   		    </TableRow>
+
+   		    <TableRow
+   		        android:layout_width="wrap_content"
+   		        android:layout_height="wrap_content" >
+
+   		        <TextView
+   		            android:id="@+id/labelCharLimit"
+   		            android:layout_width="wrap_content"
+   		            android:layout_height="wrap_content"
+   		            android:lines="1"
+   		            android:paddingRight="10sp"
+   		            android:text="@string/edit_charlimit_label"
+   		            android:textSize="20sp" >
+   		        </TextView>
+
+   		        <Spinner
+   		            android:id="@+id/spinCharLimit"
+   		            android:layout_width="fill_parent"
+   		            android:layout_height="wrap_content"
+   		            android:clickable="true" >
+   		        </Spinner>
+   		    </TableRow>
+
+   		    <TableRow
+   		        android:layout_width="wrap_content"
+   		        android:layout_height="wrap_content" >
+
+   		        <TextView
+   		            android:id="@+id/labelOutput"
+   		            android:layout_width="wrap_content"
+   		            android:layout_height="wrap_content"
+   		            android:paddingRight="10sp"
+   		            android:text="@string/edit_output_label"
+   		            android:textSize="20sp" >
+   		        </TextView>
+
+   		        <EditText
+   		            android:id="@+id/txtOutput"
+   		            android:layout_width="fill_parent"
+   		            android:layout_height="wrap_content"
+   		            android:ellipsize="none"
+   		            android:hint="@string/edit_output_hint"
+   		            android:saveEnabled="false" >
+   		        </EditText>
+   		    </TableRow>
+   		</TableLayout>
+
+		<Button
+		    android:id="@+id/btnGenerate"
+		    android:layout_width="wrap_content"
+		    android:layout_height="wrap_content"
+		    android:layout_gravity="center_horizontal"
+		    android:text="@string/edit_generate_button_label" >
+		</Button>
+	</LinearLayout>
+</ScrollView>

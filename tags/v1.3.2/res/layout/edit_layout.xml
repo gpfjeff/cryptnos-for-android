@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    android:orientation="vertical"
+    android:padding="5sp" xmlns:tools="http://schemas.android.com/tools" tools:ignore="UselessParent">
+
+	<ScrollView android:id="@+id/ScrollView01"
+		android:layout_width="fill_parent"
+		android:layout_height="fill_parent">
+		<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    		android:orientation="vertical"
+    		android:layout_width="fill_parent"
+    		android:layout_height="wrap_content">
+			<TextView android:layout_width="wrap_content"
+				android:layout_height="wrap_content"
+				android:lines="1"
+				android:id="@+id/labelSite"
+				android:text="@string/edit_site_label"></TextView>
+			<EditText android:layout_width="fill_parent"
+				android:layout_height="wrap_content"
+				android:id="@+id/txtSite"
+				android:autoLink="none"
+				android:ellipsize="none"
+				android:hint="@string/edit_site_hint"
+				android:autoText="false"></EditText>
+			<TextView android:layout_width="wrap_content"
+				android:layout_height="wrap_content"
+				android:id="@+id/labelPassphrase"
+				android:text="@string/edit_password_label"></TextView>
+			<EditText android:layout_width="fill_parent"
+				android:layout_height="wrap_content"
+				android:id="@+id/txtPassphrase"
+				android:password="true"
+				android:ellipsize="none"
+				android:saveEnabled="false"
+				android:hint="@string/edit_password_hint"></EditText>
+			<TableLayout android:layout_height="wrap_content"
+		    	android:layout_width="fill_parent"
+		    	android:shrinkColumns="1"
+		    	android:stretchColumns="0">
+
+		    	<TableRow
+		    	    android:layout_width="wrap_content"
+		    	    android:layout_height="wrap_content" >
+
+					<TextView android:layout_width="wrap_content"
+						android:layout_height="wrap_content"
+						android:id="@+id/labelHash"
+						android:text="@string/edit_hash_label"></TextView>
+					<Spinner android:layout_width="fill_parent"
+						android:layout_height="wrap_content"
+						android:clickable="true"
+						android:id="@+id/spinHashes"
+						android:entries="@array/hashList"></Spinner>
+        		</TableRow>
+	    	</TableLayout>
+			<TableLayout android:layout_height="wrap_content"
+		    	android:layout_width="fill_parent"
+		    	android:shrinkColumns="1"
+		    	android:stretchColumns="0">
+		    	<TableRow android:layout_width="wrap_content"
+        			android:layout_height="wrap_content">
+					<TextView android:layout_width="wrap_content"
+						android:layout_height="wrap_content"
+						android:id="@+id/labelIterations"
+						android:text="@string/edit_iterations_label"></TextView>
+					<EditText android:layout_width="fill_parent"
+						android:layout_height="wrap_content"
+						android:id="@+id/txtIterations"
+						android:ellipsize="none"
+						android:hint="@string/dummy_hint"
+						android:saveEnabled="false"
+						android:numeric="integer"
+						android:autoText="false"
+						android:gravity="right"></EditText>
+        		</TableRow>
+		    </TableLayout>
+			<TextView android:layout_width="wrap_content"
+				android:layout_height="wrap_content"
+				android:id="@+id/labelCharTypes"
+				android:text="@string/edit_chartypes_label"></TextView>
+			<Spinner android:layout_width="fill_parent"
+				android:layout_height="wrap_content"
+				android:clickable="true"
+				android:id="@+id/spinCharTypes"
+				android:entries="@array/charTypeList"></Spinner>
+			<TableLayout android:layout_height="wrap_content"
+		    	android:layout_width="fill_parent"
+		    	android:shrinkColumns="1"
+		    	android:stretchColumns="0">
+		    	<TableRow android:layout_width="wrap_content"
+        			android:layout_height="wrap_content">
+					<TextView android:layout_width="wrap_content"
+						android:layout_height="wrap_content"
+						android:lines="1"
+						android:id="@+id/labelCharLimit"
+						android:text="@string/edit_charlimit_label"></TextView>
+					<Spinner android:id="@+id/spinCharLimit"
+						android:layout_width="fill_parent"
+						android:layout_height="wrap_content"
+						android:clickable="true"></Spinner>
+        		</TableRow>
+		    </TableLayout>
+			<TextView android:layout_width="wrap_content"
+				android:layout_height="wrap_content"
+				android:id="@+id/labelOutput"
+				android:text="@string/edit_output_label"></TextView>
+			<EditText android:layout_width="fill_parent"
+				android:layout_height="wrap_content"
+				android:id="@+id/txtOutput"
+				android:ellipsize="none"
+				android:saveEnabled="false"
+				android:hint="@string/edit_output_hint"></EditText>
+			<Button android:layout_width="fill_parent"
+				android:layout_height="wrap_content"
+				android:id="@+id/btnGenerate"
+				android:text="@string/edit_generate_button_label"></Button>
+		</LinearLayout>
+	</ScrollView>
+</LinearLayout>

@@ -6,7 +6,7 @@
 |:--------------------|:------|
 | **Date of Release** | July 5, 2013 |
 | **Next Release Milestone** | 2.0.0 |
-| **Date of Next Release** | Spring 2014 |
+| **Date of Next Release** | Unknown |
 | **Status of Development** | Sporadic |
 
 # Download Cryptnos #

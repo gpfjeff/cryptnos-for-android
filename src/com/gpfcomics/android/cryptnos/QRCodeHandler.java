@@ -580,7 +580,18 @@ public class QRCodeHandler {
 				// site token and move on.  Otherwise, fail.  Note that all the
 				// other parameters will proceed in the same fashion.
 				String[] param = bits[1].split(DELIMITER_HEADER);
-				if (param.length != 2) {
+				// JTD 10/27/2016:  Fix for Issue #19, part one.  We've had some
+				// users who have put colons in their site token; specifically, they
+				// were using a website URL, presumably with the protocal included
+				// ("http://...").  Unfortunately, we're using colons as a delimiter
+				// between headers and values, and we didn't explicitly forbid them
+				// from the site text box.  So when we tried to split the value
+				// above, we ended up with more than two parts.  It's fine for us
+				// to throw an error on the other header/value pairs if they end up
+				// with more tha two parts, but not here.  So we'll change this
+				// test to throw an error if we get less than two parts after the
+				// split, then adjust things below before returning our results.
+				if (param.length < 2) {
 					if (DEBUG)
 						Toast.makeText(theApp.getBaseContext(), "ERROR: Site param has wrong " +
 							"number of items (" + String.valueOf(param.length) + ")",
@@ -594,7 +605,25 @@ public class QRCodeHandler {
 							Toast.LENGTH_LONG).show();
 					return null;
 				}
-				params.setSite(param[1]);
+				// JTD 10/27/2016:  Fix for Issue #19, part two.  Now that we've
+				// validated that we got a good header, we need to set the site token.
+				// This is easy if we only have one non-header part.  However, if the
+				// site token contained colons, we could end up with multiple parts
+				// that we'll have to reassemble.  So declare a String variable to
+				// hold the site token, assign the first part to it, then check to see
+				// if we have more parts to add.  If we do, loop through those parts
+				// and glue them back together, making sure to restore the colons
+				// along the way.  This would probably be more efficient if we used
+				// a StringBuilder rather than a bunch of concatenates, but I don't
+				// think we'll be doing a lot of this.
+				String site = param[1];
+				if (param.length > 2) {
+					// Combine remaining strings into one and stuff into site
+					for (int i = 2; i < param.length; i++) {
+						site = site.concat(DELIMITER_HEADER).concat(param[i]);
+					}
+				}
+				params.setSite(site);
 				// Get the hash algorithm:
 				param = bits[2].split(DELIMITER_HEADER);
 				if (param.length != 2) {

@@ -2,9 +2,9 @@
 
 # Project Status #
 
-| **Current Release** | 1.3.2 |
+| **Current Release** | 1.3.3 |
 |:--------------------|:------|
-| **Date of Release** | July 5, 2013 |
+| **Date of Release** | October 28, 2016 |
 | **Next Release Milestone** | 2.0.0 |
 | **Date of Next Release** | Unknown |
 | **Status of Development** | Sporadic |
@@ -15,8 +15,8 @@ The following links point to the latest version of the Cryptnos download files h
 
 | **Download Type** | **GnuPG Signature** | **SHA-1 Hash** | **Size**|
 |:------------------|:--------------------|:---------------|:--------|
-| [Android Installer (APK)](https://drive.google.com/uc?export=download&id=0B55ltyq5FildemJLUFN6V3FYQk0) | [Signature](https://drive.google.com/uc?export=download&id=0B55ltyq5FildRmZiT3pwNXZEQU0) | e9cd52ee7bd7aa85c8cc143dd26ac369ee18d115 | 581kb |
-| [Source Archive](https://drive.google.com/uc?export=download&id=0B55ltyq5FildVTQyQWlhZm53OFU) | [Signature](https://drive.google.com/uc?export=download&id=0B55ltyq5FildcDRPQzhTdnRGTGc) | dc2740abd309d50a4e49d22f14d363aeeba9769d | 521kb |
+| [Android Installer (APK)](http://www.cryptnos.com/files/downloads/Cryptnos_1.3.3.apk) | [Signature](http://www.cryptnos.com/files/downloads/Cryptnos_1.3.3.apk.asc) | 1a47b76ced5b9ba8e19494559ad304bf1299eb00 | 605kb |
+| [Source Archive](http://www.cryptnos.com/files/downloads/Cryptnos_Android_1.3.3_Source.zip) | [Signature](http://www.cryptnos.com/files/downloads/Cryptnos_Android_1.3.3_Source.zip.asc) | 890939f1bbf469cc3293c476e6f658160d9f2e5a | 563kb |
 
 # About Cryptnos #
 

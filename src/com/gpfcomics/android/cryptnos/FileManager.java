@@ -63,7 +63,7 @@ import android.net.Uri;
  * provide sufficient abstraction to allow new file managers to be added over time
  * as new Intents are discovered.
  * @author Jeffrey T. Darlington
- * @version 1.3.1
+ * @version 1.3.4
  * @since 1.2
  */
 public class FileManager {
@@ -96,6 +96,20 @@ public class FileManager {
 	/** This constant represents the ES File Explorer app name */
 	public static final String NAME_ES_FILE_EXPLORER = "ES File Explorer";
 	
+	/** A constant used to represent that ES File Explorer Pro is selected as the
+	 *  user's preferred file manager. */
+	public static final int APP_ES_FILE_EXPLORER_PRO = 4;
+	
+	/** This constant represents the ES File Explorer Pro app name */
+	public static final String NAME_ES_FILE_EXPLORER_PRO = "ES File Explorer Pro";
+	
+	/** A constant used to represent that Total Commander is selected as the
+	 *  user's preferred file manager. */
+	public static final int APP_TOTAL_COMMANDER = 5;
+	
+	/** This constant represents the Total Commander app name */
+	public static final String NAME_TOTAL_COMMANDER = "Total Commander";
+	
 	/** The return code expected when we call startActivityForResult() with our
 	 *  generated Intent to select a file. */
 	public static final int INTENT_REQUEST_SELECT_FILE = 4321;
@@ -114,6 +128,12 @@ public class FileManager {
 	
 	/** The package name for ES File Explorer */
 	private static final String PACKAGE_ES_FILE_EXPLORER = "com.estrongs.android.pop";
+	
+	/** The package name for ES File Explorer Pro */
+	private static final String PACKAGE_ES_FILE_EXPLORER_PRO = "com.estrongs.android.pop.pro";
+	
+	/** The package name for Total Commander */
+	private static final String PACKAGE_TOTAL_COMMANDER = "com.ghisler.android.TotalCommander";
 	
 	/** The select file Intent action for OI File Manager */
 	private static final String FILE_SELECT_INTENT_OI = "org.openintents.action.PICK_FILE";
@@ -206,6 +226,18 @@ public class FileManager {
 			fmList.add(Integer.valueOf(APP_ES_FILE_EXPLORER));
 		}
 		catch (PackageManager.NameNotFoundException ex3) {}
+		// ES File Explorer Pro:
+		try {
+			pm.getPackageInfo(PACKAGE_ES_FILE_EXPLORER_PRO, 0);
+			fmList.add(Integer.valueOf(APP_ES_FILE_EXPLORER_PRO));
+		}
+		catch (PackageManager.NameNotFoundException ex4) {}
+		// ES File Explorer Pro:
+		try {
+			pm.getPackageInfo(PACKAGE_TOTAL_COMMANDER, 0);
+			fmList.add(Integer.valueOf(APP_TOTAL_COMMANDER));
+		}
+		catch (PackageManager.NameNotFoundException ex5) {}
 		// Now check the ArrayList's size.  If we got anything at all, we found
 		// at least one of them.  Convert the ArrayList to a simple integer array:
 		if (fmList.size() > 0) {
@@ -304,7 +336,8 @@ public class FileManager {
 		// file managers before adding it.
 		if (code == APP_NO_FILE_MANAGER ||
 				((code == APP_OI_FILE_MANAGER || code == APP_ANDEXPLORER ||
-						code == APP_ES_FILE_EXPLORER)) &&
+						code == APP_ES_FILE_EXPLORER || code == APP_ES_FILE_EXPLORER_PRO ||
+						code == APP_TOTAL_COMMANDER)) &&
 				codeInAvailableList(code)) {
 			// Store the preference, first locally then in the shared preferences:
 			preferredFM = code;
@@ -331,8 +364,10 @@ public class FileManager {
 	public Intent generateSelectFileIntent(String rootPath, String dialogTitle,
 			String buttonText) {
 		switch (preferredFM) {
-			// Generate an OI File Manager intent:
+			// Generate an OI File Manager intent.  Note that Total Commander uses
+			// the exact same OpenIntent style.
 			case APP_OI_FILE_MANAGER:
+			case APP_TOTAL_COMMANDER:
 				Intent oii = new Intent(FILE_SELECT_INTENT_OI);
 				oii.setData(Uri.parse("file://" + rootPath));
 				oii.putExtra("org.openintents.extra.TITLE", dialogTitle);
@@ -347,8 +382,9 @@ public class FileManager {
 				aei.putExtra("explorer_title", dialogTitle);
 				aei.putExtra("browser_list_layout", "0");
 				return aei;
-			// ES File Explorer:
+			// ES File Explorer Free & Pro:
 			case APP_ES_FILE_EXPLORER:
+			case APP_ES_FILE_EXPLORER_PRO:
 				Intent esi = new Intent(FILE_SELECT_INTENT_ES);
 				esi.putExtra("com.estrongs.intent.extra.TITLE", buttonText);
 				return esi;
@@ -368,6 +404,7 @@ public class FileManager {
 		switch (preferredFM) {
 			// Generate an OI File Manager intent:
 			case APP_OI_FILE_MANAGER:
+			case APP_TOTAL_COMMANDER:
 				Intent oii = new Intent(DIR_SELECT_INTENT_OI);
 				oii.setData(Uri.parse("file://" + rootPath));
 				oii.putExtra("org.openintents.extra.TITLE", dialogTitle);
@@ -381,8 +418,9 @@ public class FileManager {
 						DIR_SELECT_INTENT_AE);
 				aei.putExtra("explorer_title", dialogTitle);
 				return aei;
-			// ES File Explorer:
+			// ES File Explorer Free & Pro:
 			case APP_ES_FILE_EXPLORER:
+			case APP_ES_FILE_EXPLORER_PRO:
 				Intent esi = new Intent(DIR_SELECT_INTENT_ES);
 				esi.putExtra("com.estrongs.intent.extra.TITLE", buttonText);
 				return esi;
@@ -406,6 +444,7 @@ public class FileManager {
 		switch (preferredFM) {
 			// Getting the file from OI File Manager is pretty simple:
 			case APP_OI_FILE_MANAGER:
+			case APP_TOTAL_COMMANDER:
 				return data.getDataString();
 			// AndExplorer takes a bit more work, and it may technically not return
 			// anything useful:
@@ -422,6 +461,7 @@ public class FileManager {
 			// This was taken pretty much verbatim from the ES File Explorer
 			// Developers page (http://www.estrongs.com/en/support/developers.html):
 			case APP_ES_FILE_EXPLORER:
+			case APP_ES_FILE_EXPLORER_PRO:
 				Uri uri2 = data.getData();
 				if (uri2 != null) return uri2.getPath();
 				else return null;    
@@ -483,7 +523,8 @@ public class FileManager {
 	 */
 	public String getRecognizedFileManagerNames() {
 		return "\t" + NAME_OI_FILE_MANAGER + "\n\t" + NAME_ANDEXPLORER +
-			"\n\t" + NAME_ES_FILE_EXPLORER;
+			"\n\t" + NAME_ES_FILE_EXPLORER + "\n\t" + NAME_ES_FILE_EXPLORER_PRO +
+			"\n\t" + NAME_TOTAL_COMMANDER;
 	}
 	
 	/* Private methods: ***********************************************************/
@@ -507,6 +548,10 @@ public class FileManager {
 				return NAME_ANDEXPLORER;
 			case APP_ES_FILE_EXPLORER:
 				return NAME_ES_FILE_EXPLORER;
+			case APP_ES_FILE_EXPLORER_PRO:
+				return NAME_ES_FILE_EXPLORER_PRO;
+			case APP_TOTAL_COMMANDER:
+				return NAME_TOTAL_COMMANDER;
 			default:
 				throw new IllegalArgumentException(res.getString(R.string.error_invalid_file_manager_code));
 		}
@@ -533,6 +578,10 @@ public class FileManager {
 			return APP_ANDEXPLORER;
 		if (name.compareTo(NAME_ES_FILE_EXPLORER) == 0)
 			return APP_ES_FILE_EXPLORER;
+		if (name.compareTo(NAME_ES_FILE_EXPLORER_PRO) == 0)
+			return APP_ES_FILE_EXPLORER_PRO;
+		if (name.compareTo(NAME_TOTAL_COMMANDER) == 0)
+			return APP_TOTAL_COMMANDER;
 		return APP_NO_FILE_MANAGER;
 	}
 	

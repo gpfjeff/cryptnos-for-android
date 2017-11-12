@@ -16,7 +16,7 @@ The following links point to the latest version of the Cryptnos download files h
 | **Download Type** | **GnuPG Signature** | **SHA-1 Hash** | **Size**|
 |:------------------|:--------------------|:---------------|:--------|
 | [Android Installer (APK)](http://www.cryptnos.com/files/downloads/Cryptnos_1.3.4.apk) | [Signature](http://www.cryptnos.com/files/downloads/Cryptnos_1.3.4.apk.sig) | ee18c34acd48e296cfcdb4fe934e5e24b6d1bad7 | 606kb |
-| [Source Archive](http://www.cryptnos.com/files/downloads/Cryptnos_Android_1.3.4_Source.zip) | [Signature](http://www.cryptnos.com/files/downloads/Cryptnos_Android_1.3.4_Source.zip.sig) | d92bb764edbbc7ba11056d83322e1d84a217a169 | 543kb |
+| [Source Archive](http://www.cryptnos.com/files/downloads/Cryptnos_Android_Source_1.3.4.zip) | [Signature](http://www.cryptnos.com/files/downloads/Cryptnos_Android_Source_1.3.4.zip.sig) | d92bb764edbbc7ba11056d83322e1d84a217a169 | 543kb |
 
 # About Cryptnos #
 

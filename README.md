@@ -1,4 +1,5 @@
-[![](http://www.android.com/images/brand/android_app_on_play_logo_large.png)](http://play.google.com/store/apps/details?id=com.gpfcomics.android.cryptnos)
+# Cryptnos for Android has offically reached end-of-life #
+Please read our [end-of-life new post](https://www.cryptnos.com/2019/10/12/official-cryptnos-for-android-end-of-life-and-support/) on the [official Cryptnos website](https://www.cryptnos.com/).
 
 # Project Status #
 
@@ -6,8 +7,8 @@
 |:--------------------|:------|
 | **Date of Release** | November 12, 2017 |
 | **Next Release Milestone** | 2.0.0 |
-| **Date of Next Release** | Unknown |
-| **Status of Development** | Sporadic |
+| **Date of Next Release** | No further releases |
+| **Status of Development** | Ended |
 
 # Download Cryptnos #
 

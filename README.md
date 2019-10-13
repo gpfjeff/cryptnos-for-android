@@ -1,5 +1,5 @@
 # Cryptnos for Android has offically reached end-of-life #
-Please read our [end-of-life new post](https://www.cryptnos.com/2019/10/12/official-cryptnos-for-android-end-of-life-and-support/) on the [official Cryptnos website](https://www.cryptnos.com/).
+Please read our [end-of-life news post](https://www.cryptnos.com/2019/10/12/official-cryptnos-for-android-end-of-life-and-support/) on the [official Cryptnos website](https://www.cryptnos.com/).
 
 # Project Status #
 
